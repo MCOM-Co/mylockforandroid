@@ -3,15 +3,18 @@
 
 = Introduction =
 
-The primary purpose of MyLock is to enhance the convenience of android's already brilliant notification system by giving the user's notifications a default home right on the lock screen so they can be previewed in a timeline when the user returns to the sleeping device. The other functions of the program are secondary, and exist to support this goal in various ways.
+The primary purpose of MyLock is to enhance the convenience of android's already brilliant notification system by giving the user's notifications a default home right on the lock screen so they can be previewed in a timeline when the user returns to the sleeping device. The other functions of the program are secondary, and exist to support this goal in various ways. 
 
 
 = Details =
 
-Essentially, this activity will not need a UI for input, except after it is built to allow the user to scroll it when too many events are waiting to be shown all at once. The screen will remain locked to other input besides scrolling our preview panel or long-pressing a touch-button to activate shortcuts. I imagine that more research will be needed to control these input actions from the locked state that is independent of the code that watches for notifications and populates the strings that the window will place in timeline order for the user to see in the NP window.
+For a first release, I will design the logic that gathers information from the notification panel and populates it on the default lockscreen. After that is working well (and displaying all default events such as call, waiting email/gv, sms, gtalk) I will then begin to implement the extra features like shortcuts, unlock customization, and backlight/autolock behaviors, and additional interfaces that interact with email accounts, google voice, facebook/twitter to pull in content that is not supplied in their default notifications. At that point when more complexity is introduced, I will also implement the framework for user customization to choose what app notifications are to appear in the preview timeline (for example, I myself would only have gtalk in my preview as it is my primary communication from my device).
+
+Essentially, the NP activity will not need a UI for input directly. The screen will remain locked to other input besides scrolling our preview panel (and eventually also support long-pressing a touch-button to activate shortcuts). I imagine that more research will be needed to control these input actions from the locked state that is independent of the code that watches for notifications and populates the strings that will be placed in timeline order for the user to see in the NP window.
 
 Here is the information of how programs send the notifications we are interested in gathering on our preview panel, from the android documentation:
 
+{{{
 public void notify (String tag, int id, Notification notification)
 
 Since: API Level 5
@@ -21,3 +24,4 @@ tag	An string identifier for this notification unique within your application.
 notification	A Notification object describing how to notify the user, other than the view you're providing. Must not be null.
 Returns
 the id of the notification that is associated with the string identifier that can be used to cancel the notification
+}}}
