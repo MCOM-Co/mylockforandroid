@@ -16,12 +16,17 @@ Here is the information of how programs send the notifications we are interested
 
 {{{
 public void notify (String tag, int id, Notification notification)
-
-Since: API Level 5
-Persistent notification on the status bar,
-Parameters
-tag	An string identifier for this notification unique within your application.
-notification	A Notification object describing how to notify the user, other than the view you're providing. Must not be null.
-Returns
-the id of the notification that is associated with the string identifier that can be used to cancel the notification
 }}}
+Since: API Level 5
+
+Persistent notification on the status bar,
+
+Parameters
+  * tag:	An string identifier for this notification unique within your application.
+  * notification:	A Notification object describing how to notify the user, other than the view you're providing. Must not be null.
+
+Returns
+  * the id of the notification that is associated with the string identifier that can be used to cancel the notification
+
+
+I can use this as a starting point for gathering the preview information, but I know we will also at some point need to create code that attempts to interact with the app sending the notification to get info that is not in the notification, such as for google voice to find out who the message is from and what it says. this may be beyond the scope of what we can actually do, but ultimately the vision of the notification preview itself is to be a message timeline capable of previewing content of any message received while device sleeps upon user's return.
