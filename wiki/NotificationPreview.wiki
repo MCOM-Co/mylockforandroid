@@ -1,0 +1,23 @@
+#summary Research for main Lockscreen-residing notification preview window.
+#labels Phase-Requirements,Phase-Design
+
+= Introduction =
+
+MyLock's primary purpose is to enhance the convenience of android's already brilliant notification system by giving the user's notifications a default home right on the lock screen so they can be previewed. The other functions of the program are secondary, and exist to support this goal in various ways.
+
+
+= Details =
+
+Essentially, this activity will not need a UI for input, except after it is built to allow the user to scroll it when too many events are waiting to be shown all at once. The screen will remain locked to other input besides scrolling our preview panel or long-pressing a touch-button to activate shortcuts. I imagine that more research will be needed to control these input actions from the locked state that is independent of the code that watches for notifications and populates the strings that the window will place in timeline order for the user to see in the NP window.
+
+Here is the information of how programs send the notifications we are interested in gathering on our preview panel, from the android documentation:
+
+public void notify (String tag, int id, Notification notification)
+
+Since: API Level 5
+Persistent notification on the status bar,
+Parameters
+tag	An string identifier for this notification unique within your application.
+notification	A Notification object describing how to notify the user, other than the view you're providing. Must not be null.
+Returns
+the id of the notification that is associated with the string identifier that can be used to cancel the notification
