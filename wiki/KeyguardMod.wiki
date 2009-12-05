@@ -2,13 +2,9 @@
 
 = Introduction =
 
-One of the main additional conveniences MyLock is aiming for is giving more flexible locking and unlocking methods, in addition to the need to manipulate the lock to perform functions from within the lock screen environment.
+To accomplish the starting point for this project, we need to learn how to instate our own custom keyguard environment. The foundation for the rest of the components of this project is the modified keyguard on which we can place addon objects such as the notificationpreview
 
 = Details =
-
-It needs to interact directly with the lock in order to implement long-press usage of the shortcut touch-keys, and to allow scrolling of our NotificationPreview element. Also, give users the option to place additional shortcut launchers at the bottom of the lockscreen, which can be grabbed and dragged upward to execute the shortcut while simultaneously unlocking.
-
-On top of that we want to give users the ability to unlock/relock it in other quicker methods besides the default in android. Examples: Double-press of lock button, Press lock button then shake, unlock automatically when slide is opened (current behavior is that it only wakes up the sleeping screen), or camera button full press. 
 
 I am researching how much we need to interact with what's called the keyguard manager in order to accomplish the input on the lockscreen. http://developer.android.com/reference/android/app/KeyguardManager.html
 
