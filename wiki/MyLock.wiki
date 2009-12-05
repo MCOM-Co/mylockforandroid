@@ -16,7 +16,7 @@ The program follows 3 guiding principles. The various enhancements form separate
 
 http://developer.android.com/reference/android/app/NotificationManager.html
 
-  * Shortcutter: addon object which supports the concept of quicklaunch of functions or apps via the touch-buttons (long press or press & drag) and additionally an optional panel of shortcuts user-customizable which form orbit around an activation zone. drag any shortcut into the center and release it over the activation zone to unlock+launch shortcut
+  * ShortCutter: addon object which supports the concept of quicklaunch of functions or apps via the touch-buttons (long press or press & drag) and additionally an optional panel of shortcuts user-customizable which form orbit around an activation zone. drag any shortcut into the center and release it over the activation zone to unlock+launch shortcut
 
 = Settings addons =
 
