@@ -1,5 +1,4 @@
-#summary Research for main Lockscreen-residing notification preview window.
-#labels Phase-Requirements,Phase-Design
+#summary User-customized timeline of events derived directly from notifications, first thing user will see when waking screen from sleep.
 
 = Introduction =
 
@@ -8,7 +7,7 @@ The primary purpose of MyLock is to enhance the convenience of android's already
 
 = Details =
 
-For a first release, I will design the logic that gathers information from the notification panel and populates it on the default lockscreen. After that is working well (and displaying all default events such as call, waiting email/gv, sms, gtalk) I will then begin to implement the extra features like shortcuts, unlock customization, and backlight/autolock behaviors, and additional interfaces that interact with email accounts, google voice, facebook/twitter to pull in content that is not supplied in their default notifications. At that point when more complexity is introduced, I will also implement the framework for user customization to choose what app notifications are to appear in the preview timeline (for example, I myself would only have gtalk in my preview as it is my primary communication from my device).
+For a first release, I will design the logic that gathers information from the notification panel and populates it on the default lockscreen. After that is working well (and displaying all default events such as call, waiting email/gv, sms, gtalk) I will then begin to implement the extra features like shortcuts, unlock customization, and backlight/autolock behaviors, and additional interfaces that interact with email accounts, google voice, facebook/twitter to pull in content that is not supplied in their default notifications. At that point when more complexity is introduced, I will also implement the framework for user customization to choose what app notifications are to appear in the preview timeline (for example, I would only have gtalk in my preview as it is my primary communication from my device).
 
 Essentially, the NP activity will not need a UI for input directly. The screen will remain locked to other input besides scrolling our preview panel (and eventually also support long-pressing a touch-button to activate shortcuts). More research will be needed to control these input actions from the locked state that is independent of the code that watches for notifications and populates the strings that will be placed in timeline order for the user to see in the NP window.
 
