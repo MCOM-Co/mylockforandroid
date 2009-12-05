@@ -1,0 +1,15 @@
+#summary Research for android system code related to manipulating the lock.
+
+= Introduction =
+
+One of the main additional conveniences MyLock is aiming for is giving more flexible locking and unlocking methods, in addition to the need to manipulate the lock to perform functions from within the lock screen environment.
+
+= Details =
+
+It needs to interact directly with the lock in order to implement long-press usage of the shortcut touch-keys, and to allow scrolling of our NotificationPreview element. On top of that we want to give users the ability to unlock/relock it in other methods besides the default in android. Examples: Double-press of lock button, Press lock button then shake, unlock automatically when slide is opened (current behavior is that it only wakes up the sleeping screen), or camera button full press. 
+
+I am researching how much we need to interact with what's called the keyguard manager in order to accomplish the input on the lockscreen. http://developer.android.com/reference/android/app/KeyguardManager.html
+
+Based on the way the documentation talks about "showing the keyguard" it seems like this means the lock screen itself (not the more abstract state of having functions locked) is the keyguard. So this allows us to infer that we can reprogram the lockscreen environment to accomplish our goal, and not worry about a specific state of lockdown. When keyguard is invoked it seems to be simultaneously "showing the keyguard" and turning off the backlight & display.
+
+See other app examples such as Lock 2.0, which allows a user to open the notification panel while the keyguard is being shown.
