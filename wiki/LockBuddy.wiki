@@ -1,13 +1,9 @@
-#summary One-sentence summary of this page.
+#summary Simple control panel addon object letting the user choose other unlock/relock methods and certain auto-unlock actions or auto-relock restriction conditions.
 
 = Introduction =
 
-Add your content here.
-
+One of the main additional conveniences MyLock is aiming for is giving users the ability to unlock/relock it in other quicker methods besides the default in android. Examples: Double-press of lock button, Press lock button then shake, unlock automatically when slide is opened (current behavior is that it only wakes up the sleeping screen), or camera button full press. 
 
 = Details =
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+The implementation of this will live inside the base process of the app that will be running at all times to catch the input we are going to use to invoke or bypass the keyguard
