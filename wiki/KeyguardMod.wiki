@@ -1,4 +1,4 @@
-#summary Research for android system code related to manipulating the lock.
+#summary Base UI and master process framework for all other objects
 
 = Introduction =
 
