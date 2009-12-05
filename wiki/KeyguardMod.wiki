@@ -6,7 +6,9 @@ One of the main additional conveniences MyLock is aiming for is giving more flex
 
 = Details =
 
-It needs to interact directly with the lock in order to implement long-press usage of the shortcut touch-keys, and to allow scrolling of our NotificationPreview element. On top of that we want to give users the ability to unlock/relock it in other methods besides the default in android. Examples: Double-press of lock button, Press lock button then shake, unlock automatically when slide is opened (current behavior is that it only wakes up the sleeping screen), or camera button full press. 
+It needs to interact directly with the lock in order to implement long-press usage of the shortcut touch-keys, and to allow scrolling of our NotificationPreview element. Also, give users the option to place additional shortcut launchers at the bottom of the lockscreen, which can be grabbed and dragged upward to execute the shortcut while simultaneously unlocking.
+
+On top of that we want to give users the ability to unlock/relock it in other quicker methods besides the default in android. Examples: Double-press of lock button, Press lock button then shake, unlock automatically when slide is opened (current behavior is that it only wakes up the sleeping screen), or camera button full press. 
 
 I am researching how much we need to interact with what's called the keyguard manager in order to accomplish the input on the lockscreen. http://developer.android.com/reference/android/app/KeyguardManager.html
 
