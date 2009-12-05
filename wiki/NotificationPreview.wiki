@@ -2,7 +2,7 @@
 
 = Introduction =
 
-The primary purpose of MyLock is to enhance the convenience of android's already brilliant notification system by giving the user's notifications a default home right on the lock screen so they can be previewed in a timeline when the user returns to the sleeping device. The other functions of the program are secondary, and exist to support this goal in various ways. 
+The primary purpose of MyLock is to enhance the convenience of android's already brilliant notification system by giving the user's notifications a default home right on the lock screen so they can be previewed in a timeline when the user returns to the sleeping device. The other functions of the program are secondary, and exist to support this goal in various ways. I also want to enhance notifications and allow the user to specify things like a custom LED flash or reminder vibration.
 
 
 = Details =
