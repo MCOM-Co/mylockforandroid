@@ -16,6 +16,12 @@ The program follows 3 guiding principles which play out as 3 specific functional
 
   * NotificationPreview: put users in control of their own personal message timeline which grabs all communication while the device sleeps, saving time when users do have a second to check up on the messages just by viewing the lockscreen. by default it collects all notifications which contain text, and is able to be scrolled without unlocking to view all when many have collected. filter out contacts or just set a whitelist if you only need to preview specific contacts. eventually, great facebook and twitter integration will become available as well so that if you don't have twidroid or other clients you can still connect these accounts to your preview panel to grab posts on your wall and @ mentions. at initial I will only have it set so it can interact with apps that place notifications (I use twidroid so I am expecting in the earliest versions I can have it see twidroid notifications)
 
+http://developer.android.com/reference/android/app/NotificationManager.html
+
   * control over all lock behavior: choose different ways to unlock, access shortcut functions from the soft buttons while locked, and enable portal mode which lets you preview apps which are running without unlocking
 
+http://developer.android.com/reference/android/app/KeyguardManager.html
+
   * backlight fine tuning: the app will need to make the default behavior a very short timeout to turn the screen back off when viewing the notification preview. when you have it on lowest brightness, it kind of auto-dims even dimmer a bit before the autolock kicks in. users will be able to make the autolock vs autodim work for them and respect whether the keypad is open, and other factors. also invoke a brightness control or toggle using buttons/shortcut mode, for this i am imagining a 3 stage control similar to the power control widget, however it will be fine tuned to a literal backlight OFF, or 20%/80% bright. best control option for this would be from the menu touch-button. Option to keep the screen from auto-locking while the keypad slider is open, control keypad backlight time as well.
+
+http://developer.android.com/reference/android/os/PowerManager.html
