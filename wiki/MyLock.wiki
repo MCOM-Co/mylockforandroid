@@ -1,5 +1,5 @@
 #summary An android app that will empower the end user with better convenience and control of their device in how it locks, backlights, and is able to be used from partial lock.
-The program follows 3 guiding principles which play out as 3 specific functional modifications/enhancements (Sub-apps, each could be put out separately however the three all complement each other in various ways)
+The program follows 3 guiding principles. The various enhancements form separate changes ----- or Sub-apps, each could be put out separately however they all complement each other in various ways
 
 
 = Philosophy =
@@ -10,18 +10,20 @@ The program follows 3 guiding principles which play out as 3 specific functional
 
 = Sub-apps =
 
-  * MyLock: the literal keyguard replacement allowing for addons to be displayed and scrolled. 
+  * MyLock: the literal keyguard replacement allowing for addons to be displayed and scrolled. if multiple addon panels are enabled they can be switched left/right similar to how the home screens change, in a continuous loop. the goal of this is to provide information or shortcut functions, it will strive to stick to those 2 because keyguarding's purpose is to block unintentional input, so we will still keep functions besides previewing information locked to slide motions
 
   * NotificationPreview: addon object which put users in control of their own personal message timeline which grabs all communication while the device sleeps, saving time when users do have a second to check up on the messages just by viewing the lockscreen. by default it collects all notifications which contain text, and is able to be scrolled without unlocking to view all when many have collected. this can also be used to set if you want to put custom LED notification for a specific event type. option filter out contacts/apps or just set a whitelist if you only need to preview specific contacts. eventually, great facebook and twitter (also potentially email to show you who the waiting email is from and a subject preview with tap and hold to load a tooltip with body text) integration will become available as well so that if you don't have twidroid or other clients you can still connect these accounts to your preview panel to grab posts on your wall and @ mentions. at initial I will only have it set so it can interact with apps that place notifications (I use twidroid so I am expecting in the earliest versions I can have it see twidroid notifications)
 
 http://developer.android.com/reference/android/app/NotificationManager.html
 
-  * LockBuddy: addon object which lets youchoose different ways to unlock, access shortcut functions from the soft buttons while locked, and enable portal mode which lets you preview apps which are running without unlocking
+  * Shortcutter: addon object which supports the concept of quicklaunch of functions or apps via the touch-buttons (long press or press & drag) and additionally an optional panel of shortcuts user-customizable which form orbit around an activation zone. drag any shortcut into the center and release it over the activation zone to unlock+launch shortcut
+
+= Settings addons =
+
+  * LockBuddy: addon object which lets you choose different ways to unlock or invoke shortcutter unlocks 
 
 http://developer.android.com/reference/android/app/KeyguardManager.html
 
   * BacklightWiz: the app will need to make the default behavior a very short timeout to turn the screen back off when viewing the notification preview. when you have it on lowest brightness, it kind of auto-dims even dimmer a bit before the autolock kicks in. users will be able to make the autolock vs autodim work for them and respect whether the keypad is open, and other factors. also invoke a brightness control or toggle using buttons/shortcut mode, for this i am imagining a 3 stage control similar to the power control widget, however it will be fine tuned to a literal backlight OFF, or 20%/80% bright. best control option for this would be from the menu touch-button. Option to keep the screen from auto-locking while the keypad slider is open, control keypad backlight time as well.
 
 http://developer.android.com/reference/android/os/PowerManager.html
-
-  * Shortcutter: addon object which supports the concept of quicklaunch of functions or apps via the touch-buttons (long press or press & drag) and additionally an optional panel of shortcuts user-customizable which form orbit around an activation zone. drag any shortcut into the center and release it over the activation zone to unlock+launch shortcut
