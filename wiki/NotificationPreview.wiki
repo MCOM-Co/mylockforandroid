@@ -39,3 +39,6 @@ Use with getSystemService(String) to retrieve a NotificationManager for informin
 Constant Value: "notification"
 
 I can use this as a starting point for gathering the preview information, but I know we will also at some point need to create code that attempts to interact with the app sending the notification to get info that is not in the notification, such as for google voice to find out who the message is from and what it says. this may be beyond the scope of what we can actually do, but ultimately the vision of the notification preview itself is to be a message timeline capable of previewing content of any message received while device sleeps upon user's return.
+
+==Application Interaction==
+For email items, show sender and subject, then allow tap and hold to pop up a preview of the body. Same for GV sms or trasncripted VM. 
