@@ -12,8 +12,12 @@ Based on the way the documentation talks about "showing the keyguard" it seems l
 
 See other app examples such as Lock 2.0, which allows a user to open the notification panel while the keyguard is being shown.
 
+the app just isn't feasible for lock pattern setup at all. it requires the user desire to be presented immediately with the previewing functionality of our app! so all we need to worry about is blocking the default keyguard case by case (or running the disable), then managing invoking our activity that will only be seen when called, but still uses a service or receiver to collect data for the preview panel at all times.
+
 ==Code info==
 
 The Handler information in KeyguardViewMediator.java states that when you want to call something on the keyguard you should pass it through the handler. This tells me that our action of hiding the keyguard could be done using this handler case HIDE.
 
 It's not clear to me yet whether we can just call a disable the same way the phone app does or if we have to have a service or some kind of receiver which watches for the circumstances that by default show the keyguard. regardless we still need to define all the cases when we want the keyguard to happen. 
+
+There is a totally separate of 2 files for use when the user is choosing to have a lockpattern. Lockpatternview and lockpatternviewproperties. The normal versions of these appear to be keyguardviewbase and keyguardviewproperties.
