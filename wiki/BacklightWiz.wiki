@@ -5,3 +5,27 @@
 when you have it on lowest brightness, it kind of auto-dims even dimmer a bit before the autolock kicks in. users will be able to make the autolock vs autodim work for them and respect whether the keypad is open, and other factors. also invoke a brightness toggle using buttons/shortcut mode, for this i am imagining a 3 stage control similar to the power control widget, however it will be fine tuned to a literal backlight OFF/20%/80%. that function will work directly with settings from shortcutter.
 
 another option within this object will allow a user to specify a shorter backlight timeout when the lockscreen is only being viewed
+
+
+==Some Code Stuff==
+
+The current default keys that get suppressed from waking up the screen are defined in KeyguardViewMediator.java -- redefining these to allow more control over the backlight and further allow it to re-sleep faster when keyguard is being shown could be part of this addon. 
+{{{
+    private boolean isWakeKeyWhenKeyguardShowing(int keyCode) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_VOLUME_UP:
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+            case KeyEvent.KEYCODE_MUTE:
+            case KeyEvent.KEYCODE_HEADSETHOOK: 
+            case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE: 
+            case KeyEvent.KEYCODE_MEDIA_STOP: 
+            case KeyEvent.KEYCODE_MEDIA_NEXT: 
+            case KeyEvent.KEYCODE_MEDIA_PREVIOUS: 
+            case KeyEvent.KEYCODE_MEDIA_REWIND: 
+            case KeyEvent.KEYCODE_MEDIA_FAST_FORWARD:
+            case KeyEvent.KEYCODE_CAMERA:
+                return false;
+        }
+        return true;
+    }
+}}}
