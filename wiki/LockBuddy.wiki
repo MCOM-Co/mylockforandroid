@@ -6,4 +6,4 @@ One of the main additional conveniences MyLock is aiming for is giving users the
 
 = Details =
 
-The implementation of this will live inside the base process of the app that will be running at all times to catch the input we are going to use to invoke or bypass the keyguard
+The implementation of this will live inside the base process of the app that will be running at all times to catch the input we are going to use to invoke or bypass the keyguard. A nice idea for lockbuddy would be to prevent the keyguard from kicking in when the screen goes to auto-sleep while the keypad is open. give a longer timeout when idle if keypad is open, such that the screen will sleep after some time (longer than the normal keypad closed timeframe) and a longer time before keyguard shows
