@@ -1,0 +1,9 @@
+#summary possible Keyguard Modification for purpose of releasing code for other devs who want to push popups from their apps up to a default-like lockscreen preview==
+
+The Handler information in KeyguardViewMediator.java states that when you want to call something on the keyguard you should pass it through the handler. This tells me that our action of hiding the keyguard could be done using this handler case HIDE.
+
+It's not clear to me yet whether we can just call a disable the same way the phone app does or if we have to have a service or some kind of receiver which watches for the circumstances that by default show the keyguard. regardless we still need to define all the cases when we want the keyguard to happen. 
+
+There is a totally separate of 2 files for use when the user is choosing to have a lockpattern. Lockpatternview and lockpatternviewproperties. The normal versions of these appear to be keyguardviewbase and keyguardviewproperties.
+
+the main process runs and monitors for input so we can place our keyguard on the screen that's able to be a receiver for events sent from the other apps that wish to place their popup on the screen
