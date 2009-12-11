@@ -7,9 +7,11 @@ The primary purpose of MyLock is to enhance the convenience of android's already
 
 = Details =
 
-For a first release, I will design the logic that gathers information from the notification panel and populates it on the default lockscreen. After that is working well (and displaying all default events such as call, waiting email/gv, sms, gtalk) I will then begin to implement the extra features like shortcuts, unlock customization, and backlight/autolock behaviors, and additional interfaces that interact with email accounts, google voice, facebook/twitter to pull in content that is not supplied in their default notifications. At that point when more complexity is introduced, I will also implement the framework for user customization to choose what app notifications are to appear in the preview timeline (for example, I would only have gtalk in my preview as it is my primary communication from my device).
+This concept is the basic inspiration for the design of this app. It will put users in control of their own personal message timeline which grabs all communication while the device sleeps. by default it collects all notifications which contain text. this can also be used to set if you want to put custom LED notification for a specific event type. option filter out contacts/apps or just set a whitelist if you only need to preview specific contacts. eventually, great facebook and twitter (also potentially email to show you who the waiting email is from and a subject preview with tap and hold to load a tooltip with body text) integration will become available as well so that if you don't have twidroid or other clients you can still connect these accounts to your preview panel to grab posts on your wall and @ mentions. at initial I will only have it set so it can interact with apps that place notifications (I use twidroid so I am expecting in the earliest versions I can have it see twidroid notifications)
 
-Essentially, the NP activity will not need a UI for input directly. The screen will remain locked to other input besides scrolling our preview panel (and eventually also support long-pressing a touch-button to activate shortcuts). More research will be needed to control these input actions from the locked state that is independent of the code that watches for notifications and populates the strings that will be placed in timeline order for the user to see in the NP window.
+For a first release, I will design the logic that gathers information from the notification panel and populates it on the default lockscreen. After that is working well (and displaying all default events such as call, waiting email/gv, sms, gtalk) I will work on getting additional interfaces that interact with email accounts, google voice, facebook/twitter to pull in content that is not supplied in their default notifications. At that point when more complexity is introduced, I will also implement the framework for user customization to choose what app notifications are to appear in the preview timeline (for example, I would only have gtalk in my preview as it is my primary communication from my device).
+
+
 
 Here is the information of how programs send the notifications we are interested in gathering on our preview panel, from the android documentation:
 
@@ -42,3 +44,5 @@ I can use this as a starting point for gathering the preview information, but I 
 
 ==Application Interaction==
 For email items, show sender and subject, then allow tap and hold to pop up a preview of the body. Same for GV sms or trasncripted VM. 
+
+Possibly enable contact organization where you see the latest message, tap and hold on that cell to see all messages in a quick tooltip display
