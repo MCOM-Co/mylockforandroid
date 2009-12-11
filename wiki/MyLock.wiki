@@ -1,29 +1,12 @@
-#summary An android app that will empower the end user with better convenience and control of their device in how it locks, backlights, and is able to be used from partial lock.
+#summary Keyguard makes no sense when there are no significant keys. What you need is a screenguard paired with a really useful homescreen!
 
 = Philosophy =
 
   * Convenience: Place important functions more accessible to the end user, improving the total android experience by shortening the steps to perform the most immediately used functions / information requests
-  * Customization: Let users decide what functions they want to access from the shortcut tools on the keyguard and let them decide what programs and/or contacts they want to be monitored by NotificationPreview
+  * Customization: Let users decide what programs and/or contacts they want to be monitored by NotificationPreview, let them have a customized shortcuts interface, and many choices of how to wake up the screen for interaction that are better than the default keyguard.
   * Control: Avoid frustrations which occur in the default autolock and auto-dim functionality, put user back in control of these in a way that is smarter for overall power management and "real-world" use of the device.
 
-= Main Process and New Keyguard environment = 
-
-the UI of the app is the literal keyguard replacement allowing for addons to be displayed and scrolled. the main process runs and monitors for input so we can place our keyguard on the screen. if multiple addon panels are enabled they can be switched left/right similar to how the home screens change, in a continuous loop. the goal of this is to provide information or shortcut functions, it will strive to stick to those 2 because keyguarding's purpose is to block unintentional input, so we will still keep functions besides previewing information locked to slide motions
-
-= Sub-apps =
-
-  * NotificationPreview: addon object which put users in control of their own personal message timeline which grabs all communication while the device sleeps, saving time when users do have a second to check up on the messages just by viewing the lockscreen. by default it collects all notifications which contain text, and is able to be scrolled without unlocking to view all when many have collected. this can also be used to set if you want to put custom LED notification for a specific event type. option filter out contacts/apps or just set a whitelist if you only need to preview specific contacts. eventually, great facebook and twitter (also potentially email to show you who the waiting email is from and a subject preview with tap and hold to load a tooltip with body text) integration will become available as well so that if you don't have twidroid or other clients you can still connect these accounts to your preview panel to grab posts on your wall and @ mentions. at initial I will only have it set so it can interact with apps that place notifications (I use twidroid so I am expecting in the earliest versions I can have it see twidroid notifications)
+== NotificationPreview ==
+This concept is the basic inspiration for the design of this app. It will put users in control of their own personal message timeline which grabs all communication while the device sleeps, saving time when users do have a second to check up on the messages just by viewing the lockscreen. by default it collects all notifications which contain text, and is able to be scrolled without unlocking to view all when many have collected. this can also be used to set if you want to put custom LED notification for a specific event type. option filter out contacts/apps or just set a whitelist if you only need to preview specific contacts. eventually, great facebook and twitter (also potentially email to show you who the waiting email is from and a subject preview with tap and hold to load a tooltip with body text) integration will become available as well so that if you don't have twidroid or other clients you can still connect these accounts to your preview panel to grab posts on your wall and @ mentions. at initial I will only have it set so it can interact with apps that place notifications (I use twidroid so I am expecting in the earliest versions I can have it see twidroid notifications)
 
 http://developer.android.com/reference/android/app/NotificationManager.html
-
-  * ShortCutter: addon object which supports the concept of quicklaunch of functions or apps via the touch-buttons (long press or press & drag) and additionally an optional panel of shortcuts user-customizable which form orbit around an activation zone. drag any shortcut into the center and release it over the activation zone to unlock+launch shortcut
-
-= Settings addons =
-
-  * LockBuddy: addon object which lets you choose different ways to unlock or invoke shortcutter unlocks 
-
-http://developer.android.com/reference/android/app/KeyguardManager.html
-
-  * BacklightWiz: the app will need to make the default behavior a very short timeout to turn the screen back off when viewing the notification preview. when you have it on lowest brightness, it kind of auto-dims even dimmer a bit before the autolock kicks in. users will be able to make the autolock vs autodim work for them and respect whether the keypad is open, and other factors. also invoke a brightness control or toggle using buttons/shortcut mode, for this i am imagining a 3 stage control similar to the power control widget, however it will be fine tuned to a literal backlight OFF, or 20%/80% bright. best control option for this would be from the menu touch-button. Option to keep the screen from auto-locking while the keypad slider is open, control keypad backlight time as well.
-
-http://developer.android.com/reference/android/os/PowerManager.html
