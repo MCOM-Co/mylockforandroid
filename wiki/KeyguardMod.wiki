@@ -1,26 +1,24 @@
-#summary Base UI and master process framework for all other objects
+#summary master process framework for skipping the keyguard and acquiring wakelocks so we can open our fancy homescreen with ease!
 
 = Introduction =
 
-The useful thing of the keyguard is really in the regulation of it going back to sleep again faster when you haven't interacted with the device, giving you a slightly longer timeout if you have touched something and even longer if you have opened the slide. Give the user different ways to wake up the screen so that it can't accidentally be done, such as require double lock button press, or a press followed by a shake. I can see even using one of the touch buttons such as home in a long press to facilitate wakeup. Keyguard effectively morphs into a screenguard of sorts.
+The useful thing of the keyguard is really in the regulation of it going back to sleep again faster when you haven't interacted with the device, giving you a slightly longer timeout if you have touched something and even longer if you have opened the slide. Give the user the option of different ways to wake up the screen so that it can't accidentally be done (necessarily), such as require double lock button press, or a press followed by a shake. I can see even using one of the touch buttons such as home in a long press to facilitate wakeup. Keyguard effectively morphs into a screenguard of sorts.
 
 = Details =
 
 the app just isn't feasible for lock pattern setup at all. it requires the user desire to be presented immediately with the previewing functionality of our app! so all we need to worry about is blocking the default keyguard case by case (or running the disable), then managing invoking our activity that will only be seen when called, but still uses a service or receiver to collect data for the preview panel at all times.
 
 = Lockbuddy = 
-Simple control panel addon object letting the user choose other unlock/relock methods and certain auto-unlock actions or auto-relock restriction conditions.
+Simple control panel addon object letting the user choose other unlock/relock methods and certain auto-unlock actions or auto-relock restriction conditions. This is essentially the users INPUT gatekeeper to getting wakelocks.
 
 = Introduction =
 
 One of the main additional conveniences MyLock is aiming for is giving users the ability to unlock/relock it in other quicker methods besides the default in android. Examples: Double-press of lock button, Press lock button then shake, unlock automatically when slide is opened (current behavior is that it only wakes up the sleeping screen), or camera button full press. 
 
-= Details =
-
-The implementation of this will live inside the base process of the app that will be running at all times to catch the input we are going to use to invoke or bypass the keyguard. A nice idea for lockbuddy would be to prevent the keyguard from kicking in when the screen goes to auto-sleep while the keypad is open. give a longer timeout when idle if keypad is open, such that the screen will sleep after some time (longer than the normal keypad closed timeframe) and a longer time before keyguard shows
+A nice idea for lockbuddy would be to prevent the keyguard from kicking in when the screen goes to auto-sleep while the keypad is open. give a longer timeout when idle if keypad is open, such that the screen will sleep after some time (longer than the normal keypad closed timeframe) and a longer time before keyguard shows
 
 ==  Backlightwiz ==
-Simple control panel addon object enabling great control over screen brightness and backlight timers
+Simple control panel addon object enabling great control over screen brightness and backlight timers - this is in control of how long the screen stays without user sleep commands. This is the gatekeeper to respect the users intent for viewing or input on the device, it knows when to sleep depending on circumstances of what just happened!
 
 = Details =
 
