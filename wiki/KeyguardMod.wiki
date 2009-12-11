@@ -2,22 +2,29 @@
 
 = Introduction =
 
-To accomplish the starting point for this project, we need to learn how to instate our own custom keyguard environment. The foundation for the rest of the components of this project is the modified keyguard on which we can place addon objects such as the notificationpreview
+The useful thing of the keyguard is really in the regulation of it going back to sleep again faster when you haven't interacted with the device, giving you a slightly longer timeout if you have touched something and even longer if you have opened the slide. Give the user different ways to wake up the screen so that it can't accidentally be done, such as require double lock button press, or a press followed by a shake. I can see even using one of the touch buttons such as home in a long press to facilitate wakeup. Keyguard effectively morphs into a screenguard of sorts.
 
 = Details =
 
-I am researching how much we need to interact with what's called the keyguard manager in order to accomplish the input on the lockscreen. http://developer.android.com/reference/android/app/KeyguardManager.html
-
-Based on the way the documentation talks about "showing the keyguard" it seems like this means the lock screen itself (not the more abstract state of having functions locked) is the keyguard. So this allows us to infer that we can reprogram the lockscreen environment to accomplish our goal, and not worry about a specific state of lockdown. When keyguard is invoked it seems to be simultaneously "showing the keyguard" and turning off the backlight & display.
-
-See other app examples such as Lock 2.0, which allows a user to open the notification panel while the keyguard is being shown.
-
 the app just isn't feasible for lock pattern setup at all. it requires the user desire to be presented immediately with the previewing functionality of our app! so all we need to worry about is blocking the default keyguard case by case (or running the disable), then managing invoking our activity that will only be seen when called, but still uses a service or receiver to collect data for the preview panel at all times.
 
-==Code info==
+==Code info for possible Keyguard Modification for purpose of releasing code for other devs who want to push popups from their apps up to a default-like lockscreen preview==
 
 The Handler information in KeyguardViewMediator.java states that when you want to call something on the keyguard you should pass it through the handler. This tells me that our action of hiding the keyguard could be done using this handler case HIDE.
 
 It's not clear to me yet whether we can just call a disable the same way the phone app does or if we have to have a service or some kind of receiver which watches for the circumstances that by default show the keyguard. regardless we still need to define all the cases when we want the keyguard to happen. 
 
 There is a totally separate of 2 files for use when the user is choosing to have a lockpattern. Lockpatternview and lockpatternviewproperties. The normal versions of these appear to be keyguardviewbase and keyguardviewproperties.
+
+
+
+= LockBuddy = 
+Simple control panel addon object letting the user choose other unlock/relock methods and certain auto-unlock actions or auto-relock restriction conditions.
+
+= Introduction =
+
+One of the main additional conveniences MyLock is aiming for is giving users the ability to unlock/relock it in other quicker methods besides the default in android. Examples: Double-press of lock button, Press lock button then shake, unlock automatically when slide is opened (current behavior is that it only wakes up the sleeping screen), or camera button full press. 
+
+= Details =
+
+The implementation of this will live inside the base process of the app that will be running at all times to catch the input we are going to use to invoke or bypass the keyguard. A nice idea for lockbuddy would be to prevent the keyguard from kicking in when the screen goes to auto-sleep while the keypad is open. give a longer timeout when idle if keypad is open, such that the screen will sleep after some time (longer than the normal keypad closed timeframe) and a longer time before keyguard shows
