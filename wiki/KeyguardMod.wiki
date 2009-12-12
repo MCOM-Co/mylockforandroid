@@ -42,7 +42,7 @@ The current default keys that get suppressed from waking up the screen are defin
     }
 }}}
 
-Setting up a remote service which on receiving the ACTION_SCREEN_OFF broadcast to simply kill off the keyguard anytime the OS actually creates it.
+Setting up a remote service which on receiving the ACTION_SCREEN_OFF broadcast to simply kill off the keyguard anytime the OS actually creates it. It appears that we might not need to have a service. Different sources indicate that we can set up intent receiver (which seems to be the same as a broadcast receiver) that will get called even if our activity is paused. I am trying to learn how to register a receiver for the action screen off. Once I can do that I can test if it works just from the activity. If not I will place it within a remote service
 
 here is code i pulled from SMS popup managekeyguard process
 {{{
