@@ -41,3 +41,13 @@ The current default keys that get suppressed from waking up the screen are defin
         return true;
     }
 }}}
+
+This code should be able to be used from a service
+on receiving the ACTION_SCREEN_OFF broadcast to simply kill off the keyguard anytime the OS actually creates it.
+
+
+KeyguardManager keyguardManager = KeyguardManager)getSystemService
+(KEYGUARD_SERVICE);
+KeyguardLock keyguardLock = keyguardManager.newKeyguardLock
+(getPackageName());
+keyguardLock.disableKeyguard();
