@@ -65,3 +65,6 @@ where
 
 mKeyguardManager = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
 }}}
+
+We need to give permission in the manifest to disable the keyguard
+String	DISABLE_KEYGUARD	 - Allows applications to disable the keyguard
