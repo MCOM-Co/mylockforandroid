@@ -66,5 +66,29 @@ where
 mKeyguardManager = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
 }}}
 
+
+here is code i pulled from SMS popup managekeyguard process
+{{{
+  private static KeyguardManager myKM = null;
+  private static KeyguardLock myKL = null;
+
+  if (myKM == null) {
+      myKM = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
+    }
+  }
+
+  if (myKM.inKeyguardRestrictedInputMode()) {
+      myKL = myKM.newKeyguardLock(Log.LOGTAG);
+      myKL.disableKeyguard();
+      if (Log.DEBUG) Log.v("--Keyguard disabled");
+    } else {
+      myKL = null;
+    }
+  }
+}}}
+
 We need to give permission in the manifest to disable the keyguard
-String	DISABLE_KEYGUARD	 - Allows applications to disable the keyguard
+{{{
+<uses-permission
+    android:name="android.permission.DISABLE_KEYGUARD" />
+}}}
