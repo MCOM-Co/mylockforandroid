@@ -74,7 +74,7 @@ We need to give permission in the manifest to disable the keyguard
 Test code which has successfully killed the KG, though after that the behavior is difficult to gauge, and KG seemed to come back and I was no longer getting screen off logging.
 
 {{{
-Package i4nc4mp.skipKeyguard;
+package i4nc4mp.skipKeyguard;
 
 import android.app.Activity; 
 import android.app.KeyguardManager;
@@ -91,27 +91,61 @@ public class skSettings extends Activity {
 	private static KeyguardManager myKM = null;
 	private static KeyguardLock myKL = null;
 	
-	BroadcastReceiver sk = new BroadcastReceiver() {
+	/**
+	BroadcastReceiver guard = new BroadcastReceiver() {
 		
-		public static final String TAG = "skipKeyguard";
-		public static final String Screen_off = "android.intent.action.SCREEN_OFF";
+		public static final String TAG = "re-guard";
+		public static final String Screenoff = "android.intent.action.SCREEN_OFF";
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			if (!intent.getAction().equals(Screen_off)) return;
-			Log.v(TAG, "Screen just went off!");
+			if (!intent.getAction().equals(Screenoff)) return;
+			
+			Log.v(TAG, "Screen just went OFF");
+			
 			if (myKM == null) {
 				myKM = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
-				Log.v(TAG, "Attempted to get KM");
+				Log.v(TAG, "Grabbed a KM");
 			    }
-			//if (myKM.inKeyguardRestrictedInputMode()) {
-			if (myKM != null) {
+			else {Log.v(TAG, "We already have the KM");}
+			
+			if (myKM.inKeyguardRestrictedInputMode()) {
+				myKL = null;
+			    Log.v(TAG, "Took no action- screen already guarded");
+			    } else {
+			    	myKL = myKM.newKeyguardLock(TAG);
+				    myKL.reenableKeyguard();
+				    Log.v(TAG, "screen re-guarded");
+			    }
+			  }
+	};
+	*/
+	
+	BroadcastReceiver skip = new BroadcastReceiver() {
+		
+		public static final String TAG = "skipKeyguard";
+		public static final String Screen = "android.intent.action.SCREEN_ON";
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (!intent.getAction().equals(Screen)) return;
+			
+			Log.v(TAG, "Screen just went ON!");
+			
+			if (myKM == null) {
+				myKM = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
+				Log.v(TAG, "Grabbed KM");
+			    }
+			else {Log.v(TAG, "We already have the KM");}
+			
+			if (myKM.inKeyguardRestrictedInputMode()) {
+
 			      myKL = myKM.newKeyguardLock(TAG);
 			      myKL.disableKeyguard();
 			      Log.v(TAG, "KG has been SKIPPED");
 			    } else {
 			      myKL = null;
-			      Log.v(TAG, "Took no action due to No KG ;o");
+			      Log.v(TAG, "Took no action- can't see KG");
 			    }
 			  }
 	};
@@ -126,15 +160,18 @@ public class skSettings extends Activity {
     @Override
     protected void onResume() {
     	super.onResume();
-    	IntentFilter filter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
-    	registerReceiver(sk, filter);
+    	IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
+    	//IntentFilter offfilter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
+    	registerReceiver(skip, onfilter);
+    	//registerReceiver(guard, offfilter);
     }
     
-    /**@Override
+    @Override
     protected void onPause() {
     super.onPause();
-    unregisterReceiver(sk);
-    } */
+    unregisterReceiver(skip);
+    //unregisterReceiver(guard);
+    }
 }
 
 Manifest:
@@ -150,7 +187,7 @@ Manifest:
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                <action android:name="android.intent.action.SCREEN_OFF" />
+                <action android:name="android.intent.action.SCREEN_ON" />
             </intent-filter>
         </activity>
 
@@ -161,4 +198,3 @@ Manifest:
 
 </manifest>
 }}}
-
