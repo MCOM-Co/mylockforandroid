@@ -1,0 +1,115 @@
+{{{
+
+boolean NeedToGuard = false;
+
+//call the KM/KL here also, this is embedded in original test code
+
+///Task running every system tick to log states/change states
+
+if (myKM == null) return;
+			
+			if (!NeedToGuard) {
+				if (!KG()) {//Not waiting to re-guard and not guarded means we just skipped
+					Log.v("doublecheck","KG has been SKIPPED");
+					NeedToGuard = true;
+				}
+				else {//Not waiting to re-guard and Guarded means
+					//this is the case we keep getting after first successful skip
+					//because KG keeps returning true even though we have skipped
+					Log.v("doublecheck", "Currently Guarded, need to guard is not active");
+				}
+			}
+			else {
+				if (KG()) {//Need to guard and guarded means we just RGed
+					Log.v("doublecheck","Re-guarded");
+					NeedToGuard = false;
+				}
+				else {//Waiting to re-guard and not guarded means ?
+					Log.v("doublecheck", "Currently unguarded, need to guard is active");
+				}
+			}
+		    	
+		}
+	}
+	
+	private boolean KG()
+	{
+		if(myKM.inKeyguardRestrictedInputMode()) return true;
+		else return false;
+		
+	}
+
+
+BroadcastReceiver skip = new BroadcastReceiver() {
+		
+		public static final String TAG = "skipKeyguard";
+		public static final String Screen = "android.intent.action.SCREEN_ON";
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (!intent.getAction().equals(Screen)) return;
+			
+			Log.v(TAG, "Screen just went ON!");//marks that we received the broadcast
+			
+			//if (myKM != null) myKM = null; doesn't appear this is needed, done for testing
+			
+			if (myKM == null) {
+				myKM = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
+				Log.v(TAG, "Grabbed a new KM");
+			    }
+			//else {Log.v(TAG, "We already have the KM");}
+			
+			if (KG()) {
+
+			      myKL = myKM.newKeyguardLock(TAG);
+			      //myKL.disableKeyguard();
+			      if (!NeedToGuard) {
+			    	  myKL.disableKeyguard();
+			    	  NeedToGuard = true;
+			      	}
+			      }
+			      //Log.v(TAG, "KG has been SKIPPED"); moved to double-check
+			
+			else {
+			      myKL = null;
+			      Log.v(TAG, "Skip got requested when no KG was up");
+			    }
+			} 
+			  
+	};
+	
+	BroadcastReceiver guard = new BroadcastReceiver() {
+        
+        public static final String TAG = "reguard";
+        public static final String Screenoff = "android.intent.action.SCREEN_OFF";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+                if (!intent.getAction().equals(Screenoff)) return;
+                
+                Log.v(TAG, "Screen just went OFF");
+                
+                if (!NeedToGuard) {
+    				Log.v(TAG, "re-guard got called, first KG since init");
+    				return;
+    			}
+                
+                //if (myKM != null) myKM = null; doesn't appear this is needed, done for testing
+                
+                if (myKM == null) {
+                        myKM = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
+                        Log.v(TAG, "Grabbed a new KM");
+                    }
+                //else {Log.v(TAG, "We already have the KM");}
+                
+               // if (!KG()) { got rid of this since KG won't work, just rely on bool
+                        myKL = myKM.newKeyguardLock(TAG);
+                            myKL.reenableKeyguard();
+                            NeedToGuard = false;
+                    //}
+                //else {
+  			      //myKL = null;
+  			      //Log.v(TAG, "Re-guard got requested when KG was already up");
+  			    //}
+                }
+};
