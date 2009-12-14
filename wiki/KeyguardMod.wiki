@@ -44,7 +44,7 @@ The current default keys that get suppressed from waking up the screen are defin
 
 Setting up a remote service which on receiving the ACTION_SCREEN_OFF broadcast to simply kill off the keyguard anytime the OS actually creates it. It appears that we might not need to have a service. Different sources indicate that we can set up intent receiver (which seems to be the same as a broadcast receiver) that will get called even if our activity is paused. I am trying to learn how to register a receiver for the action screen off. Once I can do that I can test if it works just from the activity. If not I will place it within a remote service. It seems that for unconditional keyguard skip we will only need the receiver, but to control it based on different input or allow lock to be invoked in a certain way but otherwise bypass it we would need the service.
 
-here is code i pulled from SMS popup managekeyguard process
+here is code i pulled from SMS popup managekeyguard process-- this works in my testing, see below for the entirety of the test code so far.
 {{{
   private static KeyguardManager myKM = null;
   private static KeyguardLock myKL = null;
@@ -71,28 +71,94 @@ We need to give permission in the manifest to disable the keyguard
 }}}
 
 
-Pulled some info from anddev.org so we can try the broadcast receiver method----
-
-This is a small sample to explain the usage of BroadcastReceiver?, which is used to listener for broadcasted intents. Whenever a new sms arrives. The system will broadcast an intent. You can use Broadcast Receiver to receive such intent.
-
-Java:
+Test code which has successfully killed the KG, though after that the behavior is difficult to gauge, and KG seemed to come back and I was no longer getting screen off logging.
 
 {{{
-public class SMSReceiver extends BroadcastReceiver? {
+Package i4nc4mp.skipKeyguard;
 
-public static final String TAG = "SMSReceiver"; public static final String SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";
-@Override public void onReceive(Context context, Intent intent) {
-if (!intent.getAction().equals(SMS_RECEIVED)) return; Log.v(TAG, "An incoming SMS just received!");
-}
-}
-}}}
-Add these to your AndroidManifest?.xml XML:
+import android.app.Activity; 
+import android.app.KeyguardManager;
+import android.app.KeyguardManager.KeyguardLock;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Bundle;
+import android.util.Log;
 
-{{{
-<receiver android:name=".SMSReceiver" >
-<intent-filter>
-<action android:name="android.provider.Telephony.SMS_RECEIVED" /> <category android:name="android.intent.category.DEFAULT" />
-</intent-filter>
-</receiver> ....
-<uses-permission android:name="android.permission.RECEIVE_SMS" />
+public class skSettings extends Activity {
+	
+	private static KeyguardManager myKM = null;
+	private static KeyguardLock myKL = null;
+	
+	BroadcastReceiver sk = new BroadcastReceiver() {
+		
+		public static final String TAG = "skipKeyguard";
+		public static final String Screen_off = "android.intent.action.SCREEN_OFF";
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (!intent.getAction().equals(Screen_off)) return;
+			Log.v(TAG, "Screen just went off!");
+			if (myKM == null) {
+				myKM = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
+				Log.v(TAG, "Attempted to get KM");
+			    }
+			//if (myKM.inKeyguardRestrictedInputMode()) {
+			if (myKM != null) {
+			      myKL = myKM.newKeyguardLock(TAG);
+			      myKL.disableKeyguard();
+			      Log.v(TAG, "KG has been SKIPPED");
+			    } else {
+			      myKL = null;
+			      Log.v(TAG, "Took no action due to No KG ;o");
+			    }
+			  }
+	};
+		
+    /** Called when the activity is first created. */
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+    }
+    
+    @Override
+    protected void onResume() {
+    	super.onResume();
+    	IntentFilter filter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
+    	registerReceiver(sk, filter);
+    }
+    
+    /**@Override
+    protected void onPause() {
+    super.onPause();
+    unregisterReceiver(sk);
+    } */
+}
+
+Manifest:
+
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+      package="i4nc4mp.skipKeyguard"
+      android:versionCode="1"
+      android:versionName="1.0">
+    <application android:icon="@drawable/icon" android:label="@string/app_name">
+        <activity android:name=".skSettings"
+                  android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.SCREEN_OFF" />
+            </intent-filter>
+        </activity>
+
+    </application>
+    <uses-permission
+    android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-sdk android:minSdkVersion="6" />
+
+</manifest>
 }}}
+
