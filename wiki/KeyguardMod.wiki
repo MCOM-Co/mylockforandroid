@@ -42,7 +42,7 @@ The current default keys that get suppressed from waking up the screen are defin
     }
 }}}
 
-Setting up a remote service which on receiving the ACTION_SCREEN_OFF broadcast to simply kill off the keyguard anytime the OS actually creates it. It appears that we might not need to have a service. Different sources indicate that we can set up intent receiver (which seems to be the same as a broadcast receiver) that will get called even if our activity is paused. I am trying to learn how to register a receiver for the action screen off. Once I can do that I can test if it works just from the activity. If not I will place it within a remote service
+Setting up a remote service which on receiving the ACTION_SCREEN_OFF broadcast to simply kill off the keyguard anytime the OS actually creates it. It appears that we might not need to have a service. Different sources indicate that we can set up intent receiver (which seems to be the same as a broadcast receiver) that will get called even if our activity is paused. I am trying to learn how to register a receiver for the action screen off. Once I can do that I can test if it works just from the activity. If not I will place it within a remote service. It seems that for unconditional keyguard skip we will only need the receiver, but to control it based on different input or allow lock to be invoked in a certain way but otherwise bypass it we would need the service.
 
 here is code i pulled from SMS popup managekeyguard process
 {{{
@@ -68,4 +68,31 @@ We need to give permission in the manifest to disable the keyguard
 {{{
 <uses-permission
     android:name="android.permission.DISABLE_KEYGUARD" />
+}}}
+
+
+Pulled some info from anddev.org so we can try the broadcast receiver method----
+
+This is a small sample to explain the usage of BroadcastReceiver?, which is used to listener for broadcasted intents. Whenever a new sms arrives. The system will broadcast an intent. You can use Broadcast Receiver to receive such intent.
+
+Java:
+
+{{{
+public class SMSReceiver extends BroadcastReceiver? {
+
+public static final String TAG = "SMSReceiver"; public static final String SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";
+@Override public void onReceive(Context context, Intent intent) {
+if (!intent.getAction().equals(SMS_RECEIVED)) return; Log.v(TAG, "An incoming SMS just received!");
+}
+}
+}}}
+Add these to your AndroidManifest?.xml XML:
+
+{{{
+<receiver android:name=".SMSReceiver" >
+<intent-filter>
+<action android:name="android.provider.Telephony.SMS_RECEIVED" /> <category android:name="android.intent.category.DEFAULT" />
+</intent-filter>
+</receiver> ....
+<uses-permission android:name="android.permission.RECEIVE_SMS" />
 }}}
