@@ -1,46 +1,96 @@
 {{{
 
-boolean NeedToGuard = false;
+package i4nc4mp.myLock;
 
-//call the KM/KL here also, this is embedded in original test code
+import android.app.KeyguardManager;
+import android.app.Service;
+import android.app.KeyguardManager.KeyguardLock;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.RemoteException;
+import android.util.Log;
+import i4nc4mp.myLock.ManageKeyguard.LaunchOnKeyguardExit;
 
-///Task running every system tick to log states/change states
+public class RemoteService extends Service {
+	
+	private Handler serviceHandler;
+	private int counter;
+	private Task myTask = new Task();
+	
+	boolean NeedToGuard = false;
+	
 
-if (myKM == null) return;
+	@Override
+	public IBinder onBind(Intent arg0) {
+		Log.d(getClass().getSimpleName(), "onBind()");
+		return myRemoteServiceStub;
+	}
+
+	private IMyRemoteService.Stub myRemoteServiceStub = new IMyRemoteService.Stub() {
+		public int getCounter() throws RemoteException {
+			return counter;
+		}
+	};
+	
+	@Override
+	public void onCreate() {
+		super.onCreate();
+		Log.d(getClass().getSimpleName(),"onCreate()");
+	}
+	
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		serviceHandler.removeCallbacks(myTask);
+		serviceHandler = null;
+		Log.d(getClass().getSimpleName(),"onDestroy()");
+		
+		//destroy the receivers
+		unregisterReceiver(skip);
+	    unregisterReceiver(guard);
+	}
+	
+	@Override
+	public void onStart(Intent intent, int startId) {
+		super.onStart(intent, startId);
+		serviceHandler = new Handler();
+		serviceHandler.postDelayed(myTask, 1000L);
+		Log.d(getClass().getSimpleName(), "onStart()");
+		
+		//register the receivers
+		IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
+    	IntentFilter offfilter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
+    	registerReceiver(skip, onfilter);
+    	registerReceiver(guard, offfilter);
+	}
+	
+	class Task implements Runnable {
+		public void run() {
+			//++counter;
+			//serviceHandler.postDelayed(this,1000L);
 			
-			if (!NeedToGuard) {
-				if (!KG()) {//Not waiting to re-guard and not guarded means we just skipped
-					Log.v("doublecheck","KG has been SKIPPED");
-					NeedToGuard = true;
-				}
-				else {//Not waiting to re-guard and Guarded means
-					//this is the case we keep getting after first successful skip
-					//because KG keeps returning true even though we have skipped
-					Log.v("doublecheck", "Currently Guarded, need to guard is not active");
-				}
-			}
-			else {
-				if (KG()) {//Need to guard and guarded means we just RGed
-					Log.v("doublecheck","Re-guarded");
-					NeedToGuard = false;
-				}
-				else {//Waiting to re-guard and not guarded means ?
-					Log.v("doublecheck", "Currently unguarded, need to guard is active");
-				}
+			//if (NeedToGuard) Log.i(getClass().getSimpleName(), "NTG: True");
+			//else Log.i(getClass().getSimpleName(), "NTG: False");
+				//don't need any more tracking right now since we know it is working
+			
 			}
 		    	
 		}
-	}
 	
 	private boolean KG()
 	{
-		if(myKM.inKeyguardRestrictedInputMode()) return true;
-		else return false;
+		ManageKeyguard.initialize(getApplicationContext());
+
+        if (ManageKeyguard.inKeyguardRestrictedInputMode()) return true;
+        else return false;
 		
 	}
-
-
-BroadcastReceiver skip = new BroadcastReceiver() {
+	
+	BroadcastReceiver skip = new BroadcastReceiver() {
 		
 		public static final String TAG = "skipKeyguard";
 		public static final String Screen = "android.intent.action.SCREEN_ON";
@@ -51,30 +101,21 @@ BroadcastReceiver skip = new BroadcastReceiver() {
 			
 			Log.v(TAG, "Screen just went ON!");//marks that we received the broadcast
 			
-			//if (myKM != null) myKM = null; doesn't appear this is needed, done for testing
-			
-			if (myKM == null) {
-				myKM = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
-				Log.v(TAG, "Grabbed a new KM");
-			    }
-			//else {Log.v(TAG, "We already have the KM");}
-			
 			if (KG()) {
 
-			      myKL = myKM.newKeyguardLock(TAG);
-			      //myKL.disableKeyguard();
 			      if (!NeedToGuard) {
-			    	  myKL.disableKeyguard();
+			    	  /**
+			    	  ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
+			                public void LaunchOnKeyguardExitSuccess() {
+			    	  NeedToGuard = true;}});
+			    	  }*/
+			    	  ManageKeyguard.disableKeyguard(context);
 			    	  NeedToGuard = true;
-			      	}
-			      }
-			      //Log.v(TAG, "KG has been SKIPPED"); moved to double-check
-			
+			}	
 			else {
-			      myKL = null;
-			      Log.v(TAG, "Skip got requested when no KG was up");
+			      Log.v(TAG, "Skip apparently got requested when no KG was up");
 			    }
-			} 
+			}} 
 			  
 	};
 	
@@ -93,23 +134,13 @@ BroadcastReceiver skip = new BroadcastReceiver() {
     				Log.v(TAG, "re-guard got called, first KG since init");
     				return;
     			}
-                
-                //if (myKM != null) myKM = null; doesn't appear this is needed, done for testing
-                
-                if (myKM == null) {
-                        myKM = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
-                        Log.v(TAG, "Grabbed a new KM");
-                    }
-                //else {Log.v(TAG, "We already have the KM");}
-                
-               // if (!KG()) { got rid of this since KG won't work, just rely on bool
-                        myKL = myKM.newKeyguardLock(TAG);
-                            myKL.reenableKeyguard();
-                            NeedToGuard = false;
-                    //}
-                //else {
-  			      //myKL = null;
-  			      //Log.v(TAG, "Re-guard got requested when KG was already up");
-  			    //}
+                ManageKeyguard.reenableKeyguard();
+                NeedToGuard = false;
                 }
 };
+	
+	
+	
+	}
+
+}}}
