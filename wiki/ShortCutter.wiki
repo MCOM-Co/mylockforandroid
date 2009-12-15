@@ -15,4 +15,4 @@ The app-switcher appears to be a type of keyguard, as it gets blocked sometimes 
 
 Unless there is a new trick in 2.0, it seems that there is no good way to invoke alternative functionality or skip what's happening with the home longpress. 
 
-After some thought, it appears that LOCK 2.0 is also using the home replacement trick after skipping keyguard (their app explicitly warns you not to choose it as the "Default Home" hehe). So in all reality, different methods of behavior for a home-replacing shortcutter implementation is our best bet, and functionally identical to any hopes of mimicing/enhancing keyguard-like behavior
+After some thought, it appears that LOCK 2.0 is also using the home replacement trick after skipping keyguard (their app explicitly warns you not to choose it as the "Default Home" hehe). So in all reality, different methods of behavior for a home-replacing shortcutter implementation is our best bet, and functionally identical to any hopes of mimicing/enhancing keyguard-like behavior. DXTOP also has the option to use or not use the keyguard. so this is quite obvious that all that's happening is a keyguard skip followed by home replacement.
