@@ -9,3 +9,6 @@ I'd like to potentially also include options to remap the camera key or program 
 Our current base idea for this involves a circular menu of shortcuts. I have several ideas for this. A "scrolling wheel" of shortcuts so you can have many. tap and hold on one "Frees" it to move like when you pick up an icon on the home screen, so drag and drop it on GO to launch. 
 
 the other method would be to have all shortcuts hidden till one touches the GO android guy, then they are displayed (static position) and you drag the android buddy to one and hold there for a moment till haptic feedback occurs, then release to launch.
+
+= Replace the quick 6-most-recent app switcher =
+The app-switcher appears to be a type of keyguard, as it gets blocked sometimes by our skip code. Seems like an all around good idea to put that function in customization control of our users by replacing it with ShortCutter!
