@@ -13,4 +13,6 @@ the other method would be to have all shortcuts hidden till one touches the GO a
 = Replace the quick 6-most-recent app switcher =
 The app-switcher appears to be a type of keyguard, as it gets blocked sometimes by our skip code. Seems like an all around good idea to put that function in customization control of our users by replacing it with ShortCutter! 
 
-Unless there is a new trick in 2.0, it seems that there is no good way to invoke alternative functionality or skip what's happening with the home longpress. So a good alternative would be to think about the lockscreen replacement appraoch, we know we can invoke a lockscreen on our specification, so why not allow this lockscreen to simply be a shortcutter implementation for popping around different apps? 
+Unless there is a new trick in 2.0, it seems that there is no good way to invoke alternative functionality or skip what's happening with the home longpress. 
+
+After some thought, it appears that LOCK 2.0 is also using the home replacement trick after skipping keyguard (their app explicitly warns you not to choose it as the "Default Home" hehe). So in all reality, different methods of behavior for a home-replacing shortcutter implementation is our best bet, and functionally identical to any hopes of mimicing/enhancing keyguard-like behavior
