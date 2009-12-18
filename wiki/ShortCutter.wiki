@@ -1,18 +1,15 @@
-#summary A widget that saves space for useful shortcuts. Touch the shortcutter GO android and your shortcuts will appear in a circular pattern around it. Drag onto one and release to launch your app or function!
+#summary An app/function launcer interface to be implemented both home-replacement style and as a substitute for the recent apps switcher. It can also double as the lock/wakeup screen.
 
 = Introduction =
-I'd like to potentially also include options to remap the camera key or program shortcuts onto long presses of menu or search. Other than that the widget really serves a very straight forward purpose of organizing shortcuts you want in a happier UI that saves space and looks prettier all at once.
+The idea of this function is the very straight forward purpose of organizing shortcuts you want in a happier UI that saves space and looks prettier all at once, thus being easier to call up when needed. You can access shortCutter through the home screen replacement (see current concept images) or through a window interface you bring up through button long press, or even set preference to have a short press wake up the screen to the shortcutter window
 
 
 = Details =
+On the home-replacement implementation, all shortcuts hidden till we touch the GO android guy who lives at the very bottom of the screen (where the grey app drawer sits in the stock home screen). You touch it and the icons fly out, you drag the android buddy on top of any shortcut and hold there for a moment till haptic feedback occurs, then release to launch.
 
-Our current base idea for this involves a circular menu of shortcuts. I have several ideas for this. A "scrolling wheel" of shortcuts so you can have many. tap and hold on one "Frees" it to move like when you pick up an icon on the home screen, so drag and drop it on GO to launch. 
-
-the other method would be to have all shortcuts hidden till one touches the GO android guy, then they are displayed (static position) and you drag the android buddy to one and hold there for a moment till haptic feedback occurs, then release to launch.
-
-= Replace the quick 6-most-recent app switcher =
+= Replacing the quick 6-most-recent app switcher =
 The app-switcher appears to be a type of keyguard, as it gets blocked sometimes by our skip code. Seems like an all around good idea to put that function in customization control of our users by replacing it with ShortCutter! 
 
-Unless there is a new trick in 2.0, it seems that there is no good way to invoke alternative functionality or skip what's happening with the home longpress. 
+Unless there is a new trick in 2.0, it seems that there is no good way to invoke alternative functionality or skip what's happening with the home longpress. I will have to experiment to see if we can still see when it is happening, and do a quick relock/kg skip followed by calling our shortCutter window up. I also am not sure yet what we will need to do to make sure hardware buttons can be used to launch it or wake up device. I believe we will need to stop using the method that restores the standard keyguard and instead launch a keyguard-like activity which lets us monitor the buttons while the screen is asleep.
 
-After some thought, it appears that LOCK 2.0 is also using the home replacement trick after skipping keyguard (their app explicitly warns you not to choose it as the "Default Home" hehe). So in all reality, different methods of behavior for a home-replacing shortcutter implementation is our best bet, and functionally identical to any hopes of mimicing/enhancing keyguard-like behavior. DXTOP also has the option to use or not use the keyguard. so this is quite obvious that all that's happening is a keyguard skip followed by home replacement.
+After some thought, it appears that LOCK 2.0 is also using the home replacement trick after skipping keyguard (their app explicitly warns you not to choose it as the "Default Home" hehe). DXTOP also has the option to use or not use the keyguard. so this is quite obvious that all that's happening is a keyguard skip followed by home replacement.
