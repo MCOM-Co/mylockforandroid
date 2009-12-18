@@ -4,19 +4,15 @@
 
 The useful thing of the keyguard is really in the regulation of it going back to sleep again faster when you haven't interacted with the device, giving you a slightly longer timeout if you have touched something and even longer if you have opened the slide. Give the user the option of different ways to wake up the screen so that it can't accidentally be done (necessarily), such as require double lock button press, or a press followed by a shake. I can see even using one of the touch buttons such as home in a long press to facilitate wakeup. Keyguard effectively morphs into a screenguard of sorts.
 
-the app just isn't feasible for lock pattern setup at all. it requires the user desire to be presented immediately with the previewing functionality of our app! so all we need to worry about is blocking the default keyguard case by case (or running the disable), then managing invoking our activity that will only be seen when called, but still uses a service or receiver to collect data for the preview panel at all times.
+= Keyguard skipping vs guarded wakeup = 
+This is essentially the users INPUT gatekeeper to getting/releasing wakelocks and the keyguard. It facilitates skipping the default keyguard and takes the user straight to the home/last running activity, or invoking some form of keyguard window or homescreen as opposed to the most recent activity
 
-= Lockbuddy = 
-Simple control panel addon object letting the user choose other unlock/relock methods and certain auto-unlock actions or auto-relock restriction conditions. This is essentially the users INPUT gatekeeper to getting/releasing wakelocks. It facilitates skipping the default keyguard and takes the user straight to the home/last running activity.
+myLock is aiming for is giving users the ability to unlock/relock/wakeup in other quicker methods besides the default in android, also.
 
-One of the main additional conveniences MyLock is aiming for is giving users the ability to unlock/relock it in other quicker methods besides the default in android. Examples: Double-press of lock button, Press lock button then shake, unlock automatically when slide is opened (current behavior is that it only wakes up the sleeping screen), or camera button full press. 
+==  Power control concerns: when to re-sleep? ==
+myLock will take efficient control of how long the screen stays & how bright in the absence of user originated sleep commands. This is the gatekeeper to respect the user's intent for viewing or input on the device, it knows when to sleep or how bright to be and in what ways, depending on circumstances of what just happened!
 
-A nice idea for lockbuddy would be to prevent the keyguard from kicking in when the screen goes to auto-sleep while the keypad is open. give a longer timeout when idle if keypad is open, such that the screen will sleep after some time (longer than the normal keypad closed timeframe) and a longer time before keyguard shows
-
-==  Backlightwiz ==
-Simple control panel addon object enabling great control over screen brightness and backlight timers - this is in control of how long the screen stays without user originated sleep commands. This is the gatekeeper to respect the user's intent for viewing or input on the device, it knows when to sleep or how bright to be and in what ways, depending on circumstances of what just happened!
-
-in 2.0 it kind of auto-dims before the autolock kicks in. users will be able to make the autolock vs autodim work for them and respect whether the keypad is open, and other factors. also invoke a brightness toggle using buttons/shortcut mode, for this i am imagining a 3 stage control similar to the power control widget, however it will be fine tuned to a literal backlight OFF/20%/80%. that function will work directly with settings from shortcutter.
+in 2.0 it kind of auto-dims before the autolock kicks in. users will be able to make the autosleep vs autodim work for them and respect whether the keypad is open, and other factors. also invoke a brightness toggle using buttons/shortcut mode, for this i am imagining a 3 stage control similar to the power control widget, however it will be fine tuned to a literal backlight OFF/20%/80%. that function will work directly with settings from shortcutter.
 
 
 ==Some Code Stuff==
