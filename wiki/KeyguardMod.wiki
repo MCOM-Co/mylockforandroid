@@ -69,3 +69,14 @@ Manifest:
 
 </manifest>
 }}}
+
+===Transition from simple KG skip to power controls & input monitoring===
+Currently our code just responds to screen_on/off broadcasts and enables or disables keyguard. The new code needs to accomplish a few specifics
+
+1- Persistant service which can catch any key events, so that users can specify which keys they want to use to wake or unlock.
+2- Functions/methods which call the different types of wakeup/unlock. This is so that they are independent of the circumstance they will be invoked under, allowing our customization to work easily. User pref of whether to use the custom home or the regular home and only call up shortcutter when needed. Types of wakeup/unlock:
+  *Wake to a mimiced default keyguard
+  *Wake to the shortCutter window
+  *Wake to the clock shortCutter/customized home (welcome screen of sorts where the regular home can still be accessed by pressing home)
+  *Skip keyguard directly to chosen home screen
+3- Implement the first basics of re-sleep regulation. I don't know if we will need to place very much for this initially but the framework should be considered to allow our planned customizations in future builds
