@@ -77,6 +77,8 @@ Manifest:
 Currently our code just responds to screen_on/off broadcasts and enables or disables keyguard. The new code needs to accomplish a few specifics
 
 Persistence: Remote service which can catch any key events, so that users can specify which keys they want to use to wake or unlock. All this will do is call our activity while also sleeping the screen. The standard keyguard will always be disabled when the user is accessing any part of our customized sleep or unlock settings (which should be always, all of our features are directly linked to this except the homescreen replacement).
+Here are the references I will follow to get the service changed to a foreground start so we can ensure persistence in the revision of the more customized unlocking http://developer.android.com/reference/android/app/Service.html 
+http://developer.android.com/guide/topics/ui/notifiers/notifications.html
 
 Modular Functions for wakeup screens: Functions/methods which call the different types of wakeup/unlock. This is so that they are independent of the circumstance they will be invoked under, allowing our customization to work easily. User pref of whether to use the custom home or the regular home and only call up shortcutter when needed.
 Types of wakeup/unlock:
