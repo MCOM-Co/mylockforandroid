@@ -4,12 +4,15 @@
 
 The useful thing of the keyguard is really in the regulation of it going back to sleep again faster when you haven't interacted with the device, giving you a slightly longer timeout if you have touched something and even longer if you have opened the slide. Give the user the option of different ways to wake up the screen so that it can't accidentally be done (necessarily), such as require double lock button press, or a press followed by a shake. I can see even using one of the touch buttons such as home in a long press to facilitate wakeup. Keyguard effectively morphs into a screenguard of sorts.
 
+== What's going on under the hood with the new screenguard activity? ==
+To re-do the keyguard, all we have to do is disable the original keyguard when it gets called, then call our activity up. Our own activity will determine what to display when it is time to wake the screen. So it needs to have code that tells the OS we handled the event for keys we don't want to wake it up. This is so we can return that we handled it, and really do nothing, thus keeping screen asleep. The code cited later illustrates how something like this is already getting called by the OS while it is in the keyguard state.
+
 = Keyguard skipping vs guarded wakeup = 
 This is essentially the users INPUT gatekeeper to getting/releasing wakelocks and the keyguard. It facilitates skipping the default keyguard and takes the user straight to the home/last running activity, or invoking some form of keyguard window or homescreen as opposed to the most recent activity
 
 myLock is aiming for is giving users the ability to unlock/relock/wakeup in other quicker methods besides the default in android, also.
 
-==  Power control concerns: when to re-sleep? ==
+=  Power control concerns: when to re-sleep? =
 myLock will take efficient control of how long the screen stays & how bright in the absence of user originated sleep commands. This is the gatekeeper to respect the user's intent for viewing or input on the device, it knows when to sleep or how bright to be and in what ways, depending on circumstances of what just happened!
 
 in 2.0 it kind of auto-dims before the autolock kicks in. users will be able to make the autosleep vs autodim work for them and respect whether the keypad is open, and other factors. also invoke a brightness toggle using buttons/shortcut mode, for this i am imagining a 3 stage control similar to the power control widget, however it will be fine tuned to a literal backlight OFF/20%/80%. that function will work directly with settings from shortcutter.
