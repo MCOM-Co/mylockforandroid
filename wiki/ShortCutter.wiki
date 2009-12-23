@@ -5,7 +5,7 @@ The idea of this function is the very straight forward purpose of organizing sho
 
 
 = Details =
-On the home-replacement implementation, all shortcuts hidden till we touch the GO android guy who lives at the very bottom of the screen (where the grey app drawer sits in the stock home screen). You touch it and the icons fly out, you drag the android buddy on top of any shortcut and hold there for a moment till haptic feedback occurs, then release to launch.
+On the home-replacement implementation, all shortcuts hidden till we touch the GO android guy who lives at the very bottom of the screen (where the grey app drawer sits in the stock home screen). You touch it and the icons fly out, you drag the android buddy on top of any shortcut and hold there for a moment till haptic feedback occurs, then release to launch. The home version will actually be possible to implement as a clever clock widget. So that will be the plan for beta.
 
 = Replacing the quick 6-most-recent app switcher =
 The app-switcher appears to be a type of keyguard, as it gets blocked sometimes by our skip code. Seems like an all around good idea to put that function in customization control of our users by replacing it with ShortCutter! 
