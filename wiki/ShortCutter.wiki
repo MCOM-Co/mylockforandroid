@@ -1,7 +1,7 @@
 #summary An app/function launcer interface to be implemented both home-replacement style and as a substitute for the recent apps switcher. It can also double as the lock/wakeup screen.
 
 = Introduction =
-The idea of this function is the very straight forward purpose of organizing shortcuts you want in a happier UI that saves space and looks prettier all at once, thus being easier to call up when needed. 3 Versions are currently in planning phase - A 4x3 clock widget, a visually identical one that is a home screen replacement, and a standalone frame that acts like the recent apps switcher, able to be brought up by a button shortcut.
+The idea of this function is the very straight forward purpose of organizing shortcuts you want in a happier UI that saves space and looks prettier all at once, thus being easier to call up when needed. 3 Versions are currently in planning phase - A 4x2 clock widget, a visually identical one that is a home screen replacement, and a standalone frame that acts like the recent apps switcher, able to be brought up by a button shortcut.
 
 
 = Details =
