@@ -1,7 +1,9 @@
 #summary Keyguard makes no sense when there are no significant keys. What you need is a screenguard paired with a really useful homescreen!
 
-= Philosophy =
+= Project plans =
 
-  * Convenience: Place important functions more accessible to the end user, improving the total android experience by shortening the steps to perform the most immediately used functions / information requests
-  * Customization: Let users decide what programs and/or contacts they want to be monitored by NotificationPreview, let them have a customized shortcuts interface, and many choices of how to wake up the screen for interaction that are better than the default keyguard.
-  * Control: Avoid frustrations which occur in the default autolock and auto-dim functionality, put user back in control of these in a way that is smarter for overall power management and "real-world" use of the device.
+I have identified 3 steps to the realization of the myLock vision in the first weeks of research and initial alpha programming.
+
+  * The existing keyguard is an obstruction to end user convenience on the Droid since the device has no face buttons; since the only way to even awaken it is the power button on top (impossible to pocket-press accidentally vs the volume or camera keys could be) we will begin this project by simply bypassing the lockscreen automatically.
+  * The existing keyguard does give us some examples of useful ideas that we want to retain. On the first screen the user sees on wakeup, it is nice to have clock display and some shortcuts. We will create a utility widget of sorts to converge the idea of the clock display, battery %, some power controls such as a brightness level button and optional switches for other power-consuming componenets, and of course the silent mode/vibrate toggle similar to the one on the default lockscreen. The extra home screen on wakeup is optional, the user could just place our utility widget on the regular home screen if they prefer to have the device wakeup to whatever they were last doing.
+  * Finally, it would be useful to see a timeline of waiting events that have occurred while the device has slept in the wakeup or regular homescreen. The creation of this will be most complicated, as it seems it will require programming mini clients for email, twitter, SMS handling, and phone-event handling. I am not sure we have any way to talk to the existing notification panel or pull information from the default email client at all.
