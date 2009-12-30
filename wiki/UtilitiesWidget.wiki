@@ -12,3 +12,5 @@ We need several things to be included in this component. This will have to be im
 
 
 The biggest design goal of this is to maximize the size of the clock and make the other tools either hidden till an interaction point is touched or else very minimal and unobtrusive yet easy to interact with.
+
+http://mylockforandroid.googlecode.com/files/utility_widg_concept.jpg
