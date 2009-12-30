@@ -1,0 +1,14 @@
+#summary A widget implementation of useful tools and clock display
+
+= Things to know =
+
+We need several things to be included in this component. This will have to be implemented as a self contained 4x2 widget for a first build. The point is to save space and provide utilities inspired by the regular lockscreen and other power/brightness widgets out there.
+
+  * Large readable clock/date
+  * Battery percentage text
+  * Backlight brightness 4 stage toggle
+  * Sound/Vibrate 3 stage toggle (Silent, Vibrate only, and Loudest)
+  * Optional links to other power control like bluetooth, wifi, gps)
+
+
+The biggest design goal of this is to maximize the size of the clock and make the other tools either hidden till an interaction point is touched or else very minimal and unobtrusive yet easy to interact with.
