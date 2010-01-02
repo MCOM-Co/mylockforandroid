@@ -81,15 +81,6 @@ public class RemoteService extends Service {
 		    	
 		}
 	
-	private boolean KG()
-	{
-		ManageKeyguard.initialize(getApplicationContext());
-
-        if (ManageKeyguard.inKeyguardRestrictedInputMode()) return true;
-        else return false;
-		
-	}
-	
 	BroadcastReceiver skip = new BroadcastReceiver() {
 		
 		public static final String TAG = "skipKeyguard";
@@ -101,21 +92,9 @@ public class RemoteService extends Service {
 			
 			Log.v(TAG, "Screen just went ON!");//marks that we received the broadcast
 			
-			if (KG()) {
-
-			      if (!NeedToGuard) {
-			    	  /**
-			    	  ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
-			                public void LaunchOnKeyguardExitSuccess() {
-			    	  NeedToGuard = true;}});
-			    	  }*/
-			    	  ManageKeyguard.disableKeyguard(context);
-			    	  NeedToGuard = true;
-			}	
-			else {
-			      Log.v(TAG, "Skip apparently got requested when no KG was up");
-			    }
-			}} 
+		ManageKeyguard.disableKeyguard(context);
+			    	  
+			} 
 			  
 	};
 	
@@ -130,12 +109,8 @@ public class RemoteService extends Service {
                 
                 Log.v(TAG, "Screen just went OFF");
                 
-                if (!NeedToGuard) {
-    				Log.v(TAG, "re-guard got called, first KG since init");
-    				return;
-    			}
                 ManageKeyguard.reenableKeyguard();
-                NeedToGuard = false;
+                
                 }
 };
 	
