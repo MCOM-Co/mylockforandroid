@@ -2,21 +2,15 @@
 
 = Why have a keyguard without any keys of note? =
 
-The useful thing of the keyguard is really in the regulation of it going back to sleep again faster when you haven't interacted with the device, giving you a slightly longer timeout if you have touched something and even longer if you have opened the slide. Give the user the option of different ways to wake up the screen so that it can't accidentally be done (necessarily), such as require double lock button press, or a press followed by a shake. I can see even using one of the touch buttons such as home in a long press to facilitate wakeup. Keyguard effectively morphs into a screenguard of sorts.
+The useful thing of the keyguard is really in the regulation of it going back to sleep again faster when you haven't interacted with the device, giving you a slightly longer timeout if you have touched something and even longer if you have opened the slide. 
 
-== What's going on under the hood with the new screenguard activity? ==
-To re-do the keyguard, all we have to do is disable the original keyguard when it gets called, then call our activity up. Our own activity will determine what to display when it is time to wake the screen. So it needs to have code that tells the OS we handled the event for keys we don't want to wake it up. This is so we can return that we handled it, and really do nothing, thus keeping screen asleep. The code cited later illustrates how something like this is already getting called by the OS while it is in the keyguard state.
-
-= Keyguard skipping vs guarded wakeup = 
-This is essentially the users INPUT gatekeeper to getting/releasing wakelocks and the keyguard. It facilitates skipping the default keyguard and takes the user straight to the home/last running activity, or invoking some form of keyguard window or homescreen as opposed to the most recent activity
-
-myLock is aiming for is giving users the ability to unlock/relock/wakeup in other quicker methods besides the default in android, also.
+== What's going on under the hood ==
+To re-do the keyguard, all we have to do is disable the original keyguard when it gets called, then call our activity up. Our latest code is based a WelcomeActivity, and the keyguard skip occurs in onCreate. It talks to the window manager to get a clean keyguard bypass that is automatically restored when device goes to sleep again. Our other method simply disables keyguard immediately upon receiving screen on, and calls re-enable immediately upon every screen off. That method seems to break the home long press & shortcut key functionality, it will start working only after launching home once. A workaround to this might be to have our app set as default home and automatically handle the launcher intent.
 
 =  Power control concerns: when to re-sleep? =
-myLock will take efficient control of how long the screen stays & how bright in the absence of user originated sleep commands. This is the gatekeeper to respect the user's intent for viewing or input on the device, it knows when to sleep or how bright to be and in what ways, depending on circumstances of what just happened!
+myLock will take efficient control of how long the screen stays & how bright in the absence of user originated sleep commands. This is the gatekeeper to respect the user's intent for viewing or input on the device, it knows when to sleep or how bright to be and in what ways, depending on circumstances of what just happened.
 
-in 2.0 it kind of auto-dims before the autolock kicks in. users will be able to make the autosleep vs autodim work for them and respect whether the keypad is open, and other factors. also invoke a brightness toggle using buttons/shortcut mode, for this i am imagining a 3 stage control similar to the power control widget, however it will be fine tuned to a literal backlight OFF/20%/80%. that function will work directly with settings from shortcutter.
-
+in android 2.0 it kind of auto-dims before the autolock kicks in, if you are set at anything above lowest brightness. users will be able to make the autosleep vs autodim work for them and respect whether the keypad is open, and other factors.
 
 ==Some Code Stuff==
 
@@ -41,55 +35,24 @@ The current default keys that get suppressed from waking up the screen are defin
     }
 }}}
 
+We have learned that it simply isn't possible because of this code and the nature of key events to handle buttons while the device is asleep. Buttons can either cause wake, or not cause it, and we can completely kill guarding such that wake will always happen with any key, but we cannot get new logic in place that will let us offer custom key sequence unlocks such as long press, double press, or specific key exclusion. This might be possible in root. I will need to research further to find out.
+
 We need to give permission in the manifest to disable the keyguard
 {{{
 <uses-permission
     android:name="android.permission.DISABLE_KEYGUARD" />
 }}}
 
-Manifest:
-{{{
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="i4nc4mp.skipKeyguard"
-      android:versionCode="1"
-      android:versionName="1.0">
-    <application android:icon="@drawable/icon" android:label="@string/app_name">
-        <activity android:name=".skSettings"
-                  android:label="@string/app_name">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-                <action android:name="android.intent.action.SCREEN_ON" />
-                <action android:name="android.intent.action.SCREEN_OFF" />
-            </intent-filter>
-        </activity>
-
-    </application>
-    <uses-permission
-    android:name="android.permission.DISABLE_KEYGUARD" />
-    <uses-sdk android:minSdkVersion="6" />
-
-</manifest>
-}}}
-
 ===Transition from simple KG skip to power controls & input monitoring===
 Currently our code just responds to screen_on/off broadcasts and enables or disables keyguard. The new code needs to accomplish a few specifics
 
-Persistence: Remote service which can catch any key events, so that users can specify which keys they want to use to wake or unlock. All this will do is call our activity while also sleeping the screen. The standard keyguard will always be disabled when the user is accessing any part of our customized sleep or unlock settings (which should be always, all of our features are directly linked to this except the homescreen replacement).
-Here are the references I will follow to get the service changed to a foreground start so we can ensure persistence in the revision of the more customized unlocking http://developer.android.com/reference/android/app/Service.html 
+Persistence: Remote service handles the screen off and on occurrences. Here are the references I followed to get the service changed to a foreground start so we can ensure persistence that is rock solid. http://developer.android.com/reference/android/app/Service.html 
 http://developer.android.com/guide/topics/ui/notifiers/notifications.html
 
 Modular Functions for wakeup screens: Functions/methods which call the different types of wakeup/unlock. This is so that they are independent of the circumstance they will be invoked under, allowing our customization to work easily. User pref of whether to use the custom home or the regular home and only call up shortcutter when needed.
 Types of wakeup/unlock:
-  * Wake to a mimiced default keyguard
-  * Wake to the shortCutter window
-  * Wake to the clock shortCutter/customized home (welcome screen of sorts where the regular home can still be accessed by pressing home)
-  * Skip keyguard directly to chosen home screen
+  * Quick unlock (alpha 1 method)
+  * Wakeup welcome screen (alpha 2 method), auto-dismiss
+  * Wakeup welcome home screen (upcoming - a lockscreen that houses widgets)
 
 Idle Re-Sleep Regulation: Implement the first basics of re-sleep regulation. I don't know if we will need to place very much for this initially but the framework should be considered to allow our planned customizations in future builds
-
-===Two possible paths of implementation===
-After thinking and studying some other lockscreen replacements further, it seems I can still go about this in 2 possible ways. The preferred method is going to be to simply call a welcome-activity up anytime the KG is skipped. This activity just comes to the front of the stack-history thingie. It would ideally display the large clock/date, battery %, and the nPreview frame. Then, user can either press back to peel it off and return to what they were last doing when screen slept, or they can press home to access their shortcuts/home widgets. This method for a first implementation doesn't really need shortcutter, though we can still experiment with coding it. It is like a home on top of your home. Same concept as lockscreen but with useful stuff and no bothersome guard slider. I am not sure if the customization of which buttons to wake to it vs different button commands to just unlock to last activity is necessary. But, coding the clock/shortcutter, and nPreview as capable widgets as well as components in the welcome-activity would give user the flexibility of whether they wanted to use the welcome mode or just place those tools on the home and prefer instant unlock.
-
-The 2nd implementation more or less just forgoes the idea of welcome activity and places the functions as a home replacement, somewhat necessitating the shortCutter. I would only do this if I cannot get the welcome-activity to work or to be controlled by input from the foreground service.
