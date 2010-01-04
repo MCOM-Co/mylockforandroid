@@ -1,0 +1,20 @@
+#summary Useful information that I am finding to be constantly asked on our threads
+
+= What is myLock? =
+
+It is an app whose primary function is to replace the lockscreen. It has several sub-features that go along with this goal.
+
+= Why? =
+The guiding principle is one simple fact: we don't like having to slide to unlock.
+We want to use the device as fast as we can press power, slide open the device, or do a shake.
+
+= Will myLock also offer customization for backlight timers? =
+Probably. Don't confuse the lockscreen functionality with auto-sleep or auto-dim functionalities, which are governed separately. I'd like to make it so you get a longer timeout if slider is open, and enable a quick toggle switch to "keep screen always on" in the utilities widget and as a standalone 1x1 widget.
+
+= Can you program customization for different buttons to wake it or unlock it? =
+No. The android operating system gives us two choices only. Either stick to power button, slide open, any key on slideout (the rules set by the existing lockscreen) or else allow all keys to wake it unconditionally. We can't discriminate once in the all key mode. Keyguard disabler and screenmodewidget are examples of that mode, very simple, a bit obtuse since camera and volume keys are easy to accidental press in the pocket.
+
+= But can you program shake unlocking? =
+Yep. A big win since the shake is detected in a sensor which we can definitely control from myLock. Plans are to allow you to choose if you want shake enabled and if so specify whether you want it to unlock to last activity or to the Wakeup homescreen.
+
+= next question =
