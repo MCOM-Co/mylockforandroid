@@ -29,3 +29,5 @@ it is hard to make the app play nice with other home or screenwake mods because 
 = I can't find you on the market? =
 That's because myLock isn't on the market yet. To get on the market I'm going to need some donations, as it costs a $25 fee for devs to join the market. I am choosing to create this app as a free & open source project to benefit android lovers, so I imagine once I place it in the app store I will have a donation version also allowing people to buy it for 2 dollars alongside the free download. myLock will never contain ads.
 
+= How do I send you my idea/feedback/bug complaint? =
+Email the project mylockandroid at gmail. You can also follow us on twitter and tweet at us if your comment is short. Can't guarantee I'll notice your comments elsewhere like blog, wiki, or will be aware of posts on forums.
