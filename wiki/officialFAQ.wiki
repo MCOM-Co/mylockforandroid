@@ -4,7 +4,7 @@
 
 It is an app whose primary function is to replace the lockscreen. It has several sub-features that go along with this goal.
 
-= Why? =
+= Why did you make it? =
 The guiding principle is one simple fact: we don't like having to slide to unlock.
 We want to use the device as fast as we can press power, slide open the device, or do a shake.
 
@@ -17,4 +17,15 @@ No. The android operating system gives us two choices only. Either stick to powe
 = But can you program shake unlocking? =
 Yep. A big win since the shake is detected in a sensor which we can definitely control from myLock. Plans are to allow you to choose if you want shake enabled and if so specify whether you want it to unlock to last activity or to the Wakeup homescreen.
 
-= next question =
+= What's the welcome-screen/wakeup homescreen? =
+Tentatively titled WakeHome, we are designing a very simple emulation of the stock homescreen with just a single screen, capable of displaying any widget of your choice in addition to any shortcut or app launch icon. Simply a port of the those features from the stock Launcher app. Essentially this is the alternative to quick unlock function (which exists simply to bypass the lockscreen slider and take you to what you were last doing). This mode is inspired by the silencer slider/clock display on the default lockscreen. Why not just make it an extra homescreen and let the user decide what to put there?
+
+= What's notification preview? =
+This is a plan for the full final version of the app, way down the road. We think it would be excellent to have a timeline of missed events displayed on the wakeup screen, customized by user to what types of events have the priority of being shown there. A place all in one to view any IMs, twitter, sms, email, missed call, voicemail, etc. 
+
+= It causes me a problem with <insert app name>... WTF? =
+it is hard to make the app play nice with other home or screenwake mods because they all rely on workarounds in android to work cleanly. when all these workarounds go in and try to execute in near-tandem, unexpected results will happen. I am aware it doesn't work with screebl and a few others.
+
+= I can't find you on the market? =
+That's because myLock isn't on the market yet. To get on the market I'm going to need some donations, as it costs a $25 fee for devs to join the market. I am choosing to create this app as a free & open source project to benefit android lovers, so I imagine once I place it in the app store I will have a donation version also allowing people to buy it for 2 dollars alongside the free download. myLock will never contain ads.
+
