@@ -8,11 +8,11 @@ It is an app whose primary function is to replace the lockscreen. It has several
 The guiding principle is one simple fact: we don't like having to slide to unlock.
 We want to use the device as fast as we can press power, slide open the device, or do a shake.
 
-= But I want to use myLock as a quick way to disable pattern lock also, can myLock do this? =
+= But I want a quick way to disable pattern lock also, can myLock do this? =
 Speculation: I believe we can program that and place the option as a widget or a button in the util widget. I'll look into whether our app can be permitted to toggle off your secure mode in the root settings. I am doubtful of that method but my co-worker says he has an app that gives a shortcut for secure mode on and off. In alpha 2b and beyond, the app just does nothing if a pattern is set. When you wake it up, myLock still has to call and authenticate with the password keeper of the OS in order to work correctly even when no password is set. 
 
 = Will myLock also offer customization for backlight timers? =
-Probably. Don't confuse the lockscreen functionality with auto-sleep or auto-dim functionalities, which are governed separately. I'd like to make it so you get a longer timeout if slider is open, and enable a quick toggle switch to "keep screen always on" in the utilities widget and as a standalone 1x1 widget.
+Probably. Don't confuse the lockscreen functionality with auto-sleep or auto-dim functionalities, which are governed separately. I'd like to make it so you get a longer timeout if slider is open, and enable a quick toggle switch to "keep screen always on" in the utilities widget and as a standalone 1x1 widget. Alpha 2b starts to implement that option.
 
 = Can you program customization for different buttons or touching the screen or touch buttons to wake it or unlock it? =
 No. The android operating system gives us two choices only. Either stick to power button, slide open, any key on slideout (the rules set by the existing lockscreen) or else allow all keys to wake it unconditionally. We can't discriminate once in the all key mode. Keyguard disabler and screenmodewidget are examples of that mode, very simple, a bit obtuse since camera and volume keys are easy to accidental press in the pocket.
