@@ -6,7 +6,7 @@ It is an app whose primary function is to replace the lockscreen. It has several
 
 = Why did you make it? =
 The guiding principle is one simple fact: we don't like having to slide to unlock.
-We want to use the device as fast as we can press power, slide open the device, or do a shake.
+We want to use the device as fast as we can press power, slide open the device, or do a shake. It's a little surprising that the option not to have the lockscreen isn't already built into the OS. Off, keyguard, or pattern lock seem like suitable choices for end users, so myLock wants to step in to provide the Off category. Although the OS has provided tools for making the lockscreen go away, they are only designed for use cases like pushing a popup to the screen automatically (such as the default alarm clock).
 
 = But I want a quick way to disable pattern lock also, can myLock do this? =
 Speculation: I believe we can program that and place the option as a widget or a button in the util widget. I'll look into whether our app can be permitted to toggle off your secure mode in the root settings. I am doubtful of that method but my co-worker says he has an app that gives a shortcut for secure mode on and off. In alpha 2b and beyond, the app just does nothing if a pattern is set. When you wake it up, myLock still has to call and authenticate with the password keeper of the OS in order to work correctly even when no password is set. 
