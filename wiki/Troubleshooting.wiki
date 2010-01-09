@@ -1,0 +1,19 @@
+#summary Known solutions for problems we can't fix in the code
+
+= I can't install it, getting "error parsing package" =
+
+According to my research this error happens when directly trying to open the APK file. I have always downloaded and installed the packages for testing via dolphin browser, and never experienced error. I've also read that you can install a file manager such as androzip to get past this error. 
+
+
+= It stopped working and won't work again even though I've uninstalled and reinstalled =
+
+In the most recent versions this should not happen unless an unexpected interaction with other apps causes myLock to crash more than once.
+
+What's happening is a safety block that android puts as a precaution. It does this to any program which experiences any repeated crash. That's to protect users from failed boot or total device freeze because of crash loops.
+
+To fix it, just take a moment to think about what you might have recently installed, and then disable that if you can. Please report to us in an issue report if you can identify what was creating the problem.
+
+Then, you need to reboot the device by removing the battery for a few seconds. No other method of restart or re-install will get past the safety block. I know this from testing with early versions that had different crashes which were fixed on the path from alpha 1 to alpha 2c. I have not yet had any crash scenarios for 2c reported, so things are looking good.
+
+= It seems to wakeup very slowly or lagged. Sometimes it goes so slow that the lockscreen never goes away but I can slide and unlock =
+This appears to be something that happens regardless of myLock. An example is if you slide it open you'll notice a responsiveness delay as the CPU tasks both rotating & redrawing the lockscreen at once. We can't really fix this. I've also noticed you can crash the service if you try to press power and also slide it open in quick succession. I'm not sure whether the crash is happening at screen off or screen on, but you shouldn't find yourself in that scenario without deliberately trying to do it. 
