@@ -35,6 +35,8 @@ public class KGSkipService extends Service {
 	
 	public boolean receivingcall = false;
 	//we set it true when state 1 to 2 change occurs
+	public boolean placingcall = false;
+	//set to true when state 0 to 2 occurs
 	
 	
 	@Override
@@ -164,11 +166,12 @@ public class KGSkipService extends Service {
             //unregisters from broadcasts and sets a safety flag
             //the flag stops the redundant try on changes from ringing to active
             
-            if (lastphonestate==0 && state==2) skipinprogress=false;
-            //this line reacts to outgoing call
-            //that case always occurrs during a paused lockscreen
-            //so we need to stop the screen off from unpausing
-            //since control is being passed to the phone app
+            if (lastphonestate==0 && state==2) {
+            	skipinprogress = false;
+            	placingcall = true;
+            }
+            //when we get paused, we also need to turn this back on at resume
+            //reason is that if we don't, the lockscreen never gets restored at screen off
             
             }
     		else {
@@ -180,8 +183,16 @@ public class KGSkipService extends Service {
     			//register again for screen broadcasts
     			
     			if (receivingcall) {//an incoming call is ending
-    				ManageKeyguard.disableKeyguard(getApplicationContext());
+    				//ManageKeyguard.disableKeyguard(getApplicationContext());
+    				//at the moment do nothing
+    				//skipinprogress = true;
     				receivingcall = false;
+    				}
+    			else if (placingcall) {
+    				skipinprogress = true;
+    				//flag to tell screen off to call re-enable
+    				//as the OS is treating the other pause as still active
+    				placingcall = false;
     				}
     			}
     		}
