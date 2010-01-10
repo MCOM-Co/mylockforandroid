@@ -82,15 +82,14 @@ public class CustomLockMediator extends Service {
 
 private void StartLock(Context context) {
 	
-	//TODO this needs to respect stay awake setting
-	//SharedPreferences settings = getSharedPreferences("myLock", 0);
-    //boolean wake = settings.getBoolean("StayAwake", false);
-    
-	//ManageWakeLock.acquireFull(context);
-	//won't cause repeat wakeup but ensures when we do release it will sleep
+	ManageWakeLock.acquireFull(context);
+	//won't cause wakeup when acquire causes wakeup not set
+	//the documentation for power manager indicates that the device is supposed to sleep
+	//when any screen affecting wakelock is released
 	
-	//if (!wake) ManageWakeLock.DoCancel(context,20);
-	
+	//this one calls a screen dime wakeup that does not wake on acquire
+	//Lock activity sets to release it in 1 second when a locked key is pressed
+
 	Intent closeDialogs = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
 	        context.sendBroadcast(closeDialogs);
 
@@ -103,7 +102,8 @@ private void StartLock(Context context) {
 	        Intent welcome = new Intent(context, w);
 	        
 	        welcome.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-	                | Intent.FLAG_ACTIVITY_NO_USER_ACTION);
+	                | Intent.FLAG_ACTIVITY_NO_USER_ACTION
+	                | Intent.FLAG_ACTIVITY_NO_ANIMATION);
 	        context.startActivity(welcome);
 	}
 }

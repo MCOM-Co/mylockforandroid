@@ -34,9 +34,6 @@ public class ManageWakeLock {
 
     SharedPreferences myPrefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-    //ManageKeyguard.disableKeyguard(context);
-    //we won't disable KG with this as our welcome activity does it automatically
-
     int flags;
 
     flags = PowerManager.SCREEN_DIM_WAKE_LOCK;
@@ -77,11 +74,9 @@ public class ManageWakeLock {
     }
 
     
-
-myPartialWakeLock = myPM.newWakeLock(
-        PowerManager.PARTIAL_WAKE_LOCK |
-        PowerManager.ACQUIRE_CAUSES_WAKEUP |
-        PowerManager.ON_AFTER_RELEASE, "Welcomepartial");
+//a partial is just a "cpu is awake"
+    //not sure what it helps accomplish
+myPartialWakeLock = myPM.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "customLock");
 myPartialWakeLock.acquire();
   }
 

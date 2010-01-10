@@ -26,10 +26,7 @@ public class LockActivity extends Activity {
         private Handler serviceHandler;
         private Task myTask = new Task();
         
-        private boolean unlock = false;
-        //we will set this true if we want the screen wake to close the lockscreen
-        //a key event that should not unlock will set it false
-        //the key event handling default case sets true when it isn't a locked key
+        //private boolean unlock = false;
         
         //very very complicated business.
         @Override
@@ -39,26 +36,32 @@ public class LockActivity extends Activity {
         requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
         //removed | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
-        //removed | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-        //removed | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-        //these were only used for ensuring it would work and come up when secure pattern was on
-        //they also wake it up from sleep and cause stay awake
+        /*
+         * this flag pushes the activity up and gets it ready at screen off but lockscreen rules stay in effect
+         * that means when finish is called, we see the lockscreen again
+         * that means this flag is good for showing a custom lockscreen to user
+         * it would have to be paired with the current full exit method after that
+         * to be of any use
+         */
         
-        //i'm going to try calling the activity when screen sleeps, without waking up
-        //and go from there
+        /*
+         * with dismiss keyguard, same happens but every key wakes phone after that (no lockscreen rules)
+         * therefore, we can set up wakelock manipulation and set customization
+         * so user chooses which buttons fire the shorter wakelock vs which will exit (perceived as unlock)
+        */
         
-        //if we stop dismissing kg and do show when locked instead
-        //it should let us grab and release a wakelock 3 sec timer or timer of choice
-        //we want a very short timeout if it isn't an unlock key.
+        //issue right now is that I cannot get the wakelock to behave as expected.
+        //the screen is staying on when we release, when documentation says it shouldn't
+        
         updateLayout();
         
         serviceHandler = new Handler();
         
-        //next, register for screen on broadcast so we can autolyze when the user opens the screen
-        IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
-        registerReceiver(screenon, onfilter);
+        //IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
+        //registerReceiver(screenon, onfilter);
         }
         
+        /*
         BroadcastReceiver screenon = new BroadcastReceiver() {
     		
     		public static final String TAG = "screenon";
@@ -70,12 +73,11 @@ public class LockActivity extends Activity {
     		public void onReceive(Context context, Intent intent) {
     			if (!intent.getAction().equals(Screen)) return;
     			Log.v(TAG,"screen on happened");
-    			//SharedPreferences settings = getSharedPreferences("myLock", 0);
-    			//boolean welcome = settings.getBoolean("welcome", false);
-    			
-    			//StartLock(context);
-    			if (unlock) finish();
-    }};
+    	
+    			if (unlock) {
+    				finish();
+     			}
+    }};*/
         
         //has something to do with whether we see what was behind or see a fullscreen with wallpaper BG
         protected View inflateView(LayoutInflater inflater) {
@@ -88,12 +90,12 @@ public class LockActivity extends Activity {
         setContentView(inflateView(inflater));
     }
         
-        /*
+        
         @Override
     public void onBackPressed() {
         // Don't allow back to dismiss.
         return;
-    }*/
+    }
     
     protected void onPostCreate(Bundle savedInstanceState) {
                 super.onPostCreate(savedInstanceState);
@@ -101,8 +103,12 @@ public class LockActivity extends Activity {
     
     class Task implements Runnable {
                 public void run() {
-                        ManageWakeLock.releaseFull();
-                }
+                	finish();
+                	//if (unlock) finish();
+                	//else ManageWakeLock.releaseFull();
+                	//problem is screen doesn't go off
+                	//the expected behavior of the PM is not happening
+                	}
     }
     
     @Override
@@ -119,7 +125,7 @@ public class LockActivity extends Activity {
        serviceHandler.removeCallbacks(myTask);
        serviceHandler = null;
       
-       unregisterReceiver(screenon);
+       //unregisterReceiver(screenon);
         
         Log.v("destroyWelcome","Destroying");
     }
@@ -139,29 +145,28 @@ public class LockActivity extends Activity {
                     }
                 
                 //do something like schedule a very fast screen off
-                //might be so fast user never sees screen come on
-                //example
-                //serviceHandler = new Handler(); -- moved to oncreate
-                Log.v("key event","locked keys are happening");                
-                //ManageWakeLock.releaseFull();
-                //ManageWakeLock.goToSleep(getApplicationContext()); complete fail
-                unlock = false;
-                //serviceHandler.postDelayed(myTask, 1L);//this task releases the WL
-                //the problem here is that it seems the first press never registers here.
+                
+                Log.v("key event","locked keys are happening");
+              //the problem here is that it seems the first press never registers here
                 //the 2nd try always gets the log items
+       
+                //unlock = false;
+                                
+                //serviceHandler.postDelayed(myTask, 1000L);
+                //possible workaround here would be to send the power key event
+                //don't know if it is possible to generate that and cause OS to force sleep
                 
                 
                 return true;
-                //returning true means we handled the event so don't pass the buck
-                //this would mean we keep it locked while returning true for these
-                //the break means that it doesn't handle it on up, but on down.
+                //returning true means we handled the event so don't pass it to other processes
             
                 default:
                 	Log.v("key event","unlock keys are happening");
-                	unlock = true;
+                	//unlock = true;
+                	serviceHandler.postDelayed(myTask, 1L);
                 break;
-                //this means that all other key events just break
-                //meaning they are passed on for other handling
+                //break without return means pass on to other processes
+                //don't consume the press
         }
         return super.dispatchKeyEvent(event);
     }
