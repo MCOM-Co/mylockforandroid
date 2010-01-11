@@ -6,7 +6,7 @@ So far I've researched and the only thing turned up is some info on system setti
 
 _<uses-permission android:name="android.permission.WRITE_SETTINGS" />_
 
-I've got some code that works in myLock lite, allowing the widget to service as a quick disengage for secure pattern mode and re-engages with you same stored pattern when you disable it.
+I've got some code that works in myLock lite, allowing the widget to double as a quick disengage for secure pattern mode and re-engage it with your same stored pattern when you turn it off.
 
 At first start of the service (happens on click of the widget button
 {{{
