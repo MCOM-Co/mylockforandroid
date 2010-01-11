@@ -4,17 +4,30 @@
 
 So far I've researched and the only thing turned up is some info on system settings. I need to check out the source for the stock settings activity to determine how feasible this is. I'm told there is an app AutoLock which seems like it might be skipping the lock in an interesting fashion, doing a delay before lockscreen kicks in. To me this seems to mean that you wake it back up without any unlock slider until the set time elapses, then you would see the pattern or lockscreen.
 
-_"update system set value=0 where name='lock_pattern_autolock';"
-<uses-permission android:name="android.permission.WRITE_SETTINGS" />_
+_<uses-permission android:name="android.permission.WRITE_SETTINGS" />_
 
+I've got some code that works in myLock lite, allowing the widget to service as a quick disengage for secure pattern mode and re-engages with you same stored pattern when you disable it.
 
+At first start of the service (happens on click of the widget button
 {{{
-Settings.System.putInt(this.getContentResolver(), "mySetting", 1); 
-int setting = 0; 
-try { 
-    setting = Settings.System.getInt(this.getContentResolver(), "mySetting"); 
-} catch (SettingNotFoundException e) { 
-    Log.e(LOG_TAG, "Setting mySetting not found"); 
-} 
-Log.i(LOG_TAG, "Setting mySetting: " + setting);
+try {
+			patternsetting = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.LOCK_PATTERN_ENABLED);
+		} catch (SettingNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		if (patternsetting == 1) {    	
+    	android.provider.Settings.System.putInt(getContentResolver(), 
+    			android.provider.Settings.System.LOCK_PATTERN_ENABLED, 0); 
+    	//tries turning off the lock pattern
+		}
+}}}
+
+At ondestroy
+{{{
+if (patternsetting == 1) {
+			android.provider.Settings.System.putInt(getContentResolver(), 
+    			android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
+    	//re-enable pattern lock if applicable
 }}}
