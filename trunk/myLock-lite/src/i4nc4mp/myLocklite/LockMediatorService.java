@@ -13,6 +13,7 @@ import android.provider.Settings.SettingNotFoundException;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.Toast;
 
 /* 
  * The lockscreen is a gatekeeper with rules we have to play by. 
@@ -91,7 +92,9 @@ public class LockMediatorService extends Service {
     	//re-enable pattern lock if applicable
 		}
 			
-			if (unlocked) { 
+			if (unlocked) {
+				//TODO post a handler delay of 1 second here
+				//maybe even move this logic to the toggler
 				ManageKeyguard.reenableKeyguard();
 				//restart the lockscreen, this follows the rules of the lockscreen gatekeeper
 				unlocked = false;
@@ -115,15 +118,8 @@ public class LockMediatorService extends Service {
 		
 		//need to do first inits
 		Log.v("first-start", "init service");
-		
-		activate();
-		
-		initPhoneListen();
-   		
-    	initialized = true;//protect it from retrying any of the init commands
-    	
-    	//find out if the user has lock pattern on
-    	try {
+		//find out if the user has lock pattern on
+		try {
 			patternsetting = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.LOCK_PATTERN_ENABLED);
 		} catch (SettingNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -135,6 +131,12 @@ public class LockMediatorService extends Service {
     			android.provider.Settings.System.LOCK_PATTERN_ENABLED, 0); 
     	//tries turning off the lock pattern
 		}
+		
+		activate();
+		
+		initPhoneListen();
+   		
+    	initialized = true;//protect it from retrying any of the init commands    	
     	
     	return 1;
 	}
@@ -302,51 +304,52 @@ void pause() {
 	doNotify(true);//pass notification of change
 }
 
-void doNotify(boolean stopping) {
-	//instead of toast use notification to tell user that service has started or stopped
+void doNotify(boolean stopping) {//to support the Lite vision, no notifications only Toast
 	
-	String ns = Context.NOTIFICATION_SERVICE;
-	NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
+	//String ns = Context.NOTIFICATION_SERVICE;
+	//NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
 	
-	int icon = R.drawable.icon;
+	//int icon = R.drawable.icon;
 	
-	CharSequence contentTitle = "myLock";
-	CharSequence tickerText = "myLock lite is starting";
-	CharSequence contentText = "lockscreen has been disabled";
-	if (receivingcall || placingcall) tickerText = "myLock will now resume";
+	//CharSequence contentTitle = "myLock";
+	//CharSequence tickerText = "myLock lite is starting";
+	//CharSequence contentText = "lockscreen has been disabled";
+	
+	String update = "Lockscreen has been disabled";
+	if (patternsetting == 1) update = "Pattern lockdown disabled";
+	if (receivingcall || placingcall) update = "myLock will now resume";
 	
 	if (stopping) {
-		tickerText = "myLock lite is stopping";
-		contentText = "lockscreen has been re-enabled";
+		//tickerText = "myLock lite is stopping";
+		//contentText = "lockscreen has been re-enabled";
+		update = "Lockscreen has been re-enabled";
+		if (patternsetting == 1) update = "Pattern lockdown restored";
 		if (receivingcall || placingcall) {
-			tickerText = "myLock must pause for call";
-			contentText = "call in progress";
+			//tickerText = "myLock must pause for call";
+			//contentText = "call in progress";
+			update = "myLock is pausing due to call";
 		}
 		
 	}
-		
-	long when = System.currentTimeMillis();
+	Toast.makeText(LockMediatorService.this, update, Toast.LENGTH_LONG).show();	
+	
+	//long when = System.currentTimeMillis();
 
-	Notification notification = new Notification(icon, tickerText, when);
+	//Notification notification = new Notification(icon, tickerText, when);
 	
-	Context context = getApplicationContext();
-	
-	
-	//Intent clickIntent = new Intent("i4nc4mp.myLock.intent.action.TOGGLE_LOCKSCREEN");
-	//PendingIntent contentIntent = PendingIntent.getBroadcast(context, 0, clickIntent, 0);
-	//TODO sometime it seems intent would be better for this
-	//for now we are just going to use an intent for Toggler service start command.
-	
-	Intent i = new Intent();
-	i.setClassName("i4nc4mp.myLocklite", "i4nc4mp.myLocklite.Toggler");
-	PendingIntent contentIntent = PendingIntent.getService(context, 0, i, 0);
+	//Context context = getApplicationContext();
 	
 	
-	notification.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+	//Intent i = new Intent();
+	//i.setClassName("i4nc4mp.myLocklite", "i4nc4mp.myLocklite.Toggler");
+	//PendingIntent contentIntent = PendingIntent.getService(context, 0, i, 0);
 	
-	final int SVC_ID = 1;
 	
-	mNotificationManager.notify(SVC_ID, notification);
+	//notification.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+	
+	//final int SVC_ID = 1;
+	
+	//mNotificationManager.notify(SVC_ID, notification);
 }
 
 }

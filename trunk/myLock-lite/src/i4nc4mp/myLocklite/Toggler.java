@@ -54,7 +54,8 @@ public class Toggler extends Service {
 	private void TryToggle() {
 		if (!triedstart) {
 			startService();
-			Toast.makeText(Toggler.this, "intializing myLock lite", Toast.LENGTH_SHORT).show();
+			//Toast.makeText(Toggler.this, "intializing myLock lite", Toast.LENGTH_SHORT).show();
+			//all toasting moved to Mediator
 			triedstart = true;
 		}
 		//first attempt to start. the service does nothing if already initialized
