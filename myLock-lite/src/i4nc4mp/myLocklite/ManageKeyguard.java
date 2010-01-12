@@ -1,6 +1,7 @@
 package i4nc4mp.myLocklite;
 //Thanks for this code from the open source SMSPopup project
 //Nice wrapped up tool that gets us cleanly in and out of keyguard management
+//I added some documentation to certain parts to help explain the keyguardmanager facet of android.
 
 
 import android.app.KeyguardManager;
@@ -36,15 +37,20 @@ public class ManageKeyguard {
     }
   }
 
-  //this checks if the keyguard is even on... it actually can't distinguish between password mode or not
-  //I've learned that this returns true even if you've done disable
-  //that's because disable is just HIDING the lockscreen.
+  //the following checks if the keyguard is even on...
+  //it actually can't distinguish between password mode or not
+  //I've learned that this returns true even if you've done the above disable
+  //that's because disable is just hiding or pausing the lockscreen.
+  
+  //the only time this returns false is if we haven't ever done an init
+  //or we have already securely exited
+  //the OS also seems to automatically do a secure exit when you press home
   public static synchronized boolean inKeyguardRestrictedInputMode() {
     if (myKM != null) {
       //Log.v(TAG,"--inKeyguardRestrictedInputMode = " + myKM.inKeyguardRestrictedInputMode());
       return myKM.inKeyguardRestrictedInputMode();
     }
-    Log.v("KGcheckfail","The MK couldn't see myKM to do the check");
+    
     return false;
   }
 
@@ -58,12 +64,19 @@ public class ManageKeyguard {
     }
   }
 
+  //this only can be used after we have paused/hidden the lockscreen with a disablekeyguard call
+  //otherwise the OS logs "verifyunlock called when not externally disabled."
   public static synchronized void exitKeyguardSecurely(final LaunchOnKeyguardExit callback) {
     if (inKeyguardRestrictedInputMode()) {
       Log.v(TAG,"--Trying to exit keyguard securely");
       myKM.exitKeyguardSecurely(new OnKeyguardExitResult() {
         public void onKeyguardExitResult(boolean success) {
           reenableKeyguard();
+          //this call ensures the keyguard comes back at screen off
+          //without this call, all future disable calls will be blocked
+          //for not following the lockscreen rules
+          //in other words reenable immediately restores a paused lockscreen
+          //and queues restore for next screen off if a secure exit has been done
           if (success) {
             Log.v(TAG,"--Keyguard exited securely");
             callback.LaunchOnKeyguardExitSuccess();

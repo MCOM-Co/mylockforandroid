@@ -1,9 +1,7 @@
 package i4nc4mp.myLocklite;
 
 import android.app.Service;
-import android.content.ComponentName;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
@@ -41,14 +39,14 @@ public class Toggler extends Service {
 		
 	private void startService(){
 			Intent i = new Intent();
-			i.setClassName("i4nc4mp.myLocklite", "i4nc4mp.myLocklite.KGSkipService");
+			i.setClassName("i4nc4mp.myLocklite", "i4nc4mp.myLocklite.LockMediatorService");
 			startService(i);
 			Log.d( getClass().getSimpleName(), "startService()" );
 	}
 
 	private void stopService() {
 			Intent i = new Intent();
-			i.setClassName("i4nc4mp.myLocklite", "i4nc4mp.myLocklite.KGSkipService");
+			i.setClassName("i4nc4mp.myLocklite", "i4nc4mp.myLocklite.LockMediatorService");
 			stopService(i);
 			Log.d( getClass().getSimpleName(), "stopService()" );
 	}
