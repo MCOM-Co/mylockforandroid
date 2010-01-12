@@ -33,7 +33,7 @@
         <receiver
       android:name=".ClearAllReceiver" />
                 
-        <service android:name=".KGSkipService">
+        <service android:name=".LockMediatorService">
         </service>
     </application>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -41,6 +41,8 @@
     android:name="android.permission.WAKE_LOCK" />
     <uses-permission
     android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission
+    android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission
     android:name="android.permission.READ_PHONE_STATE" />
     <uses-sdk android:minSdkVersion="6" />
