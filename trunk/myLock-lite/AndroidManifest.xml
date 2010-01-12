@@ -11,13 +11,15 @@
     	<meta-data android:name="android.appwidget.provider"
                android:resource="@xml/toggle_widget" />
 </receiver>        
-        <service android:name=".KGSkipService">
+        <service android:name=".LockMediatorService">
         </service>
         <service android:name=".Toggler">
         </service>
     </application>
     <uses-permission
     android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission
+    android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission
     android:name="android.permission.READ_PHONE_STATE" />
     <uses-sdk android:minSdkVersion="6" />

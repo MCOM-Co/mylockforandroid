@@ -5,6 +5,7 @@ package i4nc4mp.myLocklite;
 //how this works - the widget sends a broadcast when it is clicked
 //the broadcast is picked up by Toggler service which just tries toggle in its onstart
 
+//try making it toggle off secure lock at the same time as the skip is toggled on.
 
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
@@ -17,14 +18,12 @@ import android.widget.RemoteViews;
 
 public class ToggleWidget extends AppWidgetProvider {
 	
-	//intent that comes back to the widget as an update call so it can toggle states and launch the service
+	//TODO custom intent string
 	//"i4nc4mp.myLock.intent.action.TOGGLE_LOCKSCREEN"
+	
 	public boolean enabled = false;
 	@Override 
     public void onEnabled(Context context) {	
-		//Log.v("toggle_widget","Enabled is being called");
-		//this command needs to schedule onupdate to occur in 1 second
-		//then change the update frequency to never
 		
 		AppWidgetManager mgr = AppWidgetManager.getInstance(context);
 		//retrieve a ref to the manager so we can pass a view update
@@ -55,7 +54,6 @@ public class ToggleWidget extends AppWidgetProvider {
 			
 		//Intent clickintent = new Intent ("i4nc4mp.myLock.intent.action.TOGGLE_LOCKSCREEN");
 		//PendingIntent myPI = PendingIntent.getBroadcast(context, 0, clickintent, 0);
-		//make the click send broadcast that will actually call our on-update
 				
 		Intent i = new Intent();
 		i.setClassName("i4nc4mp.myLocklite", "i4nc4mp.myLocklite.Toggler");
