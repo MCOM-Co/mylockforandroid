@@ -17,8 +17,6 @@ import android.widget.Toast;
 
 
 public class SettingsActivity extends Activity {
-	private IMyRemoteService KGSkipService;
-	private RemoteServiceConnection conn = null;
 	
 	//private SharedPreferences settings = null;
 	//private SharedPreferences.Editor editor = null;
@@ -118,15 +116,14 @@ public class SettingsActivity extends Activity {
     
     private void startService(){
    			Intent i = new Intent();
-   			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.KGSkipService");
+   			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LockMediatorService");
    			startService(i);
    			Log.d( getClass().getSimpleName(), "startService()" );
    		}
     
     private void stopService() {
-    		releaseService();
 			Intent i = new Intent();
-			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.KGSkipService");
+			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LockMediatorService");
 			stopService(i);
 			Log.d( getClass().getSimpleName(), "stopService()" );
 			Toast.makeText(SettingsActivity.this, "myLock has been stopped", Toast.LENGTH_SHORT).show();
@@ -162,51 +159,9 @@ public class SettingsActivity extends Activity {
 		ManageWakeLock.DoCancel(getApplicationContext(), 100);//sets a 10 second timeout
 		Toast.makeText(SettingsActivity.this, "auto-sleep re-enabled", Toast.LENGTH_SHORT).show();
     }
-    
-    private void bindService() {
-		if(conn == null) {
-			conn = new RemoteServiceConnection();
-			Intent i = new Intent();
-			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.KGSkipService");
-			
-			bindService(i, conn, 0);
-			//if(bindService(i, conn, Context.BIND_AUTO_CREATE)) {
-			//Log.v("bind","true result for bindservice");}
-			
-		}
-		else {
-	        //redundancy catcher
-			Log.v("bind","bind was called redundantly, conn already existed");
-		}
-	}
-
-private void releaseService() {
-		if(conn != null) {
-			unbindService(conn);
-			conn = null;
-			Log.d( getClass().getSimpleName(), "releaseService()" );
-		} else {
-			//Toast.makeText(SettingsActivity.this, "Cannot unbind - service not bound", Toast.LENGTH_SHORT).show();
-			//do nothing because user doesn't manually unbind anymore
-		}
-}
-
-class RemoteServiceConnection implements ServiceConnection {
-    public void onServiceConnected(ComponentName className, 
-		IBinder boundService ) {
-      KGSkipService = IMyRemoteService.Stub.asInterface((IBinder)boundService);
-      Log.d( getClass().getSimpleName(), "onServiceConnected()" );
-    }
-
-    public void onServiceDisconnected(ComponentName className) {
-      KGSkipService = null;
-	  Log.d( getClass().getSimpleName(), "onServiceDisconnected" );
-    }
-};
 
 protected void onDestroy() {
 	  super.onDestroy();
-	  releaseService();//kill the reference
 	  Log.d( getClass().getSimpleName(), "onDestroy()" );
 	}
 }

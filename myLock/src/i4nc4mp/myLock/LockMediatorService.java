@@ -12,45 +12,48 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.provider.Settings.SettingNotFoundException;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
-public class KGSkipService extends Service {
-	
-	//private boolean wakeupscreen = false;
-	//whether wakeup homescreen will be brought up
-	//default is quick mode that just does the skip
-	
-	//for now we will just check this in prefs every time
+public class LockMediatorService extends Service {
 	
 	private Handler serviceHandler;
 	private Task myTask = new Task();
 	//we use a handler and a task thread to cleanly get final keyguard exit on every wakeup
 	
-	public boolean started = false;
+	public boolean initialized = false;
 	//flag to keep track of whether it is a first start command
 	//this is because we normally start at device boot but user starts after first install with toggle btn
 	//start gets called to flip the FG mode also, and also when the settings toggler goes to stop the service
 	
 	
-	public boolean skipactive = false;
+	public boolean active = false;
 	//to stop redundant receiver registration calls when a user answers an incoming call
 	
 	public boolean isFG = false;
 	//flag to keep track of whether FG mode is running.
 	
+/*Phone Status Flags*/
+	public int lastphonestate = 100;
+	//because we receive a state change to 0 when listener starts
+	
+	public boolean receivingcall = false;
+	//true when state 1 to 2 occurs
+	public boolean placingcall = false;
+	//true when state 0 to 2 occurs
+	
+/*Settings Flags*/	
+	public int patternsetting = 0;
+	//we'll see if the user has pattern enabled when we startup
+	//so we can disable it and then restore when we finish
+	
 	@Override
 	public IBinder onBind(Intent arg0) {
 		Log.d(getClass().getSimpleName(), "onBind()");
-		return myRemoteServiceStub;
+		return null;//we don't bind
 	}
-
-	private IMyRemoteService.Stub myRemoteServiceStub = new IMyRemoteService.Stub() {
-		public void ToggleFG() throws RemoteException {
-			return;
-		}
-	};
 	
 	@Override
 	public void onCreate() {
@@ -67,7 +70,13 @@ public class KGSkipService extends Service {
 		
 		Log.d(getClass().getSimpleName(),"onDestroy()");
 		
-		cancelSkip();//disengage from screen broadcasts
+		pause();//disengage from screen broadcasts
+		
+		if (patternsetting == 1) {
+			android.provider.Settings.System.putInt(getContentResolver(), 
+    			android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
+    	//re-enable pattern lock if applicable
+		}
 	}
 	
 	@Override
@@ -81,7 +90,7 @@ public class KGSkipService extends Service {
 		boolean wake = settings.getBoolean("StayAwake", false);
 		boolean welcome = settings.getBoolean("welcome", false);
 		
-		if (started) {
+		if (initialized) {
 			Log.v("re-start", "start command received, checking FG for change");
 					
 			if (isFG == fgpref) return 1;//don't do anything if the pref is still our same mode
@@ -109,7 +118,7 @@ public class KGSkipService extends Service {
 		serviceHandler = new Handler();
 		//handler takes care of delaying our secure KG exit to satisfy security settings in the OS
 			
-		initSkip();//registers to receive the screen broadcasts
+		activate();//registers to receive the screen broadcasts
 		
 		  	
     	//register with the telephony mgr to make sure we can read call state
@@ -128,8 +137,22 @@ public class KGSkipService extends Service {
 		else {
 			Log.v("first-start", "starting without fg mode due to user pref");
 		}
+        
+    /*===imported pattern mode disabler from Lite version===*/
+        try {
+			patternsetting = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.LOCK_PATTERN_ENABLED);
+		} catch (SettingNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		if (patternsetting == 1) {    	
+    	android.provider.Settings.System.putInt(getContentResolver(), 
+    			android.provider.Settings.System.LOCK_PATTERN_ENABLED, 0); 
+    	//tries turning off the lock pattern
+		}
 		        
-        /*the screen on broadcast doesn't get received at boot because we just registered too late*/
+    /*the screen on broadcast doesn't get received at boot because we just registered too late*/
     	
     	if(!welcome) {//when we are in quick mode only    		
     		Log.v("first-start", "Quick mode first KG exit");
@@ -145,12 +168,12 @@ public class KGSkipService extends Service {
     		//If it were possible to get key input from a service we'd initialize it here
     		//initialize accelerometer watcher here
         
-    	started = true;//protect it from retrying any of the init commands
+    	initialized = true;//protect it from retrying any of the init commands
     	
     	return 1;
 	}
 	
-	PhoneStateListener Detector = new PhoneStateListener() {
+PhoneStateListener Detector = new PhoneStateListener() {
       	
 		/*
 		CALL_STATE_IDLE is 0 - this state comes back when calls end
@@ -162,26 +185,70 @@ public class KGSkipService extends Service {
     	@Override
     	public void onCallStateChanged(int state, String incomingNumber) 
         {
-    		Log.v("statechange",state + " " + incomingNumber);
-    		//this revealed that incoming number is blank when not an incoming call
-    		//who would have thought?
-    		
-            if(state!=0) {
     		//0 to 1 when a call starts ringing
-            //1 to 2 when user answers a call
             //0 to 2 when user places a call
-            //2 to 0 when a call ends
+            
+            //1 to 2 when user answers a call
             //1 to 0 when a call is ignored/missed
-            	
-            cancelSkip();
-            //unregisters from broadcasts and sets a safety flag
-            //the flag stops the redundant try on changes from ringing to active
+            
+            //2 to 0 when a call ends
+            
+    		if (state == 2) {
+    			if (lastphonestate==1) {
+    				//if (!unlocked) callwakeup = true;
+    				//flag this so end of call can be handled for lockscreen restore
+    				
+    				//that's inconsistent if call ends while screen is asleep
+    				
+    				//it seems if user presses hangup the phone takes them to a visible lockscreen
+    				//as if they had pressed power
+    				
+    				//if other party hangs up it forces screen to sleep
+    				//and our disable doesn't wake it up but still disables lockscreen
+    				
+    				receivingcall = true;
+    			}
+    			
+    			if (lastphonestate==0) {
+    				//you can only place calls after unlocking
+                	placingcall = true;
+                }
+            
+            pause();
     		}
-    		else {
-    			//Change to 0 means call ended
-    			initSkip();
-    			//register again for screen broadcasts
+    		else if (state==1){
+//state 1, waiting call is ringing. users have requested a way to skip the incoming call lockscreen
+//we could spawn a dialog that allows the ringing call to be answered via key event
+//that's a TODO as I don't know how currently
+        	}
+    		else {//return to 0, call is ending
+    			
+    			if (lastphonestate == 100) Log.v("ListenInit","first phone listener init");
+    			else {//Change to 0 happens at first init as well as end of calls
+    			
+    		
+    			if (lastphonestate==2) {//state 1 to 0 is user ignored call, no pause occurs
+    				activate();
+    			
+    				/* need to use screen off events to properly know this
+    			if (callwakeup) {
+    			//incoming call woke device, so disable lockscreen for user
+    					ManageKeyguard.disableKeyguard(getApplicationContext());
+    					callwakeup = false;
+    					}*/
+    				
+    				//unlocked = true;
+    				//queue next screen off to restore lockscreen
+    				//(Lite mode only)
+    				
+    				receivingcall = false;
+    				placingcall = false;
+    				}
+    			}
     		}
+    		
+    		//all state changes store themselves so changes can be interpreted
+            lastphonestate = state;
         }
     };
     
@@ -263,24 +330,24 @@ public class KGSkipService extends Service {
                 //alpha functionality is to simply restore KG when screen is turned off
 }};*/
 
-void initSkip() {
-	if (skipactive) return;//protect from bad redundant calls
+void activate() {
+	if (active) return;//protect from bad redundant calls
 	
 	//register the receivers
 	IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
 	//IntentFilter offfilter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
 	registerReceiver(skip, onfilter);
 	//registerReceiver(guard, offfilter);
-	skipactive = true;
+	active = true;
 }
 
-void cancelSkip() {
-	if (!skipactive) return;//protect from bad redundant calls
+void pause() {
+	if (!active) return;//protect from bad redundant calls
 	
 	//destroy the receivers
 	unregisterReceiver(skip);
     //unregisterReceiver(guard);
-	skipactive = false;
+	active = false;
 }
 
 void doFGstart(boolean wakepref, boolean welcomepref) {
@@ -322,11 +389,14 @@ void doFGstart(boolean wakepref, boolean welcomepref) {
 private void StartWelcome(Context context) {
 	
 	//TODO this needs to respect stay awake setting
-	SharedPreferences settings = getSharedPreferences("myLock", 0);
-    boolean wake = settings.getBoolean("StayAwake", false);
+	//SharedPreferences settings = getSharedPreferences("myLock", 0);
+    //boolean wake = settings.getBoolean("StayAwake", false);
     
-	ManageWakeLock.acquireFull(context);
-	if (!wake) ManageWakeLock.DoCancel(context,20);
+	//ManageWakeLock.acquireFull(context);
+	//if we don't have a wakelock this often fails to wake up screen
+	//resulting in user confusion as screen wakes then sleeps again in quick succession
+	//not sure why it does this
+	//if (!wake) ManageWakeLock.DoCancel(context,20);
 	
 	Intent closeDialogs = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
 	        context.sendBroadcast(closeDialogs);
@@ -339,8 +409,9 @@ private void StartWelcome(Context context) {
 	         * so that the current app's notification management is not disturbed */
 	        Intent welcome = new Intent(context, w);
 	        
-	        welcome.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-	                | Intent.FLAG_ACTIVITY_NO_USER_ACTION);
+	        welcome.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+	                //| Intent.FLAG_ACTIVITY_NO_USER_ACTION);
+	        //this flag might be responsible for the immediate screen off
 	        context.startActivity(welcome);
 	}
 }

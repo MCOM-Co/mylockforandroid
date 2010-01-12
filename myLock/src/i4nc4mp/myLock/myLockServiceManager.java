@@ -13,7 +13,7 @@ public class myLockServiceManager extends BroadcastReceiver {
 	 public void onReceive(Context context, Intent intent) {
 	  // just make sure we are getting the right intent (better safe than sorry)
 	  if( "android.intent.action.BOOT_COMPLETED".equals(intent.getAction())) {
-	   ComponentName comp = new ComponentName(context.getPackageName(), KGSkipService.class.getName());
+	   ComponentName comp = new ComponentName(context.getPackageName(), LockMediatorService.class.getName());
 	   ComponentName service = context.startService(new Intent().setComponent(comp));
 	   Log.v("boot_complete","The service loaded at boot!");
 	   if (null == service){
