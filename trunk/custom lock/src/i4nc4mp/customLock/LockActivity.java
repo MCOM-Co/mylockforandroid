@@ -7,6 +7,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PowerManager;
+import android.os.SystemClock;
+import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -26,7 +29,7 @@ public class LockActivity extends Activity {
         private Handler serviceHandler;
         private Task myTask = new Task();
         
-        //private boolean unlock = false;
+        private int timeoutsetting = 15;
         
         //very very complicated business.
         @Override
@@ -50,34 +53,24 @@ public class LockActivity extends Activity {
          * so user chooses which buttons fire the shorter wakelock vs which will exit (perceived as unlock)
         */
         
-        //issue right now is that I cannot get the wakelock to behave as expected.
-        //the screen is staying on when we release, when documentation says it shouldn't
-        
         updateLayout();
         
         serviceHandler = new Handler();
         
-        //IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
-        //registerReceiver(screenon, onfilter);
+      //retrieve the user's normal timeout setting - SCREEN_OFF_TIMEOUT
+    	try {
+            timeoutsetting = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.SCREEN_OFF_TIMEOUT);
+    } catch (SettingNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+    }//this setting will be restored at finish
+    
+    //Next, change the setting to 0 seconds
+    android.provider.Settings.System.putInt(getContentResolver(), 
+            android.provider.Settings.System.SCREEN_OFF_TIMEOUT, 0);
+    //the device behavior ends up as just over 5 seconds when we do this.
+    //when we set 1 here, it comes out 6.5 to 7 seconds between timeouts.
         }
-        
-        /*
-        BroadcastReceiver screenon = new BroadcastReceiver() {
-    		
-    		public static final String TAG = "screenon";
-    		public static final String Screen = "android.intent.action.SCREEN_ON";
-    		
-    		
-
-    		@Override
-    		public void onReceive(Context context, Intent intent) {
-    			if (!intent.getAction().equals(Screen)) return;
-    			Log.v(TAG,"screen on happened");
-    	
-    			if (unlock) {
-    				finish();
-     			}
-    }};*/
         
         //has something to do with whether we see what was behind or see a fullscreen with wallpaper BG
         protected View inflateView(LayoutInflater inflater) {
@@ -102,14 +95,11 @@ public class LockActivity extends Activity {
         }
     
     class Task implements Runnable {
-                public void run() {
-                	finish();
-                	//if (unlock) finish();
-                	//else ManageWakeLock.releaseFull();
-                	//problem is screen doesn't go off
-                	//the expected behavior of the PM is not happening
-                	}
-    }
+    	public void run() {                
+    		PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
+            pm.userActivity(SystemClock.uptimeMillis(), true);
+                   	}
+                }
     
     @Override
     protected void onStop() {
@@ -125,8 +115,17 @@ public class LockActivity extends Activity {
        serviceHandler.removeCallbacks(myTask);
        serviceHandler = null;
       
-       //unregisterReceiver(screenon);
-        
+       Intent i = new Intent();
+		i.setClassName("i4nc4mp.customLock", "i4nc4mp.customLock.CustomLockMediator");
+		startService(i);//tells the mediator user has unlocked
+       
+       //restore the users preference for timeout so that the screen will sleep as they expect
+		android.provider.Settings.System.putInt(getContentResolver(),
+				android.provider.Settings.System.SCREEN_OFF_TIMEOUT, timeoutsetting);
+		//then send a new userActivity call to the power manager
+		PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
+    	pm.userActivity(SystemClock.uptimeMillis(), false);
+    	
         Log.v("destroyWelcome","Destroying");
     }
     
@@ -144,15 +143,13 @@ public class LockActivity extends Activity {
                     break;
                     }
                 
-                //do something like schedule a very fast screen off
+            //do something like schedule a very fast screen off
                 
                 Log.v("key event","locked keys are happening");
-              //the problem here is that it seems the first press never registers here
-                //the 2nd try always gets the log items
        
-                //unlock = false;
-                                
-                //serviceHandler.postDelayed(myTask, 1000L);
+                //serviceHandler.postDelayed(myTask, 1L);
+                
+                                                
                 //possible workaround here would be to send the power key event
                 //don't know if it is possible to generate that and cause OS to force sleep
                 
@@ -162,8 +159,8 @@ public class LockActivity extends Activity {
             
                 default:
                 	Log.v("key event","unlock keys are happening");
-                	//unlock = true;
-                	serviceHandler.postDelayed(myTask, 1L);
+                	finish();
+                	
                 break;
                 //break without return means pass on to other processes
                 //don't consume the press

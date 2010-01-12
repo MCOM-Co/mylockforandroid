@@ -15,6 +15,11 @@ import android.util.Log;
 //the beauty of this is we can show it at the time the screen locks, so there is now no lag to wakeup
 public class CustomLockMediator extends Service {
 	
+	public boolean unlocked = true;
+	
+	public boolean started = false;
+	//just allow us to do init commands once and let repeat start commands do other things
+	
 	@Override
 	public IBinder onBind(Intent arg0) {
 		//Log.d(getClass().getSimpleName(), "onBind()");
@@ -42,17 +47,25 @@ public class CustomLockMediator extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		super.onStartCommand(intent, flags, startId);
 		
+		if (!started) {
 		IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
 		IntentFilter offfilter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
 		registerReceiver(screenon, onfilter);
 		registerReceiver(screenoff, offfilter);
+		started = true;
+		}
+		else if (!unlocked) {
+			unlocked = true;//flag ensures the receiver won't restart the Lock Activity
+			
+		}//when finish happens in the Lock Activity, it will send a start to Mediator
+			
 		
 		return 1;
 	}
 	
 	BroadcastReceiver screenon = new BroadcastReceiver() {
 		
-		public static final String TAG = "screenon";
+		public static final String TAG = "LockMediator";
 		public static final String Screen = "android.intent.action.SCREEN_ON";
 		
 		
@@ -61,39 +74,34 @@ public class CustomLockMediator extends Service {
 		public void onReceive(Context context, Intent intent) {
 			if (!intent.getAction().equals(Screen)) return;
 			Log.v(TAG,"screen on happened");
-			//SharedPreferences settings = getSharedPreferences("myLock", 0);
-			//boolean welcome = settings.getBoolean("welcome", false);
 			
-			//StartLock(context);	
 }};
 	
 	
 	BroadcastReceiver screenoff = new BroadcastReceiver() {
-        
-        public static final String TAG = "screenoff";
+       
+        public static final String TAG = "LockMediator";
         public static final String Screenoff = "android.intent.action.SCREEN_OFF";
 
         @Override
         public void onReceive(Context context, Intent intent) {
                 if (!intent.getAction().equals(Screenoff)) return;
-              Log.v(TAG,"screen off happened");  
-              StartLock(context);
+              Log.v(TAG,"screen off happened");
+              //only repeat lock activity if we were unlocked at time of screen off
+              //unlocked gets set by the finish of the Lock Activity
+              if (unlocked) {
+            	  unlocked = false;
+            	  StartLock(context);
+              }
+              //right now would be a good time to re-set the user's preferred timeout
+              //which we have to override for lock activity to function well
 }};
 
 private void StartLock(Context context) {
-	
-	ManageWakeLock.acquireFull(context);
-	//won't cause wakeup when acquire causes wakeup not set
-	//the documentation for power manager indicates that the device is supposed to sleep
-	//when any screen affecting wakelock is released
-	
-	//this one calls a screen dime wakeup that does not wake on acquire
-	//Lock activity sets to release it in 1 second when a locked key is pressed
 
 	Intent closeDialogs = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
 	        context.sendBroadcast(closeDialogs);
-
-
+	        
 	Class w = LockActivity.class;
 	       
 
