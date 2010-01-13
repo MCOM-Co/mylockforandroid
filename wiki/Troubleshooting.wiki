@@ -16,6 +16,8 @@ This appears to be something that happens regardless of myLock. An example is if
 
 = Known apps that conflict with stable myLock operation =
   * Handcent sms - popup feature tries to call a duplicate lockscreen disable due to pre 2.0 compatibility. Reportedly works with the alpha 1 release.
-  * Screebl - seems to work by reading the screen on and off events myLock also relies on but as far as I know it doesn't use lockscreen disabling. Users have reported it doesn't work correctly.
   * Not confirmed but it is likely sms popup also has same issue as handcent. I recommend using executive assistant and putting the widget on your homescreen. The sms tab is a great replacement for the popup feature.
+  * Screebl - seems to work by reading the screen on and off events myLock also relies on but as far as I know it doesn't use lockscreen disabling. Users have reported it doesn't work correctly.
+  * AutoLock - can't function to restore pattern unlock mode due to interference from our lockscreen disable commands. Auto pattern lockdown is planned for a future release.
+  * I'm going to assume you can't use Lock 2.0 or Lockbot since they are cosmetic themable lockscreens.
   * Any task killer - again we don't recommend these at all, not necessary on android. It will cause slowness.
