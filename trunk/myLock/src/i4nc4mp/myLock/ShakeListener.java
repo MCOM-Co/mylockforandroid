@@ -27,7 +27,11 @@ public class ShakeListener implements SensorEventListener{
 	 {
 	   public void onShake();
 	 }
-	 
+	 public ShakeListener(Context context)
+	 {
+	   mContext = context;
+	   resume();
+	 }
 	 public void setOnShakeListener(OnShakeListener listener)
 	 {
 	   mShakeListener = listener;

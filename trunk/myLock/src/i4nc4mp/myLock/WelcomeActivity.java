@@ -23,6 +23,8 @@ public class WelcomeActivity extends Activity {
 	private Handler serviceHandler;
 	private Task myTask = new Task();
 	
+	
+	private ShakeListener mShaker;
 	//very very complicated business.
 	@Override
     protected void onCreate(Bundle icicle) {
@@ -35,6 +37,27 @@ public class WelcomeActivity extends Activity {
         //removed this flag | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
         //without it, screen seems to sleep but keyguard doesn't come back
         updateLayout();
+        
+        mShaker = new ShakeListener(this);
+        mShaker.setOnShakeListener(new ShakeListener.OnShakeListener () {
+          public void onShake()
+          {
+            //TODO: this is where a shake gets detected and we remove the welcome screen
+          }
+        });
+	}
+	
+	@Override
+	public void onResume()
+	{
+	  mShaker.resume();
+	  super.onResume();
+	}
+	@Override
+	public void onPause()
+	{
+	  mShaker.pause();
+	  super.onPause();
 	}
 	
 	//has something to do with whether we see what was behind or see a fullscreen with wallpaper BG
