@@ -1,0 +1,14 @@
+#summary Quick breakdown of features in the current release builds
+
+= myLock complete alpha 2c =
+
+  * Toggle myLock on & off via the settings screen
+  * Toggle foreground mode which allows the service to run persistently & provides a shortcut to the settings screen in the notification menu.
+  * Toggle stay awake mode to keep the screen from sleeping, perfect for web browsing. Very easy to check on or off whenever you need it paired with the foreground mode shortcut.
+  * Toggle a preview version of our lockscreen replacement. It cannot yet house widgets & shortcuts so I don't recommend keeping it on but feel free to check it out.
+
+= myLock lite release 1a =
+  * Toggle myLock on & off via a widget button. No settings screen.
+  * Toggling myLock lite also turns off secure pattern mode. It does not erase your pattern though- so you can re-enter pattern lockdown instantly by pressing the widget button again anytime you like.
+  * myLock runs in quick mode, meaning no presence in notifications and the process may be killed by the OS if memory gets low. This occurrence seems very rare.
+  * Important to know: the quick mode pauses the lockscreen only, to minimize CPU lag. This means that the recent app switcher shortcut (home long press) and the search key may not respond immediately after unlock. To access these features, press home. The OS clears the hidden lockscreen when you do this, enabling those 2 features.
