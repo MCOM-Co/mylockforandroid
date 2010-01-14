@@ -20,6 +20,8 @@ public class CustomLockMediator extends Service {
 	public boolean started = false;
 	//just allow us to do init commands once and let repeat start commands do other things
 	
+	//public boolean lockdownmode = true;
+	
 	@Override
 	public IBinder onBind(Intent arg0) {
 		//Log.d(getClass().getSimpleName(), "onBind()");
@@ -41,12 +43,44 @@ public class CustomLockMediator extends Service {
 		unregisterReceiver(screenon);
 	    unregisterReceiver(screenoff);
 		//disengage from screen broadcasts
+		
 	}
 	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		super.onStartCommand(intent, flags, startId);
+		/*
+		Context context = getApplicationContext();
 		
+		if (lockdownmode) {
+			if (!started) {
+				//first init of the lockdown
+				Log.v("startcommand","Lockdown mode is starting");
+				
+				Class L = LockActivity.class;
+				
+				Intent Lock = new Intent(context, L);
+		        
+		        Lock.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+		                | Intent.FLAG_ACTIVITY_NO_ANIMATION);
+		        context.startActivity(Lock);
+				started = true;
+			}
+			else
+			{
+				//user has tried to leave the lockdown screen
+				//let's re-lock
+				Log.v("startcommand","Blocked user action");
+				
+				Class L = LockActivity.class;
+				
+				Intent Lock = new Intent(context, L);
+		        
+		        Lock.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+		                | Intent.FLAG_ACTIVITY_NO_ANIMATION);
+		        context.startActivity(Lock);
+			}
+		}*/
 		if (!started) {
 		IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
 		IntentFilter offfilter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
@@ -54,15 +88,19 @@ public class CustomLockMediator extends Service {
 		registerReceiver(screenoff, offfilter);
 		started = true;
 		}
-		else if (!unlocked) {
-			unlocked = true;//flag ensures the receiver won't restart the Lock Activity
+		else if (!unlocked) {//repeat start command comes in so set flag to restart Lock at screen off
+			unlocked = true;
 			
-		}//when finish happens in the Lock Activity, it will send a start to Mediator
+		}
+		
+		//when finish happens in the Lock Activity, it will send a new start to Mediator
+		//in lockdown mode, this repeat start is treated the same as the first start, lockdown again
+		//in lockscreen mode, it sets flag that will tell screen off to start the lockscreen
 			
 		
 		return 1;
 	}
-	
+
 	BroadcastReceiver screenon = new BroadcastReceiver() {
 		
 		public static final String TAG = "LockMediator";
@@ -97,6 +135,7 @@ public class CustomLockMediator extends Service {
               //which we have to override for lock activity to function well
 }};
 
+	
 private void StartLock(Context context) {
 
 	Intent closeDialogs = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
