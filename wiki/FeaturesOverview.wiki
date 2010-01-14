@@ -18,5 +18,4 @@
 == Upcoming enhancements ==
   * More tools for pattern users in both modes such as the option to have pattern mode turn back on automatically after an idle period you set
   * Widget toggle & quick mode option in complete release
-  * Shake support - toggle the option to do a shake to unlock.
   * More features & smoother operation for the lockscreen replacement option- add widgets & app shortcuts as well as a useful clock display with brightness and sound mode toggle buttons. Customize keys to your liking- any key can either instant unlock or wakeup the myLock lockscreen.
