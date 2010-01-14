@@ -6,7 +6,7 @@ It is an app whose primary function is to replace the lockscreen. It has several
 
 = Why did you make it? =
 The guiding principle is one simple fact: we don't like having to slide to unlock.
-We want to use the device as fast as we can press power, slide open the device, or do a shake. It's a little surprising that the option not to have the lockscreen isn't already built into the OS. Off, keyguard, or pattern lock seem like suitable choices for end users, so myLock wants to step in to provide the Off category. Although the OS has provided tools for making the lockscreen go away, they are only designed for use cases like pushing a popup to the screen automatically (such as the default alarm clock).
+We want to use the device on the first interaction, and not require a redundant slide action. It's a little surprising that the option not to have the lockscreen isn't already built into the OS. Off, keyguard, or pattern lock seem like suitable choices for end users, so myLock wants to step in to provide the Off category. Although the OS has provided tools for making the lockscreen go away, they are only designed for use cases like pushing a popup to the screen automatically (such as the default alarm clock). As a result we might go as far as doing a firmware mod for install on root devices to accomplish parts of the goal that are off-limits to regular apps.
 
 = But I want a quick way to disable pattern lock also, can myLock do this? =
 Yes we can. The Lite version implements this currently (started in v1a), automatically pausing pattern mode when myLock starts. It will automatically retain your pattern in the system settings and restart lockdown mode when you stop myLock.
