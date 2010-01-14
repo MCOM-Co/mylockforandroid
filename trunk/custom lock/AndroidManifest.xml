@@ -10,23 +10,20 @@
                 android:launchMode="singleInstance"
                 android:taskAffinity=""
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/> 
-                <!--android:theme="@android:style/Theme.Wallpaper.NoTitleBar"  -->
-        <receiver android:name=".customLockBootloader" 
-        android:enabled="true" 
-        android:exported="false"
-        android:label="customLockBootloader">
-        <intent-filter>
-        	<action android:name="android.intent.action.BOOT_COMPLETED" />
-        </intent-filter>
-        </receiver>
+        <receiver android:name="ToggleWidget" >
+			<intent-filter>
+        		<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+    		</intent-filter>
+    	<meta-data android:name="android.appwidget.provider"
+               android:resource="@xml/toggle_widget" />
+</receiver>        
+        <service android:name=".Toggler">
+        </service>
 	<service android:name=".CustomLockMediator">
         </service>
     </application>
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission
     android:name="android.permission.WRITE_SETTINGS" />
-    <uses-permission
-    android:name="android.permission.WAKE_LOCK" />
     <uses-permission
     android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-sdk android:minSdkVersion="6" />
