@@ -14,6 +14,12 @@ To get it working again you need to reboot the device by removing the battery fo
 = It seems to wakeup very slowly or lagged. Sometimes it goes so slow that the lockscreen never goes away but I can slide and unlock =
 This appears to be something that happens regardless of myLock. An example is if you slide it open you'll notice a responsiveness delay as the CPU tasks both rotating & redrawing the lockscreen at once. In addition, I've confirmed that task managers and task killer apps will create noticable lag as they have to frequently load the CPU anytime the screen is awakened to refresh their list of processes. We do not recommend using task management apps because android already polices memory usage very strictly to ensure stability. 
 
+= Sometimes I see the  lockscreen flash for an instant, or even linger for a moment after the phone wakes up=
+This happens in alpha 2b and beyond, because we have to tell the main android system that the lockscreen has been dismissed. That fails unless the screen has been awakened and a temporary lockscreen bypass has been initiated. Then we have to create a short delay (50 milliseconds) that the OS expects because the scenario they designed lockscreen bypassing for is where your app ends up getting input from the user that needs to launch something else, at which point it goes back and checks if a password lock was set. For whatever reason, when it does that the flash occurs when secure mode isn't on. If the CPU is loaded it can be up longer. That happens even if you are using the regular unlock of the lockscreen at load.
+
+= Why do the volume or camera buttons wake it back up sometimes? =
+This is one of the rules of the lockscreen. When a timeout sleep occurs you have a short grace period in which the lockscreen isn't yet engaged, thus allowing any action at all to awaken it again quickly. That means any button, as well as even sliding the slider closed which normally doesn't trigger a wakeup.
+
 = Known apps that conflict with stable myLock operation =
   * Handcent sms - popup feature tries to call a duplicate lockscreen disable due to pre 2.0 compatibility. Reportedly works with the alpha 1 release.
   * Not confirmed but it is likely sms popup also has same issue as handcent. I recommend using executive assistant and putting the widget on your homescreen. The sms tab is a great replacement for the popup feature.
