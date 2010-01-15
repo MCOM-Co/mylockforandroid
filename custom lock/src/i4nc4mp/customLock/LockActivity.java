@@ -96,8 +96,7 @@ public class LockActivity extends Activity {
     //when we set 1 here, it comes out 6.5 to 7 seconds between timeouts.
         }
         
-        //has something to do with whether we see what was behind or see a fullscreen with wallpaper BG
-        protected View inflateView(LayoutInflater inflater) {
+    protected View inflateView(LayoutInflater inflater) {
         return inflater.inflate(R.layout.lockactivity, null);
     }
 
@@ -226,7 +225,7 @@ public class LockActivity extends Activity {
         boolean up = event.getAction() == KeyEvent.ACTION_UP;
         //flags to true if the event we are getting is the up (release)
         switch (event.getKeyCode()) {
-            case KeyEvent.KEYCODE_VOLUME_UP:
+            //case KeyEvent.KEYCODE_VOLUME_UP:
             case KeyEvent.KEYCODE_VOLUME_DOWN:
             case KeyEvent.KEYCODE_FOCUS:
                 if (up) {
@@ -240,6 +239,7 @@ public class LockActivity extends Activity {
                 //returning true means we handled the event so don't pass it to other processes
                             
             case KeyEvent.KEYCODE_CAMERA:
+            case KeyEvent.KEYCODE_VOLUME_UP:
             	Log.v("key event","wake key");
             	awake = true;
             	setBright((float) 0.1);//tell screen to go on with 10% brightness
