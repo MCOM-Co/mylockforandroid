@@ -29,20 +29,14 @@ We're researching this. It is definitely possible. There is an app called wave s
 = Can you give preferences to answer incoming call without using the touchscreen too? =
 Not sure yet. This is a really good idea, as the "call lockscreen" does stand in your way just like the regular one.
 
-= Sometimes I see the  lockscreen flash for an instant, or even linger for a moment after the phone wakes up... WTF? =
-This happens in alpha 2b and beyond, because we have to tell the main android system that the lockscreen has been dismissed. That fails unless the screen has been awakened and a temporary lockscreen bypass has been initiated. Then we have to create a short delay (50 milliseconds) that the OS expects because the scenario they designed lockscreen bypassing for is where your app ends up getting input from the user that needs to launch something else, at which point it goes back and checks if a password lock was set. For whatever reason, when it does that the flash occurs when secure mode isn't on. If the CPU is loaded it can be up longer. That happens even if you are using the regular unlock of the lockscreen at load.
-
-= Why do the volume or camera buttons wake it back up sometimes? =
-This is one of the rules of the lockscreen. When a timeout sleep occurs you have a short grace period in which the lockscreen isn't yet engaged, thus allowing any action at all to awaken it again quickly. That means any button, as well as even sliding the slider closed which normally doesn't trigger a wakeup.
-
 = What's the welcome-screen/wakeup homescreen? =
 Tentatively titled WakeHome, we are designing a very simple emulation of the stock homescreen with just a single screen, capable of displaying any widget of your choice in addition to any shortcut or app launch icon. Simply a port of the those features from the stock Launcher app. Essentially this is the alternative to quick unlock function (which exists simply to bypass the lockscreen slider and take you to what you were last doing). This mode is inspired by the silencer slider/clock display on the default lockscreen. Why not just make it an extra homescreen and let the user decide what to put there?
 
 = What's notification preview? =
 This is a plan for the full final version of the app, way down the road. We think it would be excellent to have a timeline of missed events displayed on the wakeup screen, customized by user to what types of events have the priority of being shown there. A converged view for the timeline of any unread IMs, twitter, sms, email, missed call, voicemail. We might limit this to gmail, sms, gtalk, & gvoice and see how it goes.
 
-= It causes me a problem with <insert app name>... WTF? =
-it is hard to make the app play nice with other home or screenwake mods because they all rely on workarounds in android to work cleanly. when all these workarounds go in and try to execute in near-tandem, unexpected results will happen. I am aware it doesn't work with screebl and a few others. See the troubleshooting FAQ for more details.
+= It makes <insert app name> stop working... WTF? =
+It is hard to make the app play nice with other home or screenwake mods because they all rely on workarounds in android to work cleanly. when all these workarounds go in and try to execute in near-tandem, unexpected results will happen. See the Troubleshooting FAQ for more details and info on apps that may interfere with myLock's operation.
 
 = I can't find you on the market? =
 That's because myLock isn't on the market yet. I would really like to be, but I'm going to need some donations, as it costs a $25 fee for devs to join the market. I am choosing to create this app as a free & open source project to benefit android lovers, so I imagine once I place it in the app store I will have a donation version also allowing people to buy it for 2 dollars alongside the free download. myLock will never contain ads.
