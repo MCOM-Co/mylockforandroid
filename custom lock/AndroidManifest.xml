@@ -7,9 +7,20 @@
 <activity android:name="LockActivity"
                 android:excludeFromRecents="true"
                 android:theme="@android:style/Theme.Wallpaper"
-                android:launchMode="singleInstance"
+                android:launchMode="singleTask"
                 android:taskAffinity=""
-                android:configChanges="orientation|keyboardHidden|keyboard|navigation"/> 
+                android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>
+<activity android:name="Lockscreen"
+                android:excludeFromRecents="true"
+                android:theme="@android:style/Theme.Wallpaper"
+                android:launchMode="singleTask"
+                android:taskAffinity=""
+                android:configChanges="orientation|keyboardHidden|keyboard|navigation">
+                <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            </activity>
         <receiver android:name="ToggleWidget" >
 			<intent-filter>
         		<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
