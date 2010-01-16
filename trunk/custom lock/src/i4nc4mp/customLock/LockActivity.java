@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
@@ -178,6 +179,14 @@ public class LockActivity extends Activity {
     	}
     }
     
+    
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+    	super.onConfigurationChanged(newConfig);
+    	//this will be called when the keyboard is slideout
+    	//we can respond by waking up!
+    	
+    }
   
     @Override
     protected void onPause() {
