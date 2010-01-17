@@ -4,6 +4,7 @@ package i4nc4mp.myLock;
 import android.content.Context; 
 import android.content.SharedPreferences;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -31,22 +32,13 @@ public class ManageWakeLock {
       return;
     }
 
-    SharedPreferences myPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+    //SharedPreferences myPrefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-    //ManageKeyguard.disableKeyguard(context);
-    //we won't disable KG with this as our welcome activity does it automatically
 
     int flags;
 
-    if (myPrefs.getBoolean(context.getString(R.string.pref_dimscreen_key), Boolean
-        .parseBoolean(context.getString(R.string.pref_dimscreen_default)))) {
-      flags = PowerManager.SCREEN_DIM_WAKE_LOCK;
-    } else {
-      flags = PowerManager.SCREEN_BRIGHT_WAKE_LOCK;
-    }
-
-    flags |= PowerManager.ACQUIRE_CAUSES_WAKEUP;
-    // PowerManager.ON_AFTER_RELEASE;
+    flags = PowerManager.SCREEN_DIM_WAKE_LOCK;
+    
 
     myWakeLock = myPM.newWakeLock(flags, "acquire");
     Log.v("acquire","**Wakelock acquired");
@@ -65,9 +57,13 @@ public class ManageWakeLock {
     
   }
 
-  public static synchronized void DoCancel(Context context,int timeout) {
-	  //what it does is passes the int, *100 milis. So one second is 10
-	  ClearAllReceiver.setCancel(context, timeout);
+  public static synchronized void DoCancel(Context context) {
+	  //ClearAllReceiver.setCancel(context, timeout);
+	  //no longer use receiver, use userActivity instead to poke the preferred screen timeout
+	  
+	  PowerManager myPM = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+	  myPM.userActivity(SystemClock.uptimeMillis(), false);
+	  releaseAll();
   }
   
   public static synchronized void acquirePartial(Context context) {

@@ -1,22 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="welcome">myLock Settings</string>
-    <string name="app_name">myLock</string>
-<string name="toggleButton">Toggle lockscreen skip</string>
-<string name="fgBox">Place settings launcher in notifications</string>
-<string name="wakeBox">Keep screen awake</string>
-<string name="welcomeBox">Use widget welcome screen as lockscreen</string>
-
-<string name="welcomeTite">Welcome</string>
-
-<string name="pref_dimscreen_key">dimscreen</string>
-   <string name="pref_dimscreen_title">Dim Popup Screen</string>
-   <string name="pref_dimscreen_summaryon">Popup screen will be dim (saves battery)</string>
-   <string name="pref_dimscreen_summaryoff">Popup screen will be bright</string>
-   <string name="pref_dimscreen_default">false</string>
-   
-   <string name="pref_timeout_key">timeout</string>
-   <string name="pref_timeout_title">Screen Timeout</string>
-   <string name="pref_timeout_summary">The screen will sleep after this time</string>
-   <string name="pref_timeout_default">15</string>
+<string name="welcome">myLock Settings</string>
+<string name="app_name">myLock</string>
+<string name="toggleButton">Toggle myLock</string>
+<string name="fgBox">Persistent mode- Protects myLock from being killed by system, and provides settings shortcut notification</string>
+<string name="wakeBox">Keep screen and keypad backlight on</string>
+<string name="welcomeBox">Use widget lockscreen</string>
+<string name="bootBox">Start myLock at boot</string>
 </resources>

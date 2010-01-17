@@ -62,7 +62,7 @@ public class WelcomeActivity extends Activity {
 	
 	//has something to do with whether we see what was behind or see a fullscreen with wallpaper BG
 	protected View inflateView(LayoutInflater inflater) {
-        return inflater.inflate(R.layout.welcomeactivity, null);
+        return inflater.inflate(R.layout.lockactivity, null);
     }
 
     private void updateLayout() {

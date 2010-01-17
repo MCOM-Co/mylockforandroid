@@ -18,16 +18,13 @@ import android.widget.Toast;
 
 public class SettingsActivity extends Activity {
 	
-	//private SharedPreferences settings = null;
-	//private SharedPreferences.Editor editor = null;
-	
 	public boolean triedstart = false;
 	
-	public boolean fgmode = true;
+	public boolean persistentNotif = true;
     public boolean awake = false;
-    public boolean welcomemode = false;
+    public boolean customLock = false;
+    //public boolean boot = true;
     	
-	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,7 +42,7 @@ public class SettingsActivity extends Activity {
        
        final CheckBox fg = (CheckBox)findViewById(R.id.fgBox);
        
-       fg.setChecked((fgmode)); 
+       fg.setChecked((persistentNotif)); 
        
        fg.setOnClickListener(new OnClickListener() {
 
@@ -84,7 +81,7 @@ public class SettingsActivity extends Activity {
        
        final CheckBox welcome = (CheckBox)findViewById(R.id.welcomeBox);
        
-       welcome.setChecked((welcomemode));        
+       welcome.setChecked((customLock));        
        
        welcome.setOnClickListener(new OnClickListener() {
 
@@ -97,8 +94,27 @@ public class SettingsActivity extends Activity {
                        // Don't forget to commit your edits!!!
                        editor.commit();
                        //finally, do the change
+                       startService();//call start service, so it can init or stop custom lock mode
                    }
                });
+       /*
+       final CheckBox bootup = (CheckBox)findViewById(R.id.bootBox);
+       
+       bootup.setChecked((boot));        
+       
+       bootup.setOnClickListener(new OnClickListener() {
+
+                   public void onClick(View v) {
+                	   SharedPreferences set = getSharedPreferences("myLock", 0);
+                	   SharedPreferences.Editor editor = set.edit(); 
+                	   
+                	   editor.putBoolean("bootstart", welcome.isChecked());
+
+                       // Don't forget to commit your edits!!!
+                       editor.commit();
+                       //finally, do the change
+                   }
+               });*/
     }
     
     public void getPrefs() {
@@ -109,9 +125,10 @@ public class SettingsActivity extends Activity {
         	return;        
         }*/
     	
-        fgmode = settings.getBoolean("FG", true);
+        persistentNotif = settings.getBoolean("FG", true);
         awake = settings.getBoolean("StayAwake", false);
-        welcomemode = settings.getBoolean("welcome", false);
+        customLock = settings.getBoolean("welcome", false);
+        //boot = settings.getBoolean("bootstart", true);
     }
     
     private void startService(){
@@ -152,11 +169,8 @@ public class SettingsActivity extends Activity {
     		//so if user has wake on but fg off, they won't get a message at boot but it still starts
     	}
     
-    private void StopWake() {
-    	//PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
-		//pm.userActivity(SystemClock.uptimeMillis()+ 10, false);
-		
-		ManageWakeLock.DoCancel(getApplicationContext(), 100);//sets a 10 second timeout
+    private void StopWake() {		
+		ManageWakeLock.DoCancel(getApplicationContext());
 		Toast.makeText(SettingsActivity.this, "auto-sleep re-enabled", Toast.LENGTH_SHORT).show();
     }
 

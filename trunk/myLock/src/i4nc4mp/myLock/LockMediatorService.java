@@ -1,5 +1,6 @@
 package i4nc4mp.myLock;
 
+
 import i4nc4mp.myLock.ManageKeyguard.LaunchOnKeyguardExit;
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -26,14 +27,26 @@ public class LockMediatorService extends Service {
 	public boolean initialized = false;
 	//flag to keep track of whether it is a first start command
 	//this is because we normally start at device boot but user starts after first install with toggle btn
-	//start gets called to flip the FG mode also, and also when the settings toggler goes to stop the service
 	
 	
 	public boolean active = false;
-	//to stop redundant receiver registration calls when a user answers an incoming call
+	//whether receivers are active- safety flag in the registration methods
 	
-	public boolean isFG = false;
-	//flag to keep track of whether FG mode is running.
+	public boolean unlocked = false;
+	//in custom lockscreen mode, set when user finishes the lockscreen activity
+	//screen off will then reset lockscreen if this is true
+	//otherwise, regular wakeups will set it true at secure exit success
+	//this flag allows phone listener to flag incoming call waking the phone
+	
+	
+	public boolean persistent = false;
+	//flag to keep track of whether the no-clear notification is active
+	//service always runs in foreground mode but allows users to set persistent notification pref
+	
+	public boolean customLock = false;
+	//flag to keep track of whether the users pref for the custom lock screen is on & initialized
+	
+	//private Notification myNotif;
 	
 /*Phone Status Flags*/
 	public int lastphonestate = 100;
@@ -43,6 +56,10 @@ public class LockMediatorService extends Service {
 	//true when state 1 to 2 occurs
 	public boolean placingcall = false;
 	//true when state 0 to 2 occurs
+
+	public boolean callwakeup = false;
+	//set to true when user gets a call while they were already using device
+	//this one is impact on quick mode, never affects custom lock mode
 	
 /*Settings Flags*/	
 	public int patternsetting = 0;
@@ -91,30 +108,38 @@ public class LockMediatorService extends Service {
 		boolean welcome = settings.getBoolean("welcome", false);
 		
 		if (initialized) {
-			Log.v("re-start", "start command received, checking FG for change");
-					
-			if (isFG == fgpref) return 1;//don't do anything if the pref is still our same mode
-			//that would only happen when toggle is trying a start to get oriented
-			
-			
-			//now if a change has happened code proceeds and toggles the fg mode
-			if (isFG) {
-				Log.v("re-start", "changing to quiet mode");
+			Log.v("re-start", "running repeat start logic");
+			if (persistent != fgpref) {//user changed persistent pref
+			if (persistent) {
 				stopForeground(true);
-				isFG = false;
+				persistent = false;
 			}
-			else {
-				Log.v("re-start", "changing to foreground mode");
-				doFGstart(wake, welcome);
+			else doFGstart(wake, welcome);//so FG mode is started again
+		}
+			
+			if (welcome == customLock) {//this is the case that the custom lockscreen is finishing
+				unlocked = true;//flag next screen off to StartLock
+			}
+			else {//otherwise user is turning custom lockscreen on or off
+				customLock = !customLock;
+				//just flip the flag
+				//screen off always handles flip to unlocked = false
 			}
 			
-			return 1;
+			return 1;//don't proceed - the rest of the start command is initialization code
 		}
+		//end of re-start logic block
+	
+		/* this method didn't work, broke lockscren rules
+		 * what we need to do instead is place a pref item for which mode has started
+		 * the pref will be the only way to have the two mediators avoid tangling each other
+		 */
+		//Intent i = new Intent();
+		//i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LiteLockMediator");
+		//stopService(i);
 		
-		//now when all above returns fail it means that this is the first service startup
-		//so need to do first inits
 		Log.v("first-start", "boot handler & rcvrs");
-		
+
 		serviceHandler = new Handler();
 		//handler takes care of delaying our secure KG exit to satisfy security settings in the OS
 			
@@ -127,18 +152,13 @@ public class LockMediatorService extends Service {
         tm.listen(Detector, PhoneStateListener.LISTEN_CALL_STATE);
         
         if(wake) ManageWakeLock.acquireFull(getApplicationContext());
-        //probably not a common case but if user happens to leave stay awake on all the time
-        //this initializes it
-        //the rest of the time it will always be initialized by the settings activity
+        //probably not a common case
+        //if user happens to leave stay awake on all the time
+        //initialize it here, otherwise always done at time of toggle in settings
         
-        //stay awake persists through use of the phone correctly
+        doFGstart(wake, welcome);
         
-        if (fgpref) doFGstart(wake, welcome);
-		else {
-			Log.v("first-start", "starting without fg mode due to user pref");
-		}
-        
-    /*===imported pattern mode disabler from Lite version===*/
+    /*===pattern mode disabler===*/
         try {
 			patternsetting = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.LOCK_PATTERN_ENABLED);
 		} catch (SettingNotFoundException e) {
@@ -149,24 +169,19 @@ public class LockMediatorService extends Service {
 		if (patternsetting == 1) {    	
     	android.provider.Settings.System.putInt(getContentResolver(), 
     			android.provider.Settings.System.LOCK_PATTERN_ENABLED, 0); 
-    	//tries turning off the lock pattern
 		}
 		        
-    /*the screen on broadcast doesn't get received at boot because we just registered too late*/
+    /*last, do a first init of lockscreen disable*/
     	
-    	if(!welcome) {//when we are in quick mode only    		
+    	//whether or not custom lock is on we need to exit the initial lockscreen 		
     		Log.v("first-start", "Quick mode first KG exit");
     		
     		ManageKeyguard.initialize(getApplicationContext());
     		
     		ManageKeyguard.disableKeyguard(getApplicationContext());
-    		serviceHandler.postDelayed(myTask, 50L);
-    		}
-    		//else StartWelcome(getApplicationContext());
-    		//don't start the welcome home at first start, doesn't make sense like quick skip does
-    	
-    		//If it were possible to get key input from a service we'd initialize it here
-    		//initialize accelerometer watcher here
+    		serviceHandler.postDelayed(myTask, 50L);//unlock will be set by this callback
+    		
+    		if (welcome) customLock = true;//so screen off will place the lockscreen from now on
         
     	initialized = true;//protect it from retrying any of the init commands
     	
@@ -195,18 +210,18 @@ PhoneStateListener Detector = new PhoneStateListener() {
             
     		if (state == 2) {
     			if (lastphonestate==1) {
-    				//if (!unlocked) callwakeup = true;
-    				//flag this so end of call can be handled for lockscreen restore
-    				
-    				//that's inconsistent if call ends while screen is asleep
-    				
-    				//it seems if user presses hangup the phone takes them to a visible lockscreen
-    				//as if they had pressed power
-    				
-    				//if other party hangs up it forces screen to sleep
-    				//and our disable doesn't wake it up but still disables lockscreen
+    				if (!unlocked) callwakeup = true;
+    						/* looks like lock activity finishes itself in cases where screen
+    						 * was awake when call ended.
+    						 * we get a problem where normal lockscreen is there on next wakeup
+    						 * if screen was off and other party terms the call
+    						 * or if we had placed a call
+    						 * doesn't matter whether we were awake before the call came--
+    						 * catch this scenario when call end happens
+    						*/
     				
     				receivingcall = true;
+    				
     			}
     			
     			if (lastphonestate==0) {
@@ -230,21 +245,28 @@ PhoneStateListener Detector = new PhoneStateListener() {
     			if (lastphonestate==2) {//state 1 to 0 is user ignored call, no pause occurs
     				activate();
     			
-    				/* need to use screen off events to properly know this
-    			if (callwakeup) {
-    			//incoming call woke device, so disable lockscreen for user
-    					ManageKeyguard.disableKeyguard(getApplicationContext());
-    					callwakeup = false;
-    					}*/
-    				
-    				//unlocked = true;
-    				//queue next screen off to restore lockscreen
-    				//(Lite mode only)
-    				
+    			
+    			if (callwakeup) {//incoming call woke device, so handle disable lockscreen for user
+    				ManageKeyguard.disableKeyguard(getApplicationContext());
+    				//We have to use the regular exit since the lockscreen is placed by end-call
+    				serviceHandler.postDelayed(myTask, 50L);
+
+    				callwakeup = false;
+    			}
+    			
+    			   			
     				receivingcall = false;
     				placingcall = false;
+    				
+    				//FIXME bug when I place a call it is not setting unlocked to true properly
+    				//next screen off, wakeup resulted in seeing regular lockscreen instead of custom
+    				//this probably means we didn't receive the screen off broadcast in time
+    				//unlocked was most definitely already true, i had placed a call
+    				//this is the same case as when a call ends with screen asleep- next wakeup is default lockscreen
     				}
+    			
     			}
+    			//end of the Call Ending logic block
     		}
     		
     		//all state changes store themselves so changes can be interpreted
@@ -266,13 +288,14 @@ PhoneStateListener Detector = new PhoneStateListener() {
 			ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
 	            public void LaunchOnKeyguardExitSuccess() {
 	               Log.v("start", "This is the exit callback");
+	               unlocked = true;//set the flag so incoming calls will be handled correctly
 	                }});
 			}
 		}
 	
-	BroadcastReceiver skip = new BroadcastReceiver() {
+	BroadcastReceiver screenon = new BroadcastReceiver() {
 		
-		public static final String TAG = "skipKeyguard";
+		public static final String TAG = "screenon";
 		public static final String Screen = "android.intent.action.SCREEN_ON";
 		
 		
@@ -282,62 +305,46 @@ PhoneStateListener Detector = new PhoneStateListener() {
 			if (!intent.getAction().equals(Screen)) return;
 			
 			Log.v(TAG, "Screen just went ON!");
-			//marks that we received the broadcast
 			
-			/*here, we want to tell the system to go back to sleep in 5 seconds
-			 * system automatically extends to full timeout if user does something
-			 * sadly, the wakelock command doesn't seem to help
-			 * secure exit of the keyguard causes the longer timeout
-			 * so the short timeout will only work in the welcome screen
-            */
-			
-           /*
-           SharedPreferences settings = getSharedPreferences("myLock", 0);
-           boolean wake = settings.getBoolean("StayAwake", false);
-      		
-      		if (!wake) {
-      			//Step 1: Take control of the timeout
-      		    ManageWakeLock.acquireFull(getApplicationContext());
-      		    //Step 2: Set plan to cancel it back in 5 sec
-      		    ManageWakeLock.DoCancel(getApplicationContext(),50);
-      		}*/
-			
-			SharedPreferences settings = getSharedPreferences("myLock", 0);
-			boolean welcome = settings.getBoolean("welcome", false);
-			
-			if (!welcome) {
-				ManageKeyguard.disableKeyguard(context);
-	    		serviceHandler.postDelayed(myTask, 50L);
-	    		//call a secure exit to tell the OS we want to stay out of KG
-	    		//the delay seems to allow us to properly read that the kg has been disabled
-	    		//this seems to be exactly the same thing that the windowmanager based bypass does
-			}
-			else StartWelcome(context);	
-			//welcome screen mode
+			if (customLock) return;//screen on is handled by the custom lockscreen, do nothing here
+			if(!unlocked) {
+					ManageKeyguard.disableKeyguard(context);
+					serviceHandler.postDelayed(myTask, 50L);//when success, unlocked set true
+					//call a secure exit to tell the OS we want to stay out of KG
+		    		//the delay seems to allow us to properly read that the kg has been disabled
+				}
+			else return;
+			//this case is not expected but seems to happen at boot with custom lock on
+			//the return statement averts an "unresponsive receiver error"
+	    		
 }};
 	
-	/*
-	BroadcastReceiver guard = new BroadcastReceiver() {
+	BroadcastReceiver screenoff = new BroadcastReceiver() {
         
-        public static final String TAG = "reguard";
+        public static final String TAG = "screenoff";
         public static final String Screenoff = "android.intent.action.SCREEN_OFF";
 
         @Override
         public void onReceive(Context context, Intent intent) {
-                if (!intent.getAction().equals(Screenoff)) return;
+        	if (!intent.getAction().equals(Screenoff)) return;
                 
                 Log.v(TAG, "Screen just went OFF");
-                //alpha functionality is to simply restore KG when screen is turned off
-}};*/
+                if (unlocked) {
+                	//screen off broadcast only cares if we were unlocked when it happened
+                	unlocked = false;
+                if (!customLock) return;//lockscreen auto-enables when not in custom lockscreen mode
+                else StartLock(context);//custom lock mode- need to startup the lockscreen
+                }
+}};
 
 void activate() {
 	if (active) return;//protect from bad redundant calls
 	
 	//register the receivers
 	IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
-	//IntentFilter offfilter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
-	registerReceiver(skip, onfilter);
-	//registerReceiver(guard, offfilter);
+	IntentFilter offfilter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
+	registerReceiver(screenon, onfilter);
+	registerReceiver (screenoff, offfilter);
 	active = true;
 }
 
@@ -345,8 +352,8 @@ void pause() {
 	if (!active) return;//protect from bad redundant calls
 	
 	//destroy the receivers
-	unregisterReceiver(skip);
-    //unregisterReceiver(guard);
+	unregisterReceiver(screenon);
+    unregisterReceiver(screenoff);
 	active = false;
 }
 
@@ -360,7 +367,8 @@ void doFGstart(boolean wakepref, boolean welcomepref) {
 	int icon = R.drawable.icon;
 	CharSequence tickerText = "myLock";
 	
-	if (welcomepref) tickerText= tickerText + "welcome mode";
+	if (welcomepref) tickerText= tickerText + " - custom lockscreen";
+	else tickerText = tickerText + " - quick unlock";
 	if (wakepref) tickerText = tickerText + " (Staying Awake)";
 	
 	long when = System.currentTimeMillis();
@@ -369,49 +377,39 @@ void doFGstart(boolean wakepref, boolean welcomepref) {
 	
 	Context context = getApplicationContext();
 	CharSequence contentTitle = "myLock";
-	CharSequence contentText = "lockscreen will be skipped";
+	CharSequence contentText = "lockscreen is disabled";
+
 	Intent notificationIntent = new Intent(this, SettingsActivity.class);
 	PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
 	notification.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
-	notification.flags |= Notification.FLAG_ONGOING_EVENT;
-	notification.flags |= Notification.FLAG_NO_CLEAR;
 	
 	final int SVC_ID = 1;
 	
 	//don't need to pass notif because startForeground will do it
 	//mNotificationManager.notify(SVC_ID, notification);
-	isFG = true;
-	
+	persistent = true;
 	startForeground(SVC_ID, notification);
 }
 
-private void StartWelcome(Context context) {
-	
-	//TODO this needs to respect stay awake setting
-	//SharedPreferences settings = getSharedPreferences("myLock", 0);
-    //boolean wake = settings.getBoolean("StayAwake", false);
-    
-	//ManageWakeLock.acquireFull(context);
-	//if we don't have a wakelock this often fails to wake up screen
-	//resulting in user confusion as screen wakes then sleeps again in quick succession
-	//not sure why it does this
-	//if (!wake) ManageWakeLock.DoCancel(context,20);
-	
+
+
+private void StartLock(Context context) {
+
 	Intent closeDialogs = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
 	        context.sendBroadcast(closeDialogs);
+	        
 
-
-	Class w = WelcomeActivity.class;
+	        Class w = LockActivity.class;
 	       
 
 	/* launch UI, explicitly stating that this is not due to user action
 	         * so that the current app's notification management is not disturbed */
 	        Intent welcome = new Intent(context, w);
 	        
-	        welcome.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-	                //| Intent.FLAG_ACTIVITY_NO_USER_ACTION);
-	        //this flag might be responsible for the immediate screen off
+	        welcome.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+	                //| Intent.FLAG_ACTIVITY_NO_USER_ACTION
+	                | Intent.FLAG_ACTIVITY_NO_ANIMATION);
 	        context.startActivity(welcome);
 	}
 }
