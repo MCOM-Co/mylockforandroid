@@ -8,20 +8,23 @@
                   android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                <action android:name="android.intent.action.SCREEN_ON" />
-                <action android:name="android.intent.action.SCREEN_OFF" />
             </intent-filter>
         </activity>
         
-       <activity android:name="WelcomeActivity"
+       <activity android:name="LockActivity"
                 android:excludeFromRecents="true"
-                android:theme="@android:style/Theme.Wallpaper.NoTitleBar"
-                android:launchMode="singleInstance"
+                android:theme="@android:style/Theme.Wallpaper"
+                android:launchMode="singleTask"
                 android:taskAffinity=""
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/> 
-        
+        <receiver android:name="ToggleWidget" >
+			<intent-filter>
+        		<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+    		</intent-filter>
+    	<meta-data android:name="android.appwidget.provider"
+               android:resource="@xml/toggle_widget" />
+</receiver>        
         <receiver android:name=".myLockServiceManager" 
         android:enabled="true" 
         android:exported="false"
@@ -30,9 +33,10 @@
         	<action android:name="android.intent.action.BOOT_COMPLETED" />
         </intent-filter>
         </receiver>
-        <receiver
-      android:name=".ClearAllReceiver" />
-                
+        <service android:name=".LiteLockMediator">
+        </service>
+        <service android:name=".Toggler">
+        </service>
         <service android:name=".LockMediatorService">
         </service>
     </application>
