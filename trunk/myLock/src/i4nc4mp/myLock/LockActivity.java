@@ -258,7 +258,6 @@ public class LockActivity extends Activity {
             case KeyEvent.KEYCODE_VOLUME_DOWN:
             case KeyEvent.KEYCODE_FOCUS:
             case KeyEvent.KEYCODE_CAMERA:
-            case KeyEvent.KEYCODE_BACK://catch back on down, because only want to allow on up if awake
                 if (up) {
                     break;//break without return means pass on to other processes
                     //doesn't consume the press

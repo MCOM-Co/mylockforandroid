@@ -17,6 +17,12 @@
                 android:theme="@android:style/Theme.Wallpaper"
                 android:launchMode="singleTask"
                 android:taskAffinity=""
+                android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>
+       <activity android:name="Lockscreen"
+                android:excludeFromRecents="true"
+                android:theme="@android:style/Theme.Wallpaper"
+                android:launchMode="singleTask"
+                android:taskAffinity=""
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/> 
         <receiver android:name="ToggleWidget" >
 			<intent-filter>
@@ -33,7 +39,7 @@
         	<action android:name="android.intent.action.BOOT_COMPLETED" />
         </intent-filter>
         </receiver>
-        <service android:name=".LiteLockMediator">
+        <service android:name=".CustomLockService">
         </service>
         <service android:name=".Toggler">
         </service>

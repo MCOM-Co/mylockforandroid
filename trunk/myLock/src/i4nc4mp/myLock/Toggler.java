@@ -4,7 +4,8 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
-
+//functionality for clickable widget, migrated in from the settings activity toggle button
+//run as service since widget UI wants to call this independent of an activity view
 public class Toggler extends Service {
 	
 	public boolean triedstart = false;
@@ -35,14 +36,14 @@ public class Toggler extends Service {
 	
 private void startService(){
 		Intent i = new Intent();
-		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LiteLockMediator");
+		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
 		startService(i);
 		Log.d( getClass().getSimpleName(), "startService()" );
 }
 
 private void stopService() {
 		Intent i = new Intent();
-		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LiteLockMediator");
+		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
 		stopService(i);
 		Log.d( getClass().getSimpleName(), "stopService()" );
 }
@@ -52,11 +53,10 @@ private void TryToggle() {
 		startService();
 		triedstart = true;
 	}
-	//first attempt to start. the service does nothing if already initialized
 	else {
 		triedstart = false;
 		stopService();
-	}//the user has clicked a 2nd time. confirming they do want the lockscreen re-enabled
+	}
 }
 
 }
