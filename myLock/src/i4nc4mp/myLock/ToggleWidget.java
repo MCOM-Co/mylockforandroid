@@ -23,6 +23,10 @@ public class ToggleWidget extends AppWidgetProvider {
 		AppWidgetManager mgr = AppWidgetManager.getInstance(context);
 		//retrieve a ref to the manager so we can pass a view update
 		
+		//here we can access shared prefs to determine which mode the user has enabled so we toggle the correct one
+		//for now I just have one static mediator mode running from toggler.
+		//the idea is to make each mode a separate mediator that has to be started after other mode is stopped
+		
 		Intent i = new Intent();
 		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.Toggler");
 		PendingIntent myPI = PendingIntent.getService(context, 0, i, 0);
