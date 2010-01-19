@@ -21,7 +21,7 @@ No. The android operating system gives us two choices only. Either stick to powe
 Ok, I've been thinking the same thing. So I've been working on different avenues to still get it working. In my custom lockscreen pre-alpha test build I am using code introduced in 2.0 that is used in the alarm clock to pop up an alarm that skips the lockscreen. The way it is used in the alarm clock is to let the user snooze that alarm with the volume or camera keys if that is their preference. The way I'm using it is to let the user unlock/wake up the screen with keys of their preference and keep the other keys locked down so that the screen won't come on if those keys get accidentally pressed. This test build keeps volume keys and camera focus (first stage press) locked, allows camera full press to wake the screen on a 5 second timeout so you could use the notification panel, or press back to unlock, and the power key just instantly unlocks.
 
 = So, does this mean you can also program shake unlocking? =
-No. This is thanks to a wonderful enhancement that came along with 2.0.1, blocking apps other than system apps from listening to sensors during screen off. This is one without a workaround. The OS has not provided any method apps can enforce different wakeup rules, so we have to deal with not having access to detecting shake. 
+No. This is thanks to a wonderful enhancement that came along with 2.0.1, blocking apps other than system apps from listening to sensors during screen off. This is one without a workaround. The OS has not provided any method apps can enforce different wakeup rules, so we have to deal with not having access to detecting shake. I'm testing to see if my same workaround to let us customize button wake will work with the shake sensor (accelerometer).
 
 = Can you create a custom lockdown mode requiring a password? =
 We're researching this. It is definitely possible. There is an app called wave secure which has a lockdown like this. We just aren't sure how useful a standalone lockdown would be in the long run. It wouldn't be able to stop incoming call usage.
@@ -29,8 +29,11 @@ We're researching this. It is definitely possible. There is an app called wave s
 = Can you give preferences to answer incoming call without using the touchscreen too? =
 Not sure yet. This is a really good idea, as the "call lockscreen" does stand in your way just like the regular one.
 
-= What's the welcome-screen/wakeup homescreen? =
-Tentatively titled WakeHome, we are designing a very simple emulation of the stock homescreen with just a single screen, capable of displaying any widget of your choice in addition to any shortcut or app launch icon. Simply a port of the those features from the stock Launcher app. Essentially this is the alternative to quick unlock function (which exists simply to bypass the lockscreen slider and take you to what you were last doing). This mode is inspired by the silencer slider/clock display on the default lockscreen. Why not just make it an extra homescreen and let the user decide what to put there?
+= What's the custom lockscreen? =
+We are designing a very simple emulation of the stock homescreen with just a single screen, capable of displaying any widget of your choice in addition to any shortcut or app launch icon. The inspiration to create this was the existing silencer slider/clock display on the default lockscreen. Why not just make it an extra homescreen and let the user decide what to put there?
+
+= Will the custom lockscreen support the option to still use the slide to unlock? =
+Yes. Once catch with this is that Android blocks apps from taking full control of the home key, so the home key will always unlock as well. But if you would like, the option for slide to unlock will be included once the custom lockscreen hits a full-featured release. 
 
 = What's notification preview? =
 This is a plan for the full final version of the app, way down the road. We think it would be excellent to have a timeline of missed events displayed on the wakeup screen, customized by user to what types of events have the priority of being shown there. A converged view for the timeline of any unread IMs, twitter, sms, email, missed call, voicemail. We might limit this to gmail, sms, gtalk, & gvoice and see how it goes.
