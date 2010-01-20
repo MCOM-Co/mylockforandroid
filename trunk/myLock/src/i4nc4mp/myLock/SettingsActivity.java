@@ -20,10 +20,11 @@ public class SettingsActivity extends Activity {
 	
 	public boolean triedstart = false;
 	
+	
 	public boolean persistentNotif = true;
     public boolean awake = false;
     public boolean customLock = false;
-    //public boolean boot = true;
+    public boolean boot = false;
     	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -39,23 +40,6 @@ public class SettingsActivity extends Activity {
           		TryToggle();
           	}
           });
-       
-       final CheckBox fg = (CheckBox)findViewById(R.id.fgBox);
-       
-       fg.setChecked((persistentNotif)); 
-       
-       fg.setOnClickListener(new OnClickListener() {
-
-           public void onClick(View v) {
-        	   SharedPreferences set = getSharedPreferences("myLock", 0);
-        	   SharedPreferences.Editor editor = set.edit();
-               editor.putBoolean("FG", fg.isChecked());
-
-               // Don't forget to commit your edits!!!
-               editor.commit();
-               startService();//call start service, so it can get FG pref & do change
-           }
-       });
        
        final CheckBox wake = (CheckBox)findViewById(R.id.wakeBox);
 
@@ -93,11 +77,34 @@ public class SettingsActivity extends Activity {
 
                        // Don't forget to commit your edits!!!
                        editor.commit();
-                       //finally, do the change
-                       startService();//call start service, so it can init or stop custom lock mode
+                 
+                       //The current mode needs to be stopped
+                       stopService();//it will go by the existing pref
+                       triedstart = false;//ensures next toggle command will start the new mode
+                       Toast.makeText(SettingsActivity.this, "Press toggle to complete mode change", Toast.LENGTH_SHORT).show();
+                       customLock = !customLock;//toggle it locally for reference of next toggle press
+
                    }
                });
-       /*
+       
+       final CheckBox fg = (CheckBox)findViewById(R.id.fgBox);
+       
+       fg.setChecked((persistentNotif)); 
+       
+       fg.setOnClickListener(new OnClickListener() {
+
+           public void onClick(View v) {
+        	   SharedPreferences set = getSharedPreferences("myLock", 0);
+        	   SharedPreferences.Editor editor = set.edit();
+               editor.putBoolean("FG", fg.isChecked());
+
+               // Don't forget to commit your edits!!!
+               editor.commit();
+               
+               startService();//call start service, so it can react to the change
+           }
+       });
+                     
        final CheckBox bootup = (CheckBox)findViewById(R.id.bootBox);
        
        bootup.setChecked((boot));        
@@ -108,13 +115,12 @@ public class SettingsActivity extends Activity {
                 	   SharedPreferences set = getSharedPreferences("myLock", 0);
                 	   SharedPreferences.Editor editor = set.edit(); 
                 	   
-                	   editor.putBoolean("bootstart", welcome.isChecked());
+                	   editor.putBoolean("boot", bootup.isChecked());
 
                        // Don't forget to commit your edits!!!
                        editor.commit();
-                       //finally, do the change
                    }
-               });*/
+               });
     }
     
     public void getPrefs() {
@@ -128,38 +134,39 @@ public class SettingsActivity extends Activity {
         persistentNotif = settings.getBoolean("FG", true);
         awake = settings.getBoolean("StayAwake", false);
         customLock = settings.getBoolean("welcome", false);
-        //boot = settings.getBoolean("bootstart", true);
+        boot = settings.getBoolean("boot", false);
     }
     
+    /*start and stop methods rely on pref and are only used by toggle button*/
     private void startService(){
    			Intent i = new Intent();
-   			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LockMediatorService");
+   			if (!customLock) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UnlockService");
+   			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
    			startService(i);
    			Log.d( getClass().getSimpleName(), "startService()" );
    		}
     
     private void stopService() {
 			Intent i = new Intent();
-			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LockMediatorService");
+			if (!customLock) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UnlockService");
+			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
 			stopService(i);
 			Log.d( getClass().getSimpleName(), "stopService()" );
-			Toast.makeText(SettingsActivity.this, "myLock has been stopped", Toast.LENGTH_SHORT).show();
-			finish();
     }
    
     private void TryToggle() {
     	if (!triedstart) {
     		startService();
-    		Toast.makeText(SettingsActivity.this, "intializing... press toggle to confirm stop myLock", Toast.LENGTH_SHORT).show();
+    		Toast.makeText(SettingsActivity.this, "Intialized... press toggle again to stop myLock", Toast.LENGTH_SHORT).show();
     		triedstart = true;
     	}
-    	//first attempt to start. the service does nothing if already initialized
-    	//else if (conn == null) bindService();
     	else {
     		triedstart = false;
     		stopService();
-    	}//the user has clicked a 2nd time. confirming they do want the lockscreen re-enabled
+    		Toast.makeText(SettingsActivity.this, "myLock has been stopped", Toast.LENGTH_SHORT).show();
+    	}
     }
+    
     
     private void StartWake() {
     	

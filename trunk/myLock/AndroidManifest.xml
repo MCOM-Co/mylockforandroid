@@ -23,6 +23,7 @@
                 android:theme="@android:style/Theme.Wallpaper"
                 android:launchMode="singleTask"
                 android:taskAffinity=""
+                android:screenOrientation="portrait"
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/> 
         <receiver android:name="ToggleWidget" >
 			<intent-filter>
@@ -31,10 +32,10 @@
     	<meta-data android:name="android.appwidget.provider"
                android:resource="@xml/toggle_widget" />
 </receiver>        
-        <receiver android:name=".myLockServiceManager" 
+        <receiver android:name=".myLockBootReceiver" 
         android:enabled="true" 
         android:exported="false"
-        android:label="myLockServiceManager">
+        android:label="myLockBootReceiver">
         <intent-filter>
         	<action android:name="android.intent.action.BOOT_COMPLETED" />
         </intent-filter>
@@ -43,8 +44,11 @@
         </service>
         <service android:name=".Toggler">
         </service>
-        <service android:name=".LockMediatorService">
+        <service android:name=".UnlockService">
         </service>
+        <service android:name=".BootHandler">
+        </service>
+        <service android:name=".LiteLockMediator"></service>
     </application>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission

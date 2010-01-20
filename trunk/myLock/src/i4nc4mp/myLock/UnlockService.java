@@ -63,6 +63,7 @@ public class UnlockService extends MediatorService {
 		SharedPreferences settings = getSharedPreferences("myLock", 0);
 		persistent = settings.getBoolean("FG", true);
 		boolean wake = settings.getBoolean("StayAwake", false);
+		//boolean bootstart = settings.getBoolean("boot", false);
 		
 		serviceHandler = new Handler();
 		
@@ -86,15 +87,14 @@ public class UnlockService extends MediatorService {
     			android.provider.Settings.System.LOCK_PATTERN_ENABLED, 0); 
 		}
 		        
-    /*when we got started at boot we need to exit the initial lockscreen*/
-	    //TODO currently this has no actual safety check for whether this a start at boot
-		//probably have to implement that via a bind
-		//it's possible we scrap start at boot
-		//but we have definite plan to deprecate this lockscreen disable method anyway
-    		ManageKeyguard.initialize(getApplicationContext());
+/*when we got started at boot we need to exit the initial lockscreen*/
+	//not critical, this an end user experience improver. disable for now
+    		/*
+			ManageKeyguard.initialize(getApplicationContext());
     		
     		ManageKeyguard.disableKeyguard(getApplicationContext());
     		serviceHandler.postDelayed(myTask, 50L);//unlock will be set by this callback
+    		*/
 	}
 	
 	class Task implements Runnable {
@@ -152,6 +152,8 @@ public class UnlockService extends MediatorService {
 		//ensures that next screen on properly exits lockscreen
 	}
 	
+	//all the state logic appears to be working for this mediator in the emulator
+	
 	void doFGstart(boolean wakepref) {
 		//putting ongoing notif together for start foreground
 		
@@ -160,7 +162,7 @@ public class UnlockService extends MediatorService {
 		//No need to get the mgr, since we aren't manually sending this for FG mode.
 		
 		int icon = R.drawable.icon;
-		CharSequence tickerText = "myLock";
+		CharSequence tickerText = "disable lockscreen mode";
 		
 		if (wakepref) tickerText = tickerText + " (Staying Awake)";
 		
@@ -170,7 +172,7 @@ public class UnlockService extends MediatorService {
 		
 		Context context = getApplicationContext();
 		CharSequence contentTitle = "myLock - click to open settings";
-		CharSequence contentText = "lockscreen is disabled";
+		CharSequence contentText = "lockscreen disabled";
 
 		Intent notificationIntent = new Intent(this, SettingsActivity.class);
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
