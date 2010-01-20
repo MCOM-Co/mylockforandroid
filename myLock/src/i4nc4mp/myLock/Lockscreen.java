@@ -34,8 +34,8 @@ import android.view.WindowManager;
 //need to implement droid-fu to accomplish this
 public class Lockscreen extends Activity {
         
-        private Handler serviceHandler;
-        private Task myTask = new Task();
+        //private Handler serviceHandler;
+        //private Task myTask = new Task();
         
         private ShakeListener mShaker;
         
@@ -83,7 +83,7 @@ public class Lockscreen extends Activity {
         IntentFilter offfilter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
 		registerReceiver(screenoff, offfilter);
         
-        serviceHandler = new Handler();
+        //serviceHandler = new Handler();
         
       //retrieve the user's normal timeout setting - SCREEN_OFF_TIMEOUT
     	try {
@@ -106,6 +106,12 @@ public class Lockscreen extends Activity {
         wakeup();//try waking up in response to the shake
       }
     });
+    
+    
+    //try acquiring the minimum partial wakelock to see if it allows us to catch shakes
+    //ManageWakeLock.acquirePartial(getApplicationContext());
+    //this is bad news. it makes it so even the touchscreen remains active and causes screen on to reply
+    //though the screen remains off thanks to activity window params, this could cause all kinds of confusing behavior for user
         }
         
     protected View inflateView(LayoutInflater inflater) {
@@ -133,12 +139,11 @@ public class Lockscreen extends Activity {
         	//what we can do is set a flag "lockedwake" and a task that cancels it in 5 seconds
         	//this flag will ensure that we can force wakeup using userActivity
         	//if user presses power to wake in that short time following the locked key silent wake
+        	
+        	//FIXME noticed another bug that seems consistent, when I try to wake it with power key
+        	//while SMS notif is waiting it seems to fail to wakeup, goes back to sleep on first press
         return;
     }
-    
-    protected void onPostCreate(Bundle savedInstanceState) {
-                super.onPostCreate(savedInstanceState);
-        }
     
     BroadcastReceiver screenoff = new BroadcastReceiver() {
         //we have to use screen off to set bright back to 0.0
@@ -151,7 +156,7 @@ public class Lockscreen extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
                 if (!intent.getAction().equals(Screenoff)) return;
-                //if a wakeup key had turned screen on let's tell the window to keep it off
+        //if a wakeup key had turned screen on let's tell the window to keep it off now
         if (screenwake) {
         	screenwake = false;
         	setBright((float) 0.0);
@@ -160,6 +165,7 @@ public class Lockscreen extends Activity {
         	//just turn the flag back off, for now
         	cpuwake = false;
         }
+        return;//avoid unresponsive receiver error outcome
              
 }};
     
@@ -175,10 +181,9 @@ public class Lockscreen extends Activity {
     
     //call this task to turn off the screen in a fadeout.
     //i don't use it now, only used to test this method before coding the rest.
-    
-    //it will actually stay off till we finish the activity
-    //wakeup keys will also tell it brighten, screen off event will then set it back to 0
-    //non wakeup keys do wake up the OS but it keeps screen off to mitigate battery impact
+    //currently i just set our bright to 0 at oncreate instead.
+
+    /*
     class Task implements Runnable {
     	public void run() {                
     		if (bright != 0) {
@@ -194,14 +199,16 @@ public class Lockscreen extends Activity {
     		}
     	}
     }
+    */
     
     public void wakeup() {
     	screenwake = true;
-    	setBright((float) 0.1);//tell screen to go on with 10% brightness
-    	
+    	    	
     	//poke user activity just to be safe that it won't flicker back off
     	PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
   	  	myPM.userActivity(SystemClock.uptimeMillis(), false);
+  	  	
+  	  	setBright((float) 0.1);//tell screen to go on with 10% brightness
     }
     
     
@@ -220,17 +227,11 @@ public class Lockscreen extends Activity {
     	This will be set on a device with a mechanism to hide the keyboard from the user, when that mechanism is closed.
     	One of: HARDKEYBOARDHIDDEN_NO, HARDKEYBOARDHIDDEN_YES.
     	*/
+
+//we could do something in response to a rotation but we have declared portrait only in manifest
+//we receive the orientation config change only to ensure we aren't destroyed and recreated at time of change
     	
     }
-  
-    @Override
-    protected void onPause() {
-        super.onPause();
-        // Don't hang around.
-        //finish();
-    }
-    //not reliably happening when activity goes to background
-    //seems also to be causing it to finish no matter what
         
     @Override
     protected void onStop() {
@@ -243,8 +244,15 @@ public class Lockscreen extends Activity {
     public void onDestroy() {
         super.onDestroy();
         
-       serviceHandler.removeCallbacks(myTask);
-       serviceHandler = null;
+      //restore the users preference for timeout so that the screen will sleep as they expect
+		android.provider.Settings.System.putInt(getContentResolver(),
+				android.provider.Settings.System.SCREEN_OFF_TIMEOUT, timeoutpref);
+		//then send a new userActivity call to the power manager
+		PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
+    	pm.userActivity(SystemClock.uptimeMillis(), false);
+        
+       //serviceHandler.removeCallbacks(myTask);
+       //serviceHandler = null;
        
        unregisterReceiver(screenoff);
       
@@ -252,12 +260,8 @@ public class Lockscreen extends Activity {
 		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
 		startService(i);//tells the mediator that user has unlocked
        
-       //restore the users preference for timeout so that the screen will sleep as they expect
-		android.provider.Settings.System.putInt(getContentResolver(),
-				android.provider.Settings.System.SCREEN_OFF_TIMEOUT, timeoutpref);
-		//then send a new userActivity call to the power manager
-		PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
-    	pm.userActivity(SystemClock.uptimeMillis(), false);
+		//release the CPU hold we obtained to let us listen for shakes
+		//ManageWakeLock.releasePartial();
     	
         Log.v("destroyWelcome","Destroying");
     }
@@ -272,7 +276,6 @@ public class Lockscreen extends Activity {
             case KeyEvent.KEYCODE_VOLUME_UP:
             case KeyEvent.KEYCODE_VOLUME_DOWN:
             case KeyEvent.KEYCODE_FOCUS:
-            case KeyEvent.KEYCODE_CAMERA:
                 if (up) {
                     break;//break without return means pass on to other processes
                     //doesn't consume the press
@@ -283,7 +286,8 @@ public class Lockscreen extends Activity {
                 return true;
                 //returning true means we handled the event so don't pass it to other processes
                             
-            case KeyEvent.KEYCODE_POWER:
+            //case KeyEvent.KEYCODE_POWER: allow default to handle power in this test build
+            case KeyEvent.KEYCODE_CAMERA:
             	Log.v("key event","wake key");
             	wakeup();
                 return true;
@@ -293,6 +297,9 @@ public class Lockscreen extends Activity {
                 //back key is automatically handled, we process it in the onBackPressed
             default:
             	Log.v("key event","unlock key");
+            	//do a user activity poke to be safe that it won't go back to sleep again
+            	PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+          	  	myPM.userActivity(SystemClock.uptimeMillis(), false);
             	finish();
             	return true;
         }

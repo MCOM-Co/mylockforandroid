@@ -58,12 +58,10 @@ public class ManageWakeLock {
   }
 
   public static synchronized void DoCancel(Context context) {
-	  //ClearAllReceiver.setCancel(context, timeout);
-	  //no longer use receiver, use userActivity instead to poke the preferred screen timeout
-	  
+	 	  
 	  PowerManager myPM = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
 	  myPM.userActivity(SystemClock.uptimeMillis(), false);
-	  releaseAll();
+	  releaseFull();//I don't call this on partial because we only let that go when lockscreen finishes
   }
   
   public static synchronized void acquirePartial(Context context) {
@@ -77,9 +75,7 @@ public class ManageWakeLock {
     
 
 myPartialWakeLock = myPM.newWakeLock(
-        PowerManager.PARTIAL_WAKE_LOCK |
-        PowerManager.ACQUIRE_CAUSES_WAKEUP |
-        PowerManager.ON_AFTER_RELEASE, "Welcomepartial");
+        PowerManager.PARTIAL_WAKE_LOCK, "myLock");
 myPartialWakeLock.acquire();
   }
 

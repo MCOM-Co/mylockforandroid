@@ -6,14 +6,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-public class myLockServiceManager extends BroadcastReceiver {
-
+public class myLockBootReceiver extends BroadcastReceiver {
+//launch a startup service which will read prefs
+//user can opt not to start at boot but we must check that from a service
 	 public static final String TAG = "myLockServiceManager";
 	 @Override
 	 public void onReceive(Context context, Intent intent) {
 	  // just make sure we are getting the right intent (better safe than sorry)
 	  if( "android.intent.action.BOOT_COMPLETED".equals(intent.getAction())) {
-	   ComponentName comp = new ComponentName(context.getPackageName(), LockMediatorService.class.getName());
+	   ComponentName comp = new ComponentName(context.getPackageName(), BootHandler.class.getName());
 	   ComponentName service = context.startService(new Intent().setComponent(comp));
 	   Log.v("boot_complete","The service loaded at boot!");
 	   if (null == service){
