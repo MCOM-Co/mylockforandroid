@@ -59,5 +59,6 @@
     android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission
     android:name="android.permission.READ_PHONE_STATE" />
-    <uses-sdk android:minSdkVersion="6" />
+    <uses-sdk android:minSdkVersion="5" />
+    <uses-sdk android:targetSdkVersion="6" />
 </manifest> 
