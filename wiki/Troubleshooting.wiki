@@ -1,8 +1,9 @@
 #summary Known solutions for problems we can't fix in the code
+#labels Featured
 
 = I can't install it, getting "error parsing package" =
 
-This error has been reported by non-rooted milestone users. I do not know the cause. I am hoping I can resolve this for milestone install by releasing on the market. If not on milestone, according to my research this error happens when directly trying to open the APK file. I have always downloaded and installed the packages for testing via dolphin browser, and never experienced error. I've also read that you can install a file manager such as androzip to get past this error. 
+This error has been reported by non-rooted milestone users. Please try the milestone test build alpha 3 and let me know if it still received the error.
 
 
 = It stopped working and won't work again even though I've uninstalled and reinstalled =
