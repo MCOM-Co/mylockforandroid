@@ -1,4 +1,5 @@
 #summary Quick breakdown of features in the current release builds
+#labels Featured
 
 = myLock complete alpha 2c =
 http://mylockforandroid.googlecode.com/files/myLock_alpha2c.apk
