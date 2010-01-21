@@ -1,4 +1,5 @@
 #summary Useful information that I am finding to be constantly asked on our threads
+#labels Featured
 
 = What is myLock? =
 
