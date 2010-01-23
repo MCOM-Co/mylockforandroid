@@ -3,7 +3,7 @@
 
 = I can't install it, getting "error parsing package" =
 
-This error has been reported by non-rooted milestone users. Please try the milestone test build alpha 3 and let me know if it still received the error.
+Resolved on test builds of alpha 3 so ongoing releases will not experience it. Sorry!
 
 
 = It stopped working and won't work again even though I've uninstalled and reinstalled =
