@@ -21,6 +21,9 @@ This happens in alpha 2b and beyond, because we have to tell the main android sy
 = Why do the volume or camera buttons wake it back up sometimes? =
 This is one of the rules of the lockscreen. When a timeout sleep occurs you have a short grace period in which the lockscreen isn't yet engaged, thus allowing any action at all to awaken it again quickly. That means any button, as well as even sliding the slider closed which normally doesn't trigger a wakeup.
 
+= It goes to sleep too fast when I wake it up and don't immediately take further action =
+This currently only impacts lite mode (activated with the widget button). This is because the lockscreen is only being paused. It is not actually cleared unless home key is used. Therefore, it follows the rule of the lockscreen that times out in 5 seconds unless interaction triggers the regular timeout delay. Lite mode will likely become retired once the beta is released because we use a custom lockscreen to get more consistent performance.
+
 = Known apps that conflict with stable myLock operation =
   * Handcent sms - popup feature tries to call a duplicate lockscreen disable due to pre 2.0 compatibility. Reportedly works with the alpha 1 release.
   * Not confirmed but it is likely sms popup also has same issue as handcent. I recommend using executive assistant and putting the widget on your homescreen. The sms tab is a great replacement for the popup feature.
