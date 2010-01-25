@@ -140,7 +140,7 @@ public class SettingsActivity extends Activity {
     /*start and stop methods rely on pref and are only used by toggle button*/
     private void startService(){
    			Intent i = new Intent();
-   			if (!customLock) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UnlockService");
+   			if (!customLock) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.NoLockService");
    			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
    			startService(i);
    			Log.d( getClass().getSimpleName(), "startService()" );
@@ -148,7 +148,7 @@ public class SettingsActivity extends Activity {
     
     private void stopService() {
 			Intent i = new Intent();
-			if (!customLock) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UnlockService");
+			if (!customLock) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.NoLockService");
 			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
 			stopService(i);
 			Log.d( getClass().getSimpleName(), "stopService()" );
@@ -177,7 +177,8 @@ public class SettingsActivity extends Activity {
     	}
     
     private void StopWake() {		
-		ManageWakeLock.DoCancel(getApplicationContext());
+		//ManageWakeLock.DoCancel(getApplicationContext());
+		ManageWakeLock.releaseFull();
 		Toast.makeText(SettingsActivity.this, "auto-sleep re-enabled", Toast.LENGTH_SHORT).show();
     }
 

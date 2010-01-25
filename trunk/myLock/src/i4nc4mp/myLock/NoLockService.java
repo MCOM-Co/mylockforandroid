@@ -8,12 +8,11 @@ import android.content.SharedPreferences;
 import android.provider.Settings.SettingNotFoundException;
 
 
-//custom lockscreen mode
-public class CustomLockService extends MediatorService {
+public class NoLockService extends MediatorService {
 	
 	public boolean persistent = false;
 	
-	public boolean unlocked = true;
+	public boolean shouldLock = true;
 	//when true screen off will start the lockscreen.
 	//we will ensure that it is false until user exits lockscreen or finishes a call
 	
@@ -46,15 +45,6 @@ public class CustomLockService extends MediatorService {
 					persistent = false;
 				}
 				else doFGstart(wake);//so FG mode is started again
-			}
-			else {//so if the pref isn't being changed, it means this restart is from lockscreen finish
-		
-		//unlock in the lockscreen activity causes start command to come back
-		//react by prepping the next StartLock
-				
-		//if (unlocked) Log unexpected restart occurred.
-				
-		if (!receivingcall && !placingcall) unlocked = true;//queue new lockscreen if no calls active
 			}
 	}
 	
@@ -100,14 +90,14 @@ public class CustomLockService extends MediatorService {
 	public void onScreenSleep() {
 		//when sleep after an unlock, start the lockscreen again
 		
-		if (receivingcall || placingcall) return;//don't handle during calls at all
+		if (receivingcall || placingcall || !shouldLock) return;
+		//don't handle during calls at all
+		//the should flag is for extra safety in case we ever find another exception case
 		
-		if (unlocked) {
-        	unlocked = false;
-        	//TODO implement a 5 second delay which would play nice with the re-lock grace period
-        	//as things stand, it doesn't really work if you try to interrupt a timeout sleep with more input immediately
-        	StartLock(getApplicationContext());
-		}
+		//TODO implement a 5 second delay which would play nice with the re-lock grace period
+        //as things stand, it doesn't really work if you try to interrupt a timeout sleep with more input immediately
+        StartLock(getApplicationContext());
+		
 		
 		return;//prevents unresponsive broadcast error
 	}
@@ -117,18 +107,13 @@ public class CustomLockService extends MediatorService {
 		Intent closeDialogs = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
 		        context.sendBroadcast(closeDialogs);
 		        
-
-		        Class w = Lockscreen.class;
-		        //Class w = ShowWhenLockedActivity.class; no button customize, uses secure exit to unlock
+		       Class w = ShowWhenLockedActivity.class; 
+		       
 		       
 
 		/* launch UI, explicitly stating that this is not due to user action
 		         * so that the current app's notification management is not disturbed */
 		        Intent lockscreen = new Intent(context, w);
-		        
-		        //When a notification with persistent LED or vibration/sound was waiting
-		        //At times it seems to wake but then sleep again when it shouldn't despite our userActivity PM calls
-		        //Other times it just won't wake when notifications are waiting
 		        
 		      //new task required for our service activity start to succeed. exception otherwise
 		        lockscreen.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
@@ -155,14 +140,15 @@ public class CustomLockService extends MediatorService {
 	
 	@Override
 	public void onCallStart() {
-		//Account for the case that a call starts while screen is asleep
 		
-		if (unlocked) {
+		//if (shouldLock)
 		//the case that user placed a call or got one while actively doing something else on device
 		//doesn't demand special handling at the moment
 		//could fire a toast message like lite mode
-		}
-		unlocked = false;
+		
+		shouldLock = false;
+		//flag so that lockscreen won't try to happen if screen off goes off in the middle of a call
+		//extra redundancy in this mode where we never wake the lockscreen
 	}
 	
 	@Override
@@ -173,7 +159,9 @@ public class CustomLockService extends MediatorService {
 			//We actually need to start lock since screen is off and lockscreened
 			StartLock(getApplicationContext());
 		}
-		else unlocked = true;//awake and unlocked state to ensure next screen off does StartLock
+		
+		shouldLock = true;//awake and unlocked state => ensure next screen off does StartLock
+		//redundancy flag telling our screen off that we want to lock
 	}
 	
 	@Override
@@ -182,7 +170,8 @@ public class CustomLockService extends MediatorService {
 			//We actually need to start lock since screen is off and lockscreened
 			StartLock(getApplicationContext());//lock again since user didn't react to this wake
 		}
-		else unlocked = true;
+		
+		shouldLock = true;
 	}
 	
 	//this logic appears to be working and places the lockscreen again when it should
@@ -195,7 +184,7 @@ public class CustomLockService extends MediatorService {
 		//No need to get the mgr, since we aren't manually sending this for FG mode.
 		
 		int icon = R.drawable.icon;
-		CharSequence tickerText = "custom lockscreen mode";
+		CharSequence tickerText = "lockscreen disabled mode";
 		
 		if (wakepref) tickerText = tickerText + " (Staying Awake)";
 		
@@ -205,7 +194,7 @@ public class CustomLockService extends MediatorService {
 		
 		Context context = getApplicationContext();
 		CharSequence contentTitle = "myLock - click to open settings";
-		CharSequence contentText = "custom lockscreen active";
+		CharSequence contentText = "lockscreen disabled";
 
 		Intent notificationIntent = new Intent(this, SettingsActivity.class);
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);

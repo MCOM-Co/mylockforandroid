@@ -59,9 +59,10 @@ public class ManageWakeLock {
 
   public static synchronized void DoCancel(Context context) {
 	 	  
-	  PowerManager myPM = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-	  myPM.userActivity(SystemClock.uptimeMillis(), false);
-	  releaseFull();//I don't call this on partial because we only let that go when lockscreen finishes
+	  //PowerManager myPM = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+	  //myPM.userActivity(SystemClock.uptimeMillis(), false);
+	  //doesn't seem necessary
+	  releaseFull();
   }
   
   public static synchronized void acquirePartial(Context context) {
