@@ -38,7 +38,7 @@ public class BootHandler extends Service {
 		
 		Intent i = new Intent();
 		
-		if (!custom) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UnlockService");
+		if (!custom) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.NoLockService");
 		else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
 		
 		startService(i);

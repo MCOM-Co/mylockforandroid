@@ -34,14 +34,20 @@ import android.view.WindowManager;
 //need to implement droid-fu to accomplish this
 public class Lockscreen extends Activity {
         
-        //private Handler serviceHandler;
-        //private Task myTask = new Task();
+        private Handler serviceHandler;
+        private Task myTask = new Task();
         
-        private ShakeListener mShaker;
+        //private ShakeListener mShaker;
+		//for now shake is too inconsistent to really use. 
         
         private int timeoutpref = 15;        
         
-        private int bright = 10;
+        //private int bright = 10; deprecated at the moment
+        private int timeleft = 0;
+        
+        private boolean shouldFinish = false;
+        //flag it to true if user hits power to wake up but quiet wake was already active
+        //this lets our task wait a half second, then actually wake up and finish
         
         private boolean screenwake = false;//set true when a wakeup key turns screen on
         private boolean cpuwake = false;//set true when a locked key wakes CPU but not screen
@@ -79,6 +85,14 @@ public class Lockscreen extends Activity {
         setBright((float) 0.0);
         //ensures that the window will keep screen off
         //we will deliberately turn it on when a wakeup key occurs
+        //it's a bit buggy at the moment as sleep timeouts seem to cause us to lose focus
+        //causing first button press to not be handle but regain focus for next attempt
+        //droid-fu can help avoid this?
+        
+        takeKeyEvents(true);
+        //FORCE OUR STUPID KEY EVENTS TO GET HANDLED EVEN IF NO FOCUS!!
+        //ANDRO-A.D.D.
+        getWindow().takeKeyEvents(true);//see if forcing the window also helps consistency
         
         IntentFilter offfilter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
 		registerReceiver(screenoff, offfilter);
@@ -99,20 +113,20 @@ public class Lockscreen extends Activity {
     //the device behavior ends up as just over 5 seconds when we do this.
     //when we set 1 here, it comes out 6.5 to 7 seconds between timeouts.
     
+    /*registering the shake listener
     mShaker = new ShakeListener(this);
     mShaker.setOnShakeListener(new ShakeListener.OnShakeListener () {
       public void onShake()
       {
         wakeup();//try waking up in response to the shake
       }
-    });
-    
-    
+    });*/
     //try acquiring the minimum partial wakelock to see if it allows us to catch shakes
     //ManageWakeLock.acquirePartial(getApplicationContext());
-    //this is bad news. it makes it so even the touchscreen remains active and causes screen on to reply
-    //though the screen remains off thanks to activity window params, this could cause all kinds of confusing behavior for user
         }
+        
+        //TODO add a handler which waits 5 seconds then switches on a flag to tell the key event logic to treat as full locked
+        //the flag would allow any key event to wake it back like the stock lockdown grace period
         
     protected View inflateView(LayoutInflater inflater) {
         return inflater.inflate(R.layout.lockactivity, null);
@@ -136,12 +150,14 @@ public class Lockscreen extends Activity {
         	
         	//the only other inconsistency is after a locked key cpu wake, if press power
         	//it is actually sleeping the cpu again so unlock doesn't happen
-        	//what we can do is set a flag "lockedwake" and a task that cancels it in 5 seconds
-        	//this flag will ensure that we can force wakeup using userActivity
-        	//if user presses power to wake in that short time following the locked key silent wake
-        	
-        	//FIXME noticed another bug that seems consistent, when I try to wake it with power key
-        	//while SMS notif is waiting it seems to fail to wakeup, goes back to sleep on first press
+        	//we've started setting flag CPU wake when a locked down key causes the forced-screenoff-wake
+        	       	
+        	//we could solve this by the following power key event reaction
+        	//set a handler for a half sec to wait for the "sleep" we can't prevent
+        	//then call a new useractivity and still do the unlock. ingenious.
+        
+        	//TODO need to do tests to see if our TAKEKEYEVENTS true actually allows custom sleep
+        	//through calling of the set bright 0.0. we'd also have to bring ourself to front... hmm
         return;
     }
     
@@ -162,9 +178,16 @@ public class Lockscreen extends Activity {
         	setBright((float) 0.0);
         }
         else if (cpuwake) {
-        	//just turn the flag back off, for now
-        	cpuwake = false;
-        }
+        	//Real sleep is happening after a quiet wake
+        	//either by 5 sec timeout or user is pressing power expecting wake
+        	//if (timeleft!=0)
+        	shouldFinish=true;
+        	//if the countdown is in progress that means user pressed power
+        	//therefore the device is going to sleep
+        	//but we actually need to wait a half second then call wakeup and finish
+        	}
+        
+        
         return;//avoid unresponsive receiver error outcome
              
 }};
@@ -201,8 +224,31 @@ public class Lockscreen extends Activity {
     }
     */
     
+    class Task implements Runnable {
+    	public void run() {                
+    		//the task will turn off the quiet wake 5 seconds after the button press happened
+    		//essentially if a 2nd press happens before the 5 seconds is up we need to restart
+    		//since that's what the real timeout does
+    		
+    		//best way is to actually use an int that does decrement every half sec
+    		//timeleft is equal to 10 half-second ticks. when it gets to 0 then the flag is cleared
+    		//when repeat calls happen we just put the int back at 5 sec worth (10 ticks)
+    		if (shouldFinish) {
+    			finish();
+    		}
+    		else if (timeleft!=0) {
+    			timeleft--;
+    			serviceHandler.postDelayed(myTask,500L);//just decrement every half second
+    		}
+    		else {
+    			cpuwake = false;
+    		}
+    	}
+    }
+    
     public void wakeup() {
     	screenwake = true;
+    	timeleft = 0;//this way the task doesn't keep going
     	    	
     	//poke user activity just to be safe that it won't flicker back off
     	PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
@@ -217,7 +263,12 @@ public class Lockscreen extends Activity {
     	super.onConfigurationChanged(newConfig);
      	if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO) {
      		//this means that a config change happened and the keyboard is open
-     		wakeup();//this works- confirmed on device
+     		//wakeup();
+     	
+     		//PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+      	  	//myPM.userActivity(SystemClock.uptimeMillis(), false);
+        	finish();
+      	  	//let's instant unlock when slide open
      	}
      	else {
      		//we will just do nothing if a config change comes and the hard keyboard is hidden
@@ -265,6 +316,34 @@ public class Lockscreen extends Activity {
     	
         Log.v("destroyWelcome","Destroying");
     }
+    //public void onWindowFocusChanged (boolean hasFocus)
+    //find out if we lost focus somehow
+    //might be helpful for the lockdown mode
+    //hasWindowFocus ()
+    
+    
+    //public void takeKeyEvents (boolean get)
+    //Request that key events come to this activity.
+    //Use this if your activity has no views with focus
+    //but still want a chance to process key events.
+    
+    @Override
+    public void onWindowFocusChanged (boolean hasFocus) {
+    	if (hasFocus) {
+    		//do nothing
+    		Log.v("focus change","we have gained focus");
+    	}
+    	else if (screenwake) {
+    		finish();//we aren't visible... need to unlock
+    		Log.v("focus change","need to finish because user pressed home");
+    		//FIXME this flags the mediator to do a new lockscreen when it shouldn't
+    		//to accomplish, let mediator see if any call is in progress before responding to restart
+    		//otherwise seems to work
+    	}
+    	
+    	//for now it assumes that user did home if this happened and screen was awake
+    }
+    
     
     //here's where most of the magic happens
     @Override
@@ -272,35 +351,76 @@ public class Lockscreen extends Activity {
         // Do this on key down
         boolean up = event.getAction() == KeyEvent.ACTION_UP;
         //flags to true if the event we are getting is the up (release)
+        //most cases let down get CPU wake always and let up get reaction wake or unlock
         switch (event.getKeyCode()) {
-            case KeyEvent.KEYCODE_VOLUME_UP:
-            case KeyEvent.KEYCODE_VOLUME_DOWN:
+            //case KeyEvent.KEYCODE_VOLUME_UP:
+            //case KeyEvent.KEYCODE_VOLUME_DOWN:
             case KeyEvent.KEYCODE_FOCUS:
                 if (up) {
-                    break;//break without return means pass on to other processes
+                    break;
+                	//break without return means pass on to other processes
                     //doesn't consume the press
-                    }
+
+                    //only set timer at down we don't need to do anything at up
+
+                    //break is actually allowing the return super to happen (see end of block)
+                    //returning false passes it on. we could allow vol changes while locked
+                    //for example
+                }
+                   
                 
                 Log.v("key event","locked key");
-                cpuwake = true;
+                //presses need to flag the quiet wake
+                //the screen off needs to know if the re-off is happening faster than the timeout
+                //because that means user forced sleep via power key
+                if (screenwake) break;//don't set off the timer if we're already in a wakeup
+                if (!cpuwake) {//set up the 5 second cpu wake flag
+                	cpuwake = true;
+                	timeleft=10;//10 half sec ticks for the task to count off
+                	serviceHandler.postDelayed(myTask,500L);
+                }
+                else {
+                	//log the fact that it is a repeat key
+                	timeleft=10;//reset count
+                	//task will continue running on its own if already started & timeleft is not 0
+                	//so don't call it to start
+                }
                 return true;
                 //returning true means we handled the event so don't pass it to other processes
-                            
-            //case KeyEvent.KEYCODE_POWER: allow default to handle power in this test build
+            case KeyEvent.KEYCODE_VOLUME_UP:
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
             case KeyEvent.KEYCODE_CAMERA:
-            	Log.v("key event","wake key");
+            	if (up) {
+                   
+               	Log.v("key event","wake key");
             	wakeup();
+            	}
                 return true;
+            	
             	
                	
                 //allow any keys we haven't locked down or defined as wake to instant unlock
+                
+                //if we catch the up from power it could mean user pressed power to sleep
+                
                 //back key is automatically handled, we process it in the onBackPressed
+               
+               
+                
             default:
+            	if (up) {
+                             
             	Log.v("key event","unlock key");
             	//do a user activity poke to be safe that it won't go back to sleep again
-            	PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-          	  	myPM.userActivity(SystemClock.uptimeMillis(), false);
+            	//this doesn't seem to help when a cpuwake is active from a locked key
+            	//it still goes to sleep despite our user activity
+            	//seems the power key root power handling overrides user activities always.
+            	//PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+          	  	//myPM.userActivity(SystemClock.uptimeMillis(), false);
             	finish();
+            	//the only case we don't get this event is during a silent wake
+            	//timeleft & the task handle this case
+            	}
             	return true;
         }
         return super.dispatchKeyEvent(event);

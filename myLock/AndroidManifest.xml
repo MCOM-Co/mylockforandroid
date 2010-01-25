@@ -11,14 +11,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
-       <activity android:name="LockActivity"
+       <activity android:name="Lockscreen"
                 android:excludeFromRecents="true"
                 android:theme="@android:style/Theme.Wallpaper"
                 android:launchMode="singleTask"
                 android:taskAffinity=""
+                android:screenOrientation="portrait"
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>
-       <activity android:name="Lockscreen"
+       <activity android:name="ShowWhenLockedActivity"
                 android:excludeFromRecents="true"
                 android:theme="@android:style/Theme.Wallpaper"
                 android:launchMode="singleTask"
@@ -44,7 +44,7 @@
         </service>
         <service android:name=".Toggler">
         </service>
-        <service android:name=".UnlockService">
+        <service android:name=".NoLockService">
         </service>
         <service android:name=".BootHandler">
         </service>

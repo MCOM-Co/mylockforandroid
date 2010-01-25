@@ -122,7 +122,7 @@ PhoneStateListener Detector = new PhoneStateListener() {
         	}
     		else {//return to idle
     			
-    			if (lastphonestate == 100) Log.v("ListenInit","first phone listener init");
+    			if (lastphonestate == 42) Log.v("ListenInit","first phone listener init");
     			else {    			
     		
     			if (lastphonestate==1) {
