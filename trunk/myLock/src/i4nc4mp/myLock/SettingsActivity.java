@@ -167,7 +167,9 @@ public class SettingsActivity extends Activity {
     	}
     }
     
-    
+    //FIXME I noticed these don't actually work unless I have one of the mediator's running. 
+    //Guess the WL just gets destroyed if no process from the app is present.
+    //The solution is to handle this inside the mediators only.
     private void StartWake() {
     	
     		Toast.makeText(SettingsActivity.this, "stay awake initialized", Toast.LENGTH_SHORT).show();

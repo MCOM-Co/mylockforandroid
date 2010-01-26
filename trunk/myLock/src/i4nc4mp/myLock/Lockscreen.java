@@ -1,6 +1,7 @@
 package i4nc4mp.myLock;
 
 import android.app.Activity;
+import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -8,6 +9,7 @@ import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.Settings.SettingNotFoundException;
@@ -34,23 +36,23 @@ import android.view.WindowManager;
 //need to implement droid-fu to accomplish this
 public class Lockscreen extends Activity {
         
-        private Handler serviceHandler;
-        private Task myTask = new Task();
-        
         //private ShakeListener mShaker;
 		//for now shake is too inconsistent to really use. 
         
+		Handler serviceHandler;
+		Task myTask = new Task();
+	
         private int timeoutpref = 15;        
         
         //private int bright = 10; deprecated at the moment
-        private int timeleft = 0;
+        public int timeleft = 0;
         
-        private boolean shouldFinish = false;
+        public boolean shouldFinish = false;
         //flag it to true if user hits power to wake up but quiet wake was already active
         //this lets our task wait a half second, then actually wake up and finish
         
-        private boolean screenwake = false;//set true when a wakeup key turns screen on
-        private boolean cpuwake = false;//set true when a locked key wakes CPU but not screen
+        public boolean screenwake = false;//set true when a wakeup key turns screen on
+        public boolean cpuwake = false;//set true when a locked key wakes CPU but not screen
         
         //very very complicated business.
         @Override
@@ -97,7 +99,7 @@ public class Lockscreen extends Activity {
         IntentFilter offfilter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
 		registerReceiver(screenoff, offfilter);
         
-        //serviceHandler = new Handler();
+        serviceHandler = new Handler();
         
       //retrieve the user's normal timeout setting - SCREEN_OFF_TIMEOUT
     	try {
@@ -180,13 +182,21 @@ public class Lockscreen extends Activity {
         else if (cpuwake) {
         	//Real sleep is happening after a quiet wake
         	//either by 5 sec timeout or user is pressing power expecting wake
+        	//by the time 5 seconds since last quiet wake pass we flag this false again in the task
+        	//so that when cpu really sleeps we just let it happen
         	//if (timeleft!=0)
         	shouldFinish=true;
         	//if the countdown is in progress that means user pressed power
         	//therefore the device is going to sleep
         	//but we actually need to wait a half second then call wakeup and finish
         	}
-        
+        //this logic seems to work but is causing a very nasty FC at the time the finish tries to go off
+        //i can't seem to get the screen on at all unless i long press power while it should be awake.
+        //we probably need all of this to happen in a service
+        //when start service is call, refresh the timeleft
+        //when timeleft successfully hits zero we should send a custom intent that this activity
+        //has in its filter which when received wakes up and kills us.
+ 
         
         return;//avoid unresponsive receiver error outcome
              
@@ -224,26 +234,40 @@ public class Lockscreen extends Activity {
     }
     */
     
-    class Task implements Runnable {
-    	public void run() {                
-    		//the task will turn off the quiet wake 5 seconds after the button press happened
-    		//essentially if a 2nd press happens before the 5 seconds is up we need to restart
-    		//since that's what the real timeout does
-    		
-    		//best way is to actually use an int that does decrement every half sec
-    		//timeleft is equal to 10 half-second ticks. when it gets to 0 then the flag is cleared
-    		//when repeat calls happen we just put the int back at 5 sec worth (10 ticks)
-    		if (shouldFinish) {
-    			finish();
-    		}
-    		else if (timeleft!=0) {
-    			timeleft--;
-    			serviceHandler.postDelayed(myTask,500L);//just decrement every half second
-    		}
-    		else {
-    			cpuwake = false;
-    		}
-    	}
+     	
+    	class Task implements Runnable {
+        	public void run() {                
+        		//the task will turn off the quiet wake 5 seconds after the button press happened
+        		//essentially if a 2nd press happens before the 5 seconds is up we need to restart
+        		//since that's what the real timeout does
+        		
+        		//best way is to actually use an int that does decrement every half sec
+        		//timeleft is equal to 10 half-second ticks. when it gets to 0 then the flag is cleared
+        		//when repeat calls happen we just put the int back at 5 sec worth (10 ticks)
+        		if (shouldFinish) {
+        			/*call the dismiss activity up
+        			Class w = DismissKeyguardActivity.class; 
+  	    	      
+        			Intent dismiss = new Intent(getApplicationContext(), w);
+        			dismiss.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK//For some reason it requires this even though we're already an activity
+        					| Intent.FLAG_ACTIVITY_NO_USER_ACTION//Just helps avoid conflicting with other important notifications
+        			        | Intent.FLAG_ACTIVITY_NO_HISTORY//Ensures the activity WILL be finished after the one time use
+        			        | Intent.FLAG_ACTIVITY_NO_ANIMATION);
+        			        
+        			getApplicationContext().startActivity(dismiss);*/
+        			//starting this steals focus from the lockscreen, causing it to finish itself
+        			//and the dismiss also finishes self automatically after a half sec
+        			wakeup();
+        			finish();
+        		}
+        		else if (timeleft!=0) {
+        			timeleft--;
+        			serviceHandler.postDelayed(myTask,500L);//just decrement every half second
+        		}
+        		else {
+        			cpuwake = false;
+        		}
+        	}
     }
     
     public void wakeup() {
@@ -302,8 +326,8 @@ public class Lockscreen extends Activity {
 		PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
     	pm.userActivity(SystemClock.uptimeMillis(), false);
         
-       //serviceHandler.removeCallbacks(myTask);
-       //serviceHandler = null;
+       serviceHandler.removeCallbacks(myTask);
+       serviceHandler = null;
        
        unregisterReceiver(screenoff);
       
@@ -353,7 +377,7 @@ public class Lockscreen extends Activity {
         //flags to true if the event we are getting is the up (release)
         //most cases let down get CPU wake always and let up get reaction wake or unlock
         switch (event.getKeyCode()) {
-            //case KeyEvent.KEYCODE_VOLUME_UP:
+            case KeyEvent.KEYCODE_VOLUME_UP:
             //case KeyEvent.KEYCODE_VOLUME_DOWN:
             case KeyEvent.KEYCODE_FOCUS:
                 if (up) {
@@ -374,20 +398,19 @@ public class Lockscreen extends Activity {
                 //the screen off needs to know if the re-off is happening faster than the timeout
                 //because that means user forced sleep via power key
                 if (screenwake) break;//don't set off the timer if we're already in a wakeup
+                timeleft=10;//10 half sec ticks for the task to count off
                 if (!cpuwake) {//set up the 5 second cpu wake flag
                 	cpuwake = true;
-                	timeleft=10;//10 half sec ticks for the task to count off
-                	serviceHandler.postDelayed(myTask,500L);
+                	serviceHandler.postDelayed(myTask, 500L);
                 }
                 else {
                 	//log the fact that it is a repeat key
-                	timeleft=10;//reset count
                 	//task will continue running on its own if already started & timeleft is not 0
                 	//so don't call it to start
                 }
                 return true;
                 //returning true means we handled the event so don't pass it to other processes
-            case KeyEvent.KEYCODE_VOLUME_UP:
+            //case KeyEvent.KEYCODE_VOLUME_UP:
             case KeyEvent.KEYCODE_VOLUME_DOWN:
             case KeyEvent.KEYCODE_CAMERA:
             	if (up) {
