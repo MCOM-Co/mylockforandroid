@@ -24,7 +24,14 @@
                 android:launchMode="singleTask"
                 android:taskAffinity=""
                 android:screenOrientation="portrait"
-                android:configChanges="orientation|keyboardHidden|keyboard|navigation"/> 
+                android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>
+       <activity android:name="DismissKeyguardActivity"
+                android:excludeFromRecents="true"
+                android:theme="@android:style/Theme.Wallpaper"
+                android:launchMode="singleTask"
+                android:taskAffinity=""
+                android:screenOrientation="portrait"
+                android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>
         <receiver android:name="ToggleWidget" >
 			<intent-filter>
         		<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
