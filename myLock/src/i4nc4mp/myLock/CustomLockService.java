@@ -13,9 +13,12 @@ public class CustomLockService extends MediatorService {
 	
 	public boolean persistent = false;
 	
-	public boolean unlocked = true;
+	public boolean shouldLock = true;
 	//when true screen off will start the lockscreen.
 	//we will ensure that it is false until user exits lockscreen or finishes a call
+	
+	public boolean Lockaftercall = false;
+	//just a flag we set when calls wake the device.
 	
 	public int patternsetting = 0;
 	//we'll see if the user has pattern enabled when we startup
@@ -52,9 +55,9 @@ public class CustomLockService extends MediatorService {
 		//unlock in the lockscreen activity causes start command to come back
 		//react by prepping the next StartLock
 				
-		//if (unlocked) Log unexpected restart occurred.
+		//if (shouldLock) Log unexpected restart occurred.
 				
-		if (!receivingcall && !placingcall) unlocked = true;//queue new lockscreen if no calls active
+		if (!receivingcall && !placingcall) shouldLock = true;//queue new lockscreen if no calls active
 			}
 	}
 	
@@ -102,8 +105,8 @@ public class CustomLockService extends MediatorService {
 		
 		if (receivingcall || placingcall) return;//don't handle during calls at all
 		
-		if (unlocked) {
-        	unlocked = false;
+		if (shouldLock) {
+        	shouldLock = false;
         	//TODO implement a 5 second delay which would play nice with the re-lock grace period
         	//as things stand, it doesn't really work if you try to interrupt a timeout sleep with more input immediately
         	StartLock(getApplicationContext());
@@ -157,23 +160,30 @@ public class CustomLockService extends MediatorService {
 	public void onCallStart() {
 		//Account for the case that a call starts while screen is asleep
 		
-		if (unlocked) {
-		//the case that user placed a call or got one while actively doing something else on device
-		//doesn't demand special handling at the moment
-		//could fire a toast message like lite mode
+		if (!shouldLock) {
+			//when should was false and a call started, it means the call woke device
+			Lockaftercall = true;
 		}
-		unlocked = false;
+		else shouldLock = false;
+		//flag so that lockscreen won't try to happen if screen off goes off in the middle of a call
+		//it doesn't seem like we even get the broadcasts- phone app is forcing the screen component off
 	}
 	
 	@Override
 	public void onCallEnd() {
 		//Account for the case that a call ends while screen is asleep
 		
-		if (!IsAwake()) {
-			//We actually need to start lock since screen is off and lockscreened
+		if (Lockaftercall) {
+			Lockaftercall = false;
 			StartLock(getApplicationContext());
 		}
-		else unlocked = true;//awake and unlocked state to ensure next screen off does StartLock
+		//the phone app is actually keeping the CPU state wakelocked
+		//then forcing screen dark like our regular lockscreen would.
+		else shouldLock = true;//awake and unlocked state => ensure next screen off does StartLock
+		
+		//the only case we still can't detect here pre-2.1 is if the screen was off at call end
+		//if so, not even a check for keyguard mode via the manage keyguard class will return correctly due to the 5 sec grace period
+		//however it is possible the grace period doesn't happen in that scenario
 	}
 	
 	@Override
@@ -182,7 +192,7 @@ public class CustomLockService extends MediatorService {
 			//We actually need to start lock since screen is off and lockscreened
 			StartLock(getApplicationContext());//lock again since user didn't react to this wake
 		}
-		else unlocked = true;
+		else shouldLock = true;
 	}
 	
 	//this logic appears to be working and places the lockscreen again when it should

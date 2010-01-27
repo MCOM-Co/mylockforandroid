@@ -5,4 +5,13 @@
     android:layout_height="fill_parent"
     android:id="@+id/mylockscreen"
     android:gravity="center">
+    <TextView
+android:id="@+id/unlockmsg"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:text="unLockScreen - please wait"
+android:textSize="20sp"
+android:gravity="left"
+>
+</TextView>
 </LinearLayout>

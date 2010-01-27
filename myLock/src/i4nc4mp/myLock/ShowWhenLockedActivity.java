@@ -8,6 +8,8 @@ import android.content.Intent;
 
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.os.SystemClock;
 
 import android.util.Log;
 import android.view.KeyEvent;
@@ -20,7 +22,6 @@ import android.view.WindowManager;
 //we just can't handle only keys we want. we either have to break out of lockscreen
 //then workaround every key event
 //or handle nothing except power which is the only key that the lockscreen allows through
-//that's what we'll do is set key event to call finish. Anything we do get means we woke up and should exit
 public class ShowWhenLockedActivity extends Activity {
                 
         //very very complicated business.
@@ -78,8 +79,13 @@ public class ShowWhenLockedActivity extends Activity {
     	super.onConfigurationChanged(newConfig);
      	if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO) {
      		//this means that a config change happened and the keyboard is open
-     		     		
-     		StartDismiss(getApplicationContext());
+     		     
+     		PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
+        	pm.userActivity(SystemClock.uptimeMillis(), false);
+        	
+        	StartMediator();
+     		
+     		//StartDismiss(getApplicationContext());
       	  	//let's instant unlock when slide open
         	//TODO give user option to keep it locked on slide open for that paranoid slider-bumper
      	}
@@ -101,6 +107,10 @@ public class ShowWhenLockedActivity extends Activity {
     public void StartDismiss(Context context) {
     	
     	//ManageKeyguard.initialize(context);
+    	PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
+    	pm.userActivity(SystemClock.uptimeMillis(), false);
+    	//ensure it will be awake
+    	
     	ManageKeyguard.disableKeyguard(getApplicationContext());
     	//advantage here is we don't have to do a task delay
     	//because we're already showing on top of keyguard this gets the job done
@@ -110,46 +120,47 @@ public class ShowWhenLockedActivity extends Activity {
             public void LaunchOnKeyguardExitSuccess() {
                Log.v("start", "This is the exit callback");
                finish();
-                }});
-    	
-    	/*
-    	Class w = DismissKeyguardActivity.class; 
-	    	      
-		Intent dismiss = new Intent(context, w);
-		dismiss.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK//For some reason it requires this even though we're already an activity
-				| Intent.FLAG_ACTIVITY_NO_USER_ACTION//Just helps avoid conflicting with other important notifications
-		        | Intent.FLAG_ACTIVITY_NO_HISTORY//Ensures the activity WILL be finished after the one time use
-		        | Intent.FLAG_ACTIVITY_NO_ANIMATION);
-		        
-		context.startActivity(dismiss);*/
-    	
+                }});    	
     }
     
     @Override
     public void onWindowFocusChanged (boolean hasFocus) {
     	if (hasFocus) {
     		//do nothing
-    		Log.v("focus change","we have gained focus");
+    		Log.v("focus gain","startup is done");
     	}
     	else {//loses focus
-    		Log.v("focus change","we have lost focus");
+    		Log.v("focus lost","finishing...");
     		finish();
     		//this implementation ensures the dismiss can start and we don't finish till it is on-screen
     		//when NoLock calls it it just ensures it finishes after the keyguard exit
     	}
     	
     }
+    /*
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        //at destroy we send a start to the mediator, which does the keyguard exit
+        //this will allow us to do it via the dismiss activity
+    }*/
+    
+    public void StartMediator() {
+    Intent i = new Intent();
+	i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.NoLockService");
+	startService(i);
+    }
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-
-       //if (event.getKeyCode() == KeyEvent.KEYCODE_POWER) {
-    	
-    	StartDismiss(getApplicationContext());
+    	boolean up = event.getAction() == KeyEvent.ACTION_UP;
+       
+    	if (up) StartMediator();
         return true;
-
-        }
-        //else return false;
-    	//we won't get anything the lockscreen doesn't let us get
+    	//always claim we handled the key
+        //but we only launch dismiss on up
+    }
+    
+    //we won't get anything the lockscreen doesn't let us get
     //the forced TAKE KEY EVENTS still doesn't put us in front of the lockscreen mediator
 }
