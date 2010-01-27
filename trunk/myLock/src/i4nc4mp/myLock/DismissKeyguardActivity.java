@@ -8,9 +8,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 
-//I'll call this to kill the lockscreen from both the standard mode and the custom lock mode
-//for custom lock it is the workaround to a power unlock request during a silent locked-key wake
-//the timer service will start this, causing the regular lockscreen to destroy because of focus change
+//one shot window that works better than securely exit hack from alpha 2
+//should always be started by a mediator service
+//it finishes itself off
 public class DismissKeyguardActivity extends Activity {
 	//Intent.FLAG_ACTIVITY_NO_HISTORY - causes this activity to end after user leaves it, unconditionally
 	//when I launch with this flag at screen off it seems to wake screen and end itself.

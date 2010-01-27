@@ -1,11 +1,15 @@
 package i4nc4mp.myLock;
 
+import i4nc4mp.myLock.ManageKeyguard.LaunchOnKeyguardExit;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.PowerManager;
+import android.os.SystemClock;
 import android.provider.Settings.SettingNotFoundException;
+import android.util.Log;
 
 
 public class NoLockService extends MediatorService {
@@ -15,6 +19,9 @@ public class NoLockService extends MediatorService {
 	public boolean shouldLock = true;
 	//when true screen off will start the lockscreen.
 	//we will ensure that it is false until user exits lockscreen or finishes a call
+	
+	public boolean Lockaftercall = false;
+	//just a flag we set when calls wake the device.
 	
 	public int patternsetting = 0;
 	//we'll see if the user has pattern enabled when we startup
@@ -45,6 +52,11 @@ public class NoLockService extends MediatorService {
 					persistent = false;
 				}
 				else doFGstart(wake);//so FG mode is started again
+			}
+			else {
+				//the key event or slider open in unLockScreen sends a start back to us. this means exit the keyguard
+				shouldLock = true;//this flag helps call logic know that user is in the middle of an active wakeup
+				StartDismiss(getApplicationContext());
 			}
 	}
 	
@@ -84,7 +96,7 @@ public class NoLockService extends MediatorService {
 	    		ManageKeyguard.disableKeyguard(getApplicationContext());
 	    		serviceHandler.postDelayed(myTask, 50L);//unlock will be set by this callback
 	    		*/
-	}
+	}	
 	
 	@Override
 	public void onScreenSleep() {
@@ -93,14 +105,43 @@ public class NoLockService extends MediatorService {
 		if (receivingcall || placingcall || !shouldLock) return;
 		//don't handle during calls at all
 		//the should flag is for extra safety in case we ever find another exception case
-		
-		//TODO implement a 5 second delay which would play nice with the re-lock grace period
-        //as things stand, it doesn't really work if you try to interrupt a timeout sleep with more input immediately
+		shouldLock = false;
         StartLock(getApplicationContext());
-		
+		//start the dummy lockscreen which allows us to know when unguarded keys or slider happen
 		
 		return;//prevents unresponsive broadcast error
 	}
+	
+	
+	public void StartDismiss(Context context) {
+    	/*
+    	//ManageKeyguard.initialize(context);
+    	PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
+    	pm.userActivity(SystemClock.uptimeMillis(), false);
+    	//ensure it will be awake
+    	
+    	ManageKeyguard.disableKeyguard(getApplicationContext());
+    	//advantage here is we don't have to do a task delay
+    	//because we're already showing on top of keyguard this gets the job done
+    	
+    	
+    	ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
+            public void LaunchOnKeyguardExitSuccess() {
+               Log.v("start", "This is the exit callback");
+               }});
+    	*/
+    	
+    	Class w = DismissKeyguardActivity.class; 
+	    	      
+		Intent dismiss = new Intent(context, w);
+		dismiss.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK//For some reason it requires this even though we're already an activity
+				| Intent.FLAG_ACTIVITY_NO_USER_ACTION//Just helps avoid conflicting with other important notifications
+		        | Intent.FLAG_ACTIVITY_NO_HISTORY//Ensures the activity WILL be finished after the one time use
+		        | Intent.FLAG_ACTIVITY_NO_ANIMATION);
+		        
+		context.startActivity(dismiss);
+    	
+    }
 	
 	private void StartLock(Context context) {
 
@@ -119,35 +160,21 @@ public class NoLockService extends MediatorService {
 		        lockscreen.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
 		                | Intent.FLAG_ACTIVITY_NO_USER_ACTION);
 		        //not sure if no user action is necessary, the alarm alert used but appears just be for retaining notifications
-		        
-		                //| Intent.FLAG_ACTIVITY_NO_HISTORY
-		                //this flag will tell OS to always finish the activity when user leaves it
-		                //when this was on, it was exiting every time it got created. interesting unexpected behavior
-		                //might be able to be utilized as an all button instant unlock mode
-		                //need to investigate the focus loss to figure this out
-		                //| Intent.FLAG_ACTIVITY_NO_ANIMATION)
-		                //because we don't need to animate... O_o doesn't really seem to be for this
-		        
+		
 		        context.startActivity(lockscreen);
 		}
-	
-	
-	//essentially anytime a call ends it seems our next screen off is not creating the lockscreen again
-	//we have a few cases
-	//1- call ends while screen was off. user turns on screen to find the regular lockscreen -- resolved
-	//2- call ends while screen is on, user sees the lockscreen. if sleep, next wakeup still has lockscreen -- resolved
-	//3- incoming call is missed or ignored results in seeing the lockscreen also
 	
 	@Override
 	public void onCallStart() {
 		
-		//if (shouldLock)
-		//the case that user placed a call or got one while actively doing something else on device
-		//doesn't demand special handling at the moment
-		//could fire a toast message like lite mode
-		
-		shouldLock = false;
+		if (!shouldLock) {
+			//when should was false and a call started, it means the call woke device
+			Lockaftercall = true;
+		}
+		else shouldLock = false;
 		//flag so that lockscreen won't try to happen if screen off goes off in the middle of a call
+		//it doesn't seem like we even get the broadcasts- phone app is forcing the screen component off
+		
 		//extra redundancy in this mode where we never wake the lockscreen
 	}
 	
@@ -155,13 +182,19 @@ public class NoLockService extends MediatorService {
 	public void onCallEnd() {
 		//Account for the case that a call ends while screen is asleep
 		
-		if (!IsAwake()) {
-			//We actually need to start lock since screen is off and lockscreened
+		if (Lockaftercall) {
+			Lockaftercall = false;
 			StartLock(getApplicationContext());
 		}
-		
-		shouldLock = true;//awake and unlocked state => ensure next screen off does StartLock
+		//the phone app is actually keeping the CPU state wakelocked
+		//then forcing screen dark like our regular lockscreen would.
+		else shouldLock = true;//awake and unlocked state => ensure next screen off does StartLock
 		//redundancy flag telling our screen off that we want to lock
+		
+		
+		//the only case we still can't detect here pre-2.1 is if the screen was off at call end
+		//if so, not even a check for keyguard mode via the manage keyguard class will return correctly due to the 5 sec grace period
+		//however it is possible the grace period doesn't happen in that scenario
 	}
 	
 	@Override
@@ -170,8 +203,7 @@ public class NoLockService extends MediatorService {
 			//We actually need to start lock since screen is off and lockscreened
 			StartLock(getApplicationContext());//lock again since user didn't react to this wake
 		}
-		
-		shouldLock = true;
+		else shouldLock = true;
 	}
 	
 	//this logic appears to be working and places the lockscreen again when it should

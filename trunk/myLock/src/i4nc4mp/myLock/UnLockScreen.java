@@ -20,22 +20,9 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
-//starting point is the alarmalert prompt.
-//this window itself dismisses keyguard.
-
-//we are going to call it up when the screen goes OFF
-//then attempt to mediate which keys will cause a result at that point
-
-//android color = #ffa4c639
-//just thought you should know that
-
-
-//lockdown and regular lockscreen are closely related
-//during lockdown, we want to ensure to bring ourselves back if activity goes to background
-//otherwise, we want to FINISH when we go to background in any fashion
-
-//the focus change method handles this fine. droid-fu lets you distinguish if it's you or other apps taking focus away
-public class Lockscreen extends Activity {
+//Alpha 3 release, no customization, just the custom lockscreen you never manually wake
+//TODO need to create the mediator subclass for it
+public class UnLockScreen extends Activity {
         
         //private ShakeListener mShaker;
 		//for now shake is too inconsistent to really use. 
@@ -265,7 +252,7 @@ public class Lockscreen extends Activity {
     	super.onConfigurationChanged(newConfig);
      	if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO) {
      		//this means that a config change happened and the keyboard is open
-     		wakeup();
+     		//wakeup();
         	finish();
       	  	//let's instant unlock when slide open
      	}
@@ -329,12 +316,10 @@ public class Lockscreen extends Activity {
     	}
     	else if (screenwake) {
     		finish();//we aren't visible... need to unlock
-    		Log.v("focus loss","finishing because user probably did home");
+    		Log.v("focus change","need to finish because user pressed home");
     	}
     	
     	//for now it assumes that user did home if this happened and screen was awake
-    	//looks like using the notification panel also loses focus.
-    	//possible to set ourselves as NO HISTORY only when wakeup happens?
     }
     
     
@@ -349,32 +334,48 @@ public class Lockscreen extends Activity {
             case KeyEvent.KEYCODE_VOLUME_UP:
             case KeyEvent.KEYCODE_VOLUME_DOWN:
             case KeyEvent.KEYCODE_FOCUS:
+            case KeyEvent.KEYCODE_CAMERA:
                 if (up) {
-                   
-                Log.v("key event","locked key has been released");
+                    break;
+                	//break without return means pass on to other processes
+                    //doesn't consume the press
 
-                if (!screenwake) {//we can ignore the key if already in a wakeup (user viewing lockscreen)
+                    //break is actually allowing the return super to happen (see end of block)
+                    //returning false passes it on.
+                    //for example we could allow vol changes while locked
+                }
+                   
+                
+                Log.v("key event","locked key");
+
+                if (screenwake) break;//we can ignore the key if already in a wakeup (user viewing lockscreen)
                 timeleft=10;//10 half sec ticks for the task to count off
                 if (!cpuwake) {
                 	cpuwake = true;
                 	serviceHandler.postDelayed(myTask, 500L);
-                		}
-                	}
+                }
+                else {
+                	//log the fact that lock key was repeated while already quiet waking
+                	//task will continue running on its own if already started & timeleft is not 0
+                	//so we don't need to call a start
                 }
                 return true;
                 //returning true means we handled the event so don't pass it to other processes
                 
                 //With the focus press the timer works and wakes and unlocks after the forced sleep
                 //Volume key would never work despite the fact that the logic is being processed exactly the same for both events
-            //case KeyEvent.KEYCODE_VOLUME_UP:
-            //case KeyEvent.KEYCODE_VOLUME_DOWN:
-            case KeyEvent.KEYCODE_CAMERA:
+                
+            //TODO give an option to use a long press to wake to the blank lockscreen replacement for purpose notification panel use
+            //This implementation is aimed at the alpha 3 release without customization
+            //because can't get the show when locked activity to be consistent
+                
+            /*case KeyEvent.KEYCODE_CAMERA:
             	if (up) {
                    
                	Log.v("key event","wake key");
             	wakeup();
             	}
-                return true;
+                return true;*/
             	
             	
                	
@@ -388,17 +389,16 @@ public class Lockscreen extends Activity {
                 
             default:
             	if (up) {
-            		finish();
-            	}
-            	else {
-            		wakeup();
-            		Log.v("key event","unlock key down");
-            	}
-            	   
+                             
+            	Log.v("key event","unlock key");
+            	
+            	finish();
             	//the only case we don't get this event is during a silent wake
             	//when user presses power
             	//timeleft & the task handle this case
+            	}
             	return true;
         }
+        return super.dispatchKeyEvent(event);
     }
 }
