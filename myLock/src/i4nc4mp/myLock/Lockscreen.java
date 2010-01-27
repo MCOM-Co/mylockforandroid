@@ -1,7 +1,6 @@
 package i4nc4mp.myLock;
 
 import android.app.Activity;
-import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -9,7 +8,6 @@ import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.Settings.SettingNotFoundException;
@@ -54,6 +52,10 @@ public class Lockscreen extends Activity {
         public boolean screenwake = false;//set true when a wakeup key turns screen on
         public boolean cpuwake = false;//set true when a locked key wakes CPU but not screen
         
+        public boolean firstwake = true;
+        //flag which will tell broadcast not to fire once
+        //due to an odd bug that happens when locking over certain apps
+        
         //very very complicated business.
         @Override
     protected void onCreate(Bundle icicle) {
@@ -93,6 +95,7 @@ public class Lockscreen extends Activity {
         //ANDRO-A.D.D.
         getWindow().takeKeyEvents(true);//see if forcing the window also helps consistency
         //this still has inconsistency. when locked on top of certain apps with input windows, we sometimes fail to react to first key event
+        //the failure actually appears to be that we start to wake, but that the screen off broadcast is occurring and should not be
         
         IntentFilter offfilter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
 		registerReceiver(screenoff, offfilter);
@@ -159,6 +162,12 @@ public class Lockscreen extends Activity {
                 if (!intent.getAction().equals(Screenoff)) return;
         //if a wakeup key had turned screen on let's tell the window to keep it off now
         if (screenwake) {
+        	//when the failure to wake happens i believe it is because the system is sending this event right away
+        	//causing the result of a screen sleep but where power sends it back into real sleep again.
+        	/*if (firstwake) {
+        		firstwake = false;
+        		return;
+        	}*/
         	screenwake = false;
         	setBright((float) 0.0);
         }
@@ -310,8 +319,7 @@ public class Lockscreen extends Activity {
 		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
 		startService(i);//tells the mediator that user has unlocked
        
-		//release the CPU hold we obtained to let us listen for shakes
-		//ManageWakeLock.releasePartial();
+		//ManageWakeLock.releaseFull();
     	
         Log.v("destroyWelcome","Destroying");
     }
@@ -329,6 +337,7 @@ public class Lockscreen extends Activity {
     	}
     	else if (screenwake) {
     		finish();//we aren't visible... need to unlock
+    		//moveTaskToBack(true);
     		Log.v("focus loss","finishing because user probably did home");
     	}
     	
@@ -389,9 +398,11 @@ public class Lockscreen extends Activity {
             default:
             	if (up) {
             		finish();
+            		//moveTaskToBack(true);
             	}
-            	else {
-            		wakeup();
+            	else {//in the bug, wakeup gets started but fails because sleep event occurs before we can send user activity
+            		//so let's try a wakelock instead
+            		//ManageWakeLock.acquireFull(getApplicationContext());
             		Log.v("key event","unlock key down");
             	}
             	   

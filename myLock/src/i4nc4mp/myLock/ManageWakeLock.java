@@ -78,6 +78,8 @@ public class ManageWakeLock {
 myPartialWakeLock = myPM.newWakeLock(
         PowerManager.PARTIAL_WAKE_LOCK, "myLock");
 myPartialWakeLock.acquire();
+Log.v("acquire","**Wakelock acquired");
+
   }
 
   public static synchronized void releaseFull() {

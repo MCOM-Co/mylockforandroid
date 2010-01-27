@@ -56,6 +56,12 @@ public class NoLockService extends MediatorService {
 			else {
 				//the key event or slider open in unLockScreen sends a start back to us. this means exit the keyguard
 				shouldLock = true;//this flag helps call logic know that user is in the middle of an active wakeup
+				
+				//ManageWakeLock.acquirePartial(getApplicationContext());//ensure that we can get the next lockscreen created
+				//it doesn't work. in certain apps, anytime we sleep we get the broadcast and try to start but it fails to start
+				//the start actually happens at next screen wakeup, as if CPU sleep is still happening right before our onCreate
+				
+				
 				StartDismiss(getApplicationContext());
 			}
 	}
@@ -106,6 +112,7 @@ public class NoLockService extends MediatorService {
 		//don't handle during calls at all
 		//the should flag is for extra safety in case we ever find another exception case
 		shouldLock = false;
+		
         StartLock(getApplicationContext());
 		//start the dummy lockscreen which allows us to know when unguarded keys or slider happen
 		
@@ -157,8 +164,8 @@ public class NoLockService extends MediatorService {
 		        Intent lockscreen = new Intent(context, w);
 		        
 		      //new task required for our service activity start to succeed. exception otherwise
-		        lockscreen.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-		                | Intent.FLAG_ACTIVITY_NO_USER_ACTION);
+		        lockscreen.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		                //| Intent.FLAG_ACTIVITY_NO_USER_ACTION);
 		        //not sure if no user action is necessary, the alarm alert used but appears just be for retaining notifications
 		
 		        context.startActivity(lockscreen);
