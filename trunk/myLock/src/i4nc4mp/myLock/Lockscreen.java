@@ -346,6 +346,13 @@ public class Lockscreen extends Activity {
     	//possible to set ourselves as NO HISTORY only when wakeup happens?
     }
     
+    /*public void onStart() {
+    	super.onStart();
+    	Log.v("start lockscreen","onStart");
+    	ManageWakeLock.releasePartial();
+    	
+    }*/
+    
     
     //here's where most of the magic happens
     @Override

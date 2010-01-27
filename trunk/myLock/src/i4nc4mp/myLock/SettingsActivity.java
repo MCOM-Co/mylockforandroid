@@ -56,8 +56,9 @@ public class SettingsActivity extends Activity {
                        // Don't forget to commit your edits!!!
                        editor.commit();
                        //finally, do the change
-                       if (wake.isChecked()) StartWake();
-                       else StopWake();
+                       ToggleWake();
+                       if (wake.isChecked()) Toast.makeText(SettingsActivity.this, "stay awake initialized", Toast.LENGTH_SHORT).show();
+                       else Toast.makeText(SettingsActivity.this, "stay awake disabled", Toast.LENGTH_SHORT).show();
                        //at boot when option is enabled the service starts wake
                        //wake is never stopped, except by the user here
                    }
@@ -170,19 +171,12 @@ public class SettingsActivity extends Activity {
     //FIXME I noticed these don't actually work unless I have one of the mediator's running. 
     //Guess the WL just gets destroyed if no process from the app is present.
     //The solution is to handle this inside the mediators only.
-    private void StartWake() {
+    private void ToggleWake() {
     	
-    		Toast.makeText(SettingsActivity.this, "stay awake initialized", Toast.LENGTH_SHORT).show();
-    		ManageWakeLock.acquireFull(getApplicationContext());
-    		//when it starts at boot, the notification will say stay awake is on
-    		//so if user has wake on but fg off, they won't get a message at boot but it still starts
+    		Intent i = new Intent();
+    		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.StayAwakeService");
+    		startService(i);
     	}
-    
-    private void StopWake() {		
-		//ManageWakeLock.DoCancel(getApplicationContext());
-		ManageWakeLock.releaseFull();
-		Toast.makeText(SettingsActivity.this, "auto-sleep re-enabled", Toast.LENGTH_SHORT).show();
-    }
 
 protected void onDestroy() {
 	  super.onDestroy();

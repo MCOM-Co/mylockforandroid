@@ -5,7 +5,9 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Handler;
 import android.provider.Settings.SettingNotFoundException;
+import android.util.Log;
 
 
 //custom lockscreen mode
@@ -24,6 +26,9 @@ public class CustomLockService extends MediatorService {
 	//we'll see if the user has pattern enabled when we startup
 	//so we can disable it and then restore when we finish
 	
+	Handler serviceHandler;
+	Task myTask = new Task();
+	
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
@@ -32,6 +37,9 @@ public class CustomLockService extends MediatorService {
 			android.provider.Settings.System.putInt(getContentResolver(), 
     			android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
     	//re-enable pattern lock if applicable
+			
+			serviceHandler.removeCallbacks(myTask);
+		    serviceHandler = null;
 	}
 }
 
@@ -97,6 +105,30 @@ public class CustomLockService extends MediatorService {
 	    		ManageKeyguard.disableKeyguard(getApplicationContext());
 	    		serviceHandler.postDelayed(myTask, 50L);//unlock will be set by this callback
 	    		*/
+		
+		serviceHandler = new Handler();
+		//ManageWakeLock.acquirePartial(getApplicationContext());
+	}
+	
+	class Task implements Runnable {
+    	public void run() {
+    		Context mCon = getApplicationContext();
+    		Log.v("lock_delay","task executing");
+    		if (!shouldLock) {    			
+    		//first run is after half second of screen off. see if any keyguard exists
+    			ManageKeyguard.initialize(mCon);
+    			if (ManageKeyguard.inKeyguardRestrictedInputMode()) StartLock(mCon);//take over the lock
+    			else {
+    				shouldLock = true;
+    				serviceHandler.postDelayed(myTask, 4500L);
+    				//wait 4 more seconds, and lock
+    				}
+    		}
+    		else {
+    			shouldLock = false;
+            	StartLock(mCon);
+    		}
+    	}
 	}
 	
 	@Override
@@ -107,9 +139,8 @@ public class CustomLockService extends MediatorService {
 		
 		if (shouldLock) {
         	shouldLock = false;
-        	//TODO implement a 5 second delay which would play nice with the re-lock grace period
-        	//as things stand, it doesn't really work if you try to interrupt a timeout sleep with more input immediately
-        	StartLock(getApplicationContext());
+        	serviceHandler.postDelayed(myTask, 500L);
+        	//StartLock(getApplicationContext());
 		}
 		
 		return;//prevents unresponsive broadcast error
