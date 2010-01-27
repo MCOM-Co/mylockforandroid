@@ -29,7 +29,7 @@ public class ShowWhenLockedActivity extends Activity {
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
 
-        
+        Log.v("create nolock","about to request window params");
         requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
         
@@ -52,12 +52,24 @@ public class ShowWhenLockedActivity extends Activity {
          * I have to hack severely to do anything useful with that (prevent user perception of all-key wakeup)
         */
         
+        //setVisible(false);
+        //Tells the OS that we don't want to display any UI
+        //we never have a UI for interaction
+      //TODO might mess up the functionality, might enhance it, we shall see
+        Log.v("create nolock","about to update layout");
         updateLayout();
         
-        
+        Log.v("create nolock","about to request key events");
         takeKeyEvents(true);
         getWindow().takeKeyEvents(true);//see if forcing the window also helps consistency
     
+        }
+        
+        public void onStart() {
+        	super.onStart();
+        	Log.v("start nolock","onStart");
+        	//ManageWakeLock.releasePartial();//drop the lock we had to get to ensure we could get this far
+        	
         }
         
         //TODO add a handler which waits 5 seconds then switches on a flag to tell the key event logic to treat as full locked
@@ -132,17 +144,33 @@ public class ShowWhenLockedActivity extends Activity {
     	else {//loses focus
     		Log.v("focus lost","finishing...");
     		finish();
+    		//moveTaskToBack(true);
+    		
+    		//reset variables also
+    		
     		//this implementation ensures the dismiss can start and we don't finish till it is on-screen
     		//when NoLock calls it it just ensures it finishes after the keyguard exit
     	}
     	
     }
+    
     /*
+    @Override
+    public void onPause() {
+    	super.onPause();
+    	takeKeyEvents(true);
+    }
+    
+    @Override
+    public void onResume() {
+    	super.onResume();
+    	takeKeyEvents(true);
+    }
+    
     @Override
     public void onDestroy() {
         super.onDestroy();
-        //at destroy we send a start to the mediator, which does the keyguard exit
-        //this will allow us to do it via the dismiss activity
+        ManageWakeLock.releaseFull();
     }*/
     
     public void StartMediator() {
@@ -156,6 +184,13 @@ public class ShowWhenLockedActivity extends Activity {
     	boolean up = event.getAction() == KeyEvent.ACTION_UP;
        
     	if (up) StartMediator();
+    	//else ManageWakeLock.acquireFull(getApplicationContext());
+    	//I thought it was too quick re-sleep causing the bug while apps like dolphin or facebook are running
+    	//this doesn't solve it. I am actually not getting any key events
+    	//Camera key doesn't even work when we are in the bug circumstance.
+    	//once i wake with power, we are seeing the activity when we shouldnt
+    	//then on next try it works as expected.
+    	
         return true;
     	//always claim we handled the key
         //but we only launch dismiss on up

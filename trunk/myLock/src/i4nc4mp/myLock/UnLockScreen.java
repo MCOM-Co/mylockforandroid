@@ -22,6 +22,8 @@ import android.view.WindowManager;
 
 //Alpha 3 release, no customization, just the custom lockscreen you never manually wake
 //TODO need to create the mediator subclass for it
+//TODO need to bring in updates from the other lock activities 
+//This version might not be needed if we can resolve the inconsistency in the other 2 versions
 public class UnLockScreen extends Activity {
         
         //private ShakeListener mShaker;

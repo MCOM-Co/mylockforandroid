@@ -28,10 +28,20 @@ public class DismissKeyguardActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
         		| WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         Log.v("dismiss","creating dismiss window");
+        
+        //setVisible(false);
+        //Tells the OS that we don't want to display any UI
+        //we never have a UI for interaction
+        //TODO might mess up the functionality, might enhance it, we shall see
+        
         updateLayout();
         //Can't call finish here
         //Have to cause delay like in the first alpha 2 window based implementation. we're creating this at wakeup essentially
         //no use in the instant unlock but useful for the bug fix in unlock from within quiet-wake
+        
+        
+        //we can use getIntent() to see the intent we got started by. this will allow me to handle different start reasons
+        //by just implementing different custom intents and registering the activity for them
 }
 	
 	protected View inflateView(LayoutInflater inflater) {
