@@ -22,6 +22,9 @@ public class CustomLockService extends MediatorService {
 	public boolean Lockaftercall = false;
 	//just a flag we set when calls wake the device.
 	
+	public boolean PendingLock = false;
+	//flag we can set if user cancels a sleep by rewaking before lock 5 sec timer runs out
+	
 	public int patternsetting = 0;
 	//we'll see if the user has pattern enabled when we startup
 	//so we can disable it and then restore when we finish
@@ -113,22 +116,30 @@ public class CustomLockService extends MediatorService {
 	class Task implements Runnable {
     	public void run() {
     		Context mCon = getApplicationContext();
-    		Log.v("lock_delay","task executing");
-    		if (!shouldLock) {    			
-    		//first run is after half second of screen off. see if any keyguard exists
+    		//Log.v("lock_delay","task executing");
+    		if (!PendingLock) return;//ensures break the attempt cycle if user has aborted the lock
+    		
+    		//see if any keyguard exists
     			ManageKeyguard.initialize(mCon);
-    			if (ManageKeyguard.inKeyguardRestrictedInputMode()) StartLock(mCon);//take over the lock
-    			else {
-    				shouldLock = true;
-    				serviceHandler.postDelayed(myTask, 4500L);
-    				//wait 4 more seconds, and lock
-    				}
+    			if (ManageKeyguard.inKeyguardRestrictedInputMode()) {
+    				shouldLock = false;
+    				PendingLock = false;
+    				StartLock(mCon);//take over the lock
+    			}
+    			else serviceHandler.postDelayed(myTask, 500L);
+    			//keep trying every half sec. essentially starts lock once keyguard is up
+    				
     		}
-    		else {
-    			shouldLock = false;
-            	StartLock(mCon);
-    		}
+    	
+    	
+    		
     	}
+	
+	@Override
+	public void onScreenWakeup() {
+		if (PendingLock) PendingLock = false;
+			//user wakes screen during pending lock, so cancel it
+		return;
 	}
 	
 	@Override
@@ -138,7 +149,7 @@ public class CustomLockService extends MediatorService {
 		if (receivingcall || placingcall) return;//don't handle during calls at all
 		
 		if (shouldLock) {
-        	shouldLock = false;
+        	PendingLock = true;
         	serviceHandler.postDelayed(myTask, 500L);
         	//StartLock(getApplicationContext());
 		}
