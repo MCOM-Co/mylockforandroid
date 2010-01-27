@@ -1,13 +1,11 @@
 package i4nc4mp.myLock;
 
-import i4nc4mp.myLock.ManageKeyguard.LaunchOnKeyguardExit;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.PowerManager;
-import android.os.SystemClock;
+import android.os.Handler;
 import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
 
@@ -27,6 +25,9 @@ public class NoLockService extends MediatorService {
 	//we'll see if the user has pattern enabled when we startup
 	//so we can disable it and then restore when we finish
 	
+	Handler serviceHandler;
+	Task myTask = new Task();
+	
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
@@ -35,6 +36,9 @@ public class NoLockService extends MediatorService {
 			android.provider.Settings.System.putInt(getContentResolver(), 
     			android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
     	//re-enable pattern lock if applicable
+			
+			serviceHandler.removeCallbacks(myTask);
+		    serviceHandler = null;
 	}
 }
 
@@ -102,7 +106,29 @@ public class NoLockService extends MediatorService {
 	    		ManageKeyguard.disableKeyguard(getApplicationContext());
 	    		serviceHandler.postDelayed(myTask, 50L);//unlock will be set by this callback
 	    		*/
-	}	
+		serviceHandler = new Handler();
+	}
+	
+	class Task implements Runnable {
+    	public void run() {
+    		Context mCon = getApplicationContext();
+    		Log.v("lock_delay","task executing");
+    		if (!shouldLock) {    			
+    		//first run is after half second of screen off. see if any keyguard exists
+    			ManageKeyguard.initialize(mCon);
+    			if (ManageKeyguard.inKeyguardRestrictedInputMode()) StartLock(mCon);//take over the lock
+    			else {
+    				shouldLock = true;
+    				serviceHandler.postDelayed(myTask, 4500L);
+    				//wait 4 more seconds, and lock
+    				}
+    		}
+    		else {
+    			shouldLock = false;
+            	StartLock(mCon);
+    		}
+    	}
+	}
 	
 	@Override
 	public void onScreenSleep() {
@@ -111,10 +137,10 @@ public class NoLockService extends MediatorService {
 		if (receivingcall || placingcall || !shouldLock) return;
 		//don't handle during calls at all
 		//the should flag is for extra safety in case we ever find another exception case
-		shouldLock = false;
 		
-        StartLock(getApplicationContext());
-		//start the dummy lockscreen which allows us to know when unguarded keys or slider happen
+		shouldLock = false;
+		serviceHandler.postDelayed(myTask, 500L);//checks if user requested the sleep
+		//this way we can leave the grace period for timeout sleeps
 		
 		return;//prevents unresponsive broadcast error
 	}

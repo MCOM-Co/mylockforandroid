@@ -29,7 +29,7 @@ public class ShowWhenLockedActivity extends Activity {
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
 
-        Log.v("create nolock","about to request window params");
+        //Log.v("create nolock","about to request window params");
         requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
         
@@ -56,24 +56,21 @@ public class ShowWhenLockedActivity extends Activity {
         //Tells the OS that we don't want to display any UI
         //we never have a UI for interaction
       //TODO might mess up the functionality, might enhance it, we shall see
-        Log.v("create nolock","about to update layout");
+        //Log.v("create nolock","about to update layout");
         updateLayout();
         
-        Log.v("create nolock","about to request key events");
+        //Log.v("create nolock","about to request key events");
         takeKeyEvents(true);
         getWindow().takeKeyEvents(true);//see if forcing the window also helps consistency
     
         }
         
-        public void onStart() {
+        /*public void onStart() {
         	super.onStart();
         	Log.v("start nolock","onStart");
         	//ManageWakeLock.releasePartial();//drop the lock we had to get to ensure we could get this far
         	
-        }
-        
-        //TODO add a handler which waits 5 seconds then switches on a flag to tell the key event logic to treat as full locked
-        //the flag would allow any key event to wake it back like the stock lockdown grace period
+        }*/
         
     protected View inflateView(LayoutInflater inflater) {
         return inflater.inflate(R.layout.lockactivity, null);
