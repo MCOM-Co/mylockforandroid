@@ -5,6 +5,8 @@
 
 Resolved on test builds of alpha 3 so ongoing releases will not experience it. Sorry!
 
+= How do I use the app and still get handcent popups? =
+In handcent go to settings > poup setting > enable 'Screen on for Popup', disable 'Show on locked'. This will ensure myLock still works and the two don't cause havoc as they both attempt to react to wakeup.
 
 = It stopped working and won't work again even though I've uninstalled and reinstalled =
 
@@ -25,8 +27,7 @@ This is one of the rules of the lockscreen. When a timeout sleep occurs you have
 This currently only impacts lite mode (activated with the widget button). This is because the lockscreen is only being paused. It is not actually cleared unless home key is used. Therefore, it follows the rule of the lockscreen that times out in 5 seconds unless interaction triggers the regular timeout delay. Lite mode will likely become retired once the beta is released because we use a custom lockscreen to get more consistent performance.
 
 = Known apps that conflict with stable myLock operation =
-  * Handcent sms - popup feature tries to call a duplicate lockscreen disable due to pre 2.0 compatibility. Reportedly works with the alpha 1 release. Try turning on the option to require unlock before popup is shown and see if it works, as myLock will auto-unlock then you should see the popup as intended.
-  * Not confirmed but it is likely sms popup also has same issue as handcent. I recommend using executive assistant and putting the widget on your homescreen. The sms tab is a great replacement for the popup feature.
+  * Not confirmed but it is likely sms popup has an issue because it relies on pre-2.0 lockscreen and wakeup interaction. I recommend using executive assistant and putting the widget on your homescreen. The sms tab is a great replacement for the popup feature.
   * Screebl - seems to work by reading the screen on and off events myLock also relies on but as far as I know it doesn't use lockscreen disabling. Users have reported it doesn't work correctly.
   * AutoLock - can't function to restore pattern unlock mode due to interference from our lockscreen disable commands. Auto pattern lockdown is planned for a future release.
   * I'm going to assume you can't use Lock 2.0 or Lockbot since they are cosmetic themable lockscreens.
