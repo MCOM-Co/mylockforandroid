@@ -157,6 +157,8 @@ public class CustomLockService extends MediatorService {
 		if (!PendingLock) return;
 		//we don't have to do anything at on unless we get it before the StartLock success callback
 		
+		Context mCon = getApplicationContext();
+		
 		//Two cases exist where we have to force the dismiss activity
 	
 			//1--- user aborts a Power key sleep before the 4 second mark where we startLock
@@ -172,7 +174,7 @@ public class CustomLockService extends MediatorService {
 			PendingLock = false;
 			//--- user aborts an auto-sleep by re-waking with any key
 			//- flag off Pending to abort task loop.
-			
+			ManageKeyguard.initialize(mCon);
 			if (!shouldLock) StartDismiss(getApplicationContext());
 				//should goes false when we fire the Start Lock intent.
 				//Pending is still true in absence of success callback from Lock Activity
