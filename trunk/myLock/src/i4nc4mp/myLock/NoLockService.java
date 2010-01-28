@@ -9,7 +9,8 @@ import android.os.Handler;
 import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
 
-
+//doesn't work very well, too much timing conflicts happen.
+//scrapping the concept since the stupid flags don't work as described in documentation
 public class NoLockService extends MediatorService {
 	
 	public boolean persistent = false;
@@ -63,14 +64,10 @@ public class NoLockService extends MediatorService {
 			}
 			else {
 				//the key event or slider open in unLockScreen sends a start back to us. this means exit the keyguard
-				shouldLock = true;//this flag helps call logic know that user is in the middle of an active wakeup
+				if (!receivingcall && !placingcall) shouldLock = true;//queue new lockscreen if no calls active
+			
 				
-				//ManageWakeLock.acquirePartial(getApplicationContext());//ensure that we can get the next lockscreen created
-				//it doesn't work. in certain apps, anytime we sleep we get the broadcast and try to start but it fails to start
-				//the start actually happens at next screen wakeup, as if CPU sleep is still happening right before our onCreate
-				
-				
-				StartDismiss(getApplicationContext());
+				//StartDismiss(getApplicationContext());
 			}
 	}
 	
@@ -126,7 +123,7 @@ public class NoLockService extends MediatorService {
     				PendingLock = false;
     				StartLock(mCon);//take over the lock
     			}
-    			else serviceHandler.postDelayed(myTask, 500L);
+    			else serviceHandler.postDelayed(myTask, 250L);
     			//keep trying every half sec. essentially starts lock once keyguard is up
     				
     		}
@@ -150,7 +147,7 @@ public class NoLockService extends MediatorService {
 		//the should flag is for extra safety in case we ever find another exception case
 		
 		PendingLock = true;
-		serviceHandler.postDelayed(myTask, 500L);
+		serviceHandler.postDelayed(myTask, 250L);
 		//task will check each half sec for the KG and then start lock.
 		//screen on aborts
 		

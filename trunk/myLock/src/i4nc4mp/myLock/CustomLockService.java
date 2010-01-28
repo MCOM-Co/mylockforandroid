@@ -1,11 +1,14 @@
 package i4nc4mp.myLock;
 
+import i4nc4mp.myLock.ManageKeyguard.LaunchOnKeyguardExit;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Handler;
+import android.os.PowerManager;
+import android.os.SystemClock;
 import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
 
@@ -15,19 +18,21 @@ public class CustomLockService extends MediatorService {
 	
 	public boolean persistent = false;
 	
+	public int patternsetting = 0;
+	//we'll see if the user has pattern enabled when we startup
+	//so we can disable it and then restore when we finish
+	
+/* Life-Cycle Flags */
 	public boolean shouldLock = true;
-	//when true screen off will start the lockscreen.
-	//we will ensure that it is false until user exits lockscreen or finishes a call
+	//Flagged true upon Lock Activity exit callback, remains true until StartLock intent is fired.
+		
+	public boolean PendingLock = false;
+	//Flagged true upon sleep, remains true until StartLock sends first callback indicating Create success.
 	
 	public boolean Lockaftercall = false;
 	//just a flag we set when calls wake the device.
 	
-	public boolean PendingLock = false;
-	//flag we can set if user cancels a sleep by rewaking before lock 5 sec timer runs out
-	
-	public int patternsetting = 0;
-	//we'll see if the user has pattern enabled when we startup
-	//so we can disable it and then restore when we finish
+
 	
 	Handler serviceHandler;
 	Task myTask = new Task();
@@ -54,22 +59,32 @@ public class CustomLockService extends MediatorService {
 		boolean fgpref = settings.getBoolean("FG", true);
 		boolean wake = settings.getBoolean("StayAwake", false);
 		
-			if (persistent != fgpref) {//user changed pref
-				if (persistent) {
+		if (persistent != fgpref) {//user changed pref
+			if (persistent) {
 					stopForeground(true);//kills the ongoing notif
 					persistent = false;
-				}
-				else doFGstart(wake);//so FG mode is started again
 			}
-			else {//so if the pref isn't being changed, it means this restart is from lockscreen finish
+			else doFGstart(wake);//so FG mode is started again
+		}
+		else {//so if the pref isn't being changed, it means this is a callback from Lock Activity
 		
-		//unlock in the lockscreen activity causes start command to come back
-		//react by prepping the next StartLock
-				
-		//if (shouldLock) Log unexpected restart occurred.
-				
-		if (!receivingcall && !placingcall) shouldLock = true;//queue new lockscreen if no calls active
+			if (PendingLock) {
+			//This is the start success callback from Lock Activity onStart
+				PendingLock = false;
+				Log.v("Received Callback","Lock Activity is primed");
+			//ensures that we know to handle screen on ourselves in case Lock Activity failed to complete start during off
 			}
+			else {
+			//This is the finish callback when activity exits.
+				if (!receivingcall && !placingcall) shouldLock = true;
+				//queue new lockscreen on next screen off if no calls active
+				//when calls are active the CallEnd reaction will take care of this
+				
+				Log.v("Received Callback","Lock Activity is finished");
+				}
+			}
+				
+		
 	}
 	
 	@Override
@@ -80,12 +95,15 @@ public class CustomLockService extends MediatorService {
 		//boolean bootstart = settings.getBoolean("boot", false);
 		
 		
-		if(wake) ManageWakeLock.acquireFull(getApplicationContext());
+		//if(wake) ManageWakeLock.acquireFull(getApplicationContext());
         //probably not a common case
         //if user happens to leave stay awake on all the time
         //initialize it here, otherwise always done at time of toggle in settings
+	//FIXME change this so the boot handler starts the StayAwake Service instead.
 		
 		if (persistent) doFGstart(wake);
+		//else send a toast telling user what mode is starting and whether stay awake is active
+		//perhaps do that in the boot handler service
 		
 		//we have to toggle pattern lock off to use a custom lockscreen
 		try {
@@ -110,7 +128,6 @@ public class CustomLockService extends MediatorService {
 	    		*/
 		
 		serviceHandler = new Handler();
-		//ManageWakeLock.acquirePartial(getApplicationContext());
 	}
 	
 	class Task implements Runnable {
@@ -118,29 +135,56 @@ public class CustomLockService extends MediatorService {
     		Context mCon = getApplicationContext();
     		//Log.v("lock_delay","task executing");
     		if (!PendingLock) return;//ensures break the attempt cycle if user has aborted the lock
+    		//user can abort Power key lock by another power key, or timeout sleep by any key wakeup
     		
-    		//see if any keyguard exists
+    		//otherwise, see if any keyguard exists yet
     			ManageKeyguard.initialize(mCon);
     			if (ManageKeyguard.inKeyguardRestrictedInputMode()) {
+    				
+    				//the keyguard exists here on first try if this isn't a timeout lock
     				shouldLock = false;
-    				PendingLock = false;
     				StartLock(mCon);//take over the lock
     			}
-    			else serviceHandler.postDelayed(myTask, 500L);
-    			//keep trying every half sec. essentially starts lock once keyguard is up
+    			else serviceHandler.postDelayed(myTask, 250L);
+    			//otherwise, we need to start lock once the keyguard kicks in
+    			//so keep trying until we succeed or user aborts
     				
-    		}
-    	
-    	
-    		
+    		}    		
     	}
 	
 	@Override
 	public void onScreenWakeup() {
-		if (PendingLock) PendingLock = false;
-			//user wakes screen during pending lock, so cancel it
+		if (!PendingLock) return;
+		//we don't have to do anything at on unless we get it before the StartLock success callback
+		
+		//Two cases exist where we have to force the dismiss activity
+	
+			//1--- user aborts a Power key sleep before the 4 second mark where we startLock
+			//- force dismiss activity since no Lock activity exists yet
+						
+			//2--- the start of LockActivity was delayed to screen on (known bug case in CPU intensive apps)
+			//- force dismiss activity which will finish the newly created & primed lock activity.
+			//this avoids user need to relock and rewake
+			
+			//the goal of this life cycle is to allow a big enough delay to always avoid the CPU lag bug
+			//then handle the side effect of user aborting an intentional power key sleep
+			
+			PendingLock = false;
+			//--- user aborts an auto-sleep by re-waking with any key
+			//- flag off Pending to abort task loop.
+			
+			if (!shouldLock) StartDismiss(getApplicationContext());
+				//should goes false when we fire the Start Lock intent.
+				//Pending is still true in absence of success callback from Lock Activity
+				//force the dismiss activity since dismiss logic won't run in Lock Activity immediately after wakeup create
+			else if (ManageKeyguard.inKeyguardRestrictedInputMode()) StartDismiss(getApplicationContext());
+			//should is still true because we haven't fired Start Lock yet.
+			//we will only be guarded if it was a Power Key sleep that user is aborting
+			//need to fire the one time exit activity
+		
 		return;
 	}
+	
 	
 	@Override
 	public void onScreenSleep() {
@@ -150,7 +194,14 @@ public class CustomLockService extends MediatorService {
 		
 		if (shouldLock) {
         	PendingLock = true;
-        	serviceHandler.postDelayed(myTask, 500L);
+        	serviceHandler.postDelayed(myTask, 4000L);
+        	//The error seems to still duplicate even at half to quarter second intervals
+        	//the best fix seems to be just to let this first delay be 4 seconds
+        	//if no KG on first try task retries every 500MS
+        	
+        	//operate on the assumption users won't normally be forcing sleep
+        	//with the intention of waking again in less then 2 to 5 seconds
+        	       	
         	//StartLock(getApplicationContext());
 		}
 		
@@ -176,8 +227,8 @@ public class CustomLockService extends MediatorService {
 		        //Other times it just won't wake when notifications are waiting
 		        
 		      //new task required for our service activity start to succeed. exception otherwise
-		        lockscreen.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-		                | Intent.FLAG_ACTIVITY_NO_USER_ACTION);
+		        lockscreen.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		                //| Intent.FLAG_ACTIVITY_NO_USER_ACTION);
 		        //not sure if no user action is necessary, the alarm alert used but appears just be for retaining notifications
 		        
 		                //| Intent.FLAG_ACTIVITY_NO_HISTORY
@@ -191,12 +242,45 @@ public class CustomLockService extends MediatorService {
 		        context.startActivity(lockscreen);
 		}
 	
+	public void DoExit(Context context) {//try the alpha keyguard manager secure exit
+    	
+    	//ManageKeyguard.initialize(context);
+    	PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
+    	pm.userActivity(SystemClock.uptimeMillis(), false);
+    	//ensure it will be awake
+    	
+    	ManageKeyguard.disableKeyguard(getApplicationContext());
+    	//advantage here is we don't have to do a task delay
+    	//because we're already showing on top of keyguard this gets the job done
+    	
+    	
+    	ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
+            public void LaunchOnKeyguardExitSuccess() {
+               Log.v("start", "This is the exit callback");
+               }});    	
+    }
+	
+	public void StartDismiss(Context context) {
+    	
+    	Class w = DismissKeyguardActivity.class; 
+	    	      
+		Intent dismiss = new Intent(context, w);
+		dismiss.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK//For some reason it requires this even though we're already an activity
+				| Intent.FLAG_ACTIVITY_NO_USER_ACTION//Just helps avoid conflicting with other important notifications
+		        | Intent.FLAG_ACTIVITY_NO_HISTORY//Ensures the activity WILL be finished after the one time use
+		        | Intent.FLAG_ACTIVITY_NO_ANIMATION);
+		        
+		context.startActivity(dismiss);
+    	
+    }
+	
 	
 	//essentially anytime a call ends it seems our next screen off is not creating the lockscreen again
 	//we have a few cases
-	//1- call ends while screen was off. user turns on screen to find the regular lockscreen -- resolved
-	//2- call ends while screen is on, user sees the lockscreen. if sleep, next wakeup still has lockscreen -- resolved
+	//1- call ends while screen was off. user turns on screen to find the regular lockscreen
+	//2- call ends while screen is on, user sees the lockscreen. if sleep, next wakeup still has lockscreen
 	//3- incoming call is missed or ignored results in seeing the lockscreen also
+	//TODO use 2.1 pm check for screen on to make these more effective
 	
 	@Override
 	public void onCallStart() {

@@ -25,21 +25,33 @@ public class BootHandler extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		SharedPreferences settings = getSharedPreferences("myLock", 0);
 		boolean boot = settings.getBoolean("boot", false);//retrieve user's start at boot pref
+		boolean wake = settings.getBoolean("StayAwake", true);//retrieve user's stay awake pref
+		
+		//always start stay awake at boot
+		if (wake) {
+			Intent w = new Intent();
+			w.setClassName("i4nc4mp.myLock","i4nc4mp.myLock.StayAwakeService");
+			startService(w);
+			//send a toast here or perhaps from the service itself
+		}
+		
 		
 		if (!boot) {
 			stopSelf();//destroy the process because user doesn't have start at boot enabled
 			return 1;
 		}
 		
-		boolean custom = settings.getBoolean("welcome", false);//retrieve user's mode pref
+		//boolean custom = settings.getBoolean("welcome", false);//retrieve user's mode pref
 		
 		//TODO we can put a pref that is called "booting"
 		//the mediator will check if that is true, then respond appropriately and then set it false
 		
 		Intent i = new Intent();
 		
-		if (!custom) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.NoLockService");
-		else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
+		//if (!custom) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.NoLockService");
+		//else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
+		
+		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
 		
 		startService(i);
 		
