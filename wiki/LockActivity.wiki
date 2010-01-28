@@ -1,0 +1,10 @@
+#summary Design information on our lockscreen replacement method
+
+= What is a Lock Activity? =
+
+In android 2.0, two window flags were added allowing activities to inherently interact with the lockscreen.
+  * FLAG_SHOW_WHEN_LOCKED allows a window to get shown above the keyguard and handle input from the user while awake. If asleep, no behavior change occurs, currently. When the window exits, the lockscreen immediately re-appears.
+  * FLAG_DISMISS_KEYGUARD allows the window to get shown and cancel the keyguard completely. How this is different from the first flag is that when the activity is closed, the user will then see their last task in the stack instead of the lockscreen. My understanding is that both flags are required for the activity to work if a security pattern is in effect. If sleep occurs while activity is active, it also prevents the Keyguard from occurring where it would normally govern that sleep. This means any key will cause a wakeup, because the Keyguard is what mediates blocking wakeup from the side keys.
+
+= How do we make use of the Lock Activities to let the user customize their lockdown & wakeup experience? =
+The implementation involves a life-cycle mediated by a remote service handling phone and screen events, which attempts to launch the Lock Activity at screen off. Two startCommand callbacks will be sent back to the mediator via startService explicit intents, allowing it to know when the Lock Activity successfully started and when it successfully exited. This life cycle lets our activity pose as the lockscreen. The real trickiness comes from the fact that key event mediation is not as we would expect with these lockscreen interaction flags. With show when locked, it seems we don't get any events unless awake. With dismiss, we get everything, and also have to deal with a wakeup from everything. The expected behavior for either would be the ability to handle key events first, then return false if we wanted to pass them on to the lockscreen for handling. It seems the case hasn't been considered, so the odd Always vs Never wake behavior is the end result.  
