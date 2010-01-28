@@ -18,10 +18,14 @@ import android.view.View;
 
 import android.view.WindowManager;
 
-//this is the no lockscreen mode.
-//we just can't handle only keys we want. we either have to break out of lockscreen
-//then workaround every key event
-//or handle nothing except power which is the only key that the lockscreen allows through
+
+//we just can't handle only keys we want
+//we either have to break out of lockscreen, then workaround every key event
+//or be completely dead to key events unless the screen is fully awake
+
+//the only way this would be good is if the screen on reaction did the dismiss & finish
+//we could make the slider wake suppressed via set bright 0.0 and set a flag that will tell screen on to abort dismiss & finish
+//another possibly useful thing would be engage stay awake on slider open
 public class ShowWhenLockedActivity extends Activity {
                 
         //very very complicated business.
@@ -88,13 +92,13 @@ public class ShowWhenLockedActivity extends Activity {
     	super.onConfigurationChanged(newConfig);
      	if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO) {
      		//this means that a config change happened and the keyboard is open
+     		//with this event, a screen wakeup is happening at the OS level, we can't suppress
+     		//except via the Lockscreen activity method of forcing window brightness to 0.0 (silent wake)
      		     
      		PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
         	pm.userActivity(SystemClock.uptimeMillis(), false);
-        	
-        	StartMediator();
-     		
-     		//StartDismiss(getApplicationContext());
+     		  	
+     		StartDismiss(getApplicationContext());
       	  	//let's instant unlock when slide open
         	//TODO give user option to keep it locked on slide open for that paranoid slider-bumper
      	}
@@ -112,8 +116,15 @@ public class ShowWhenLockedActivity extends Activity {
     	
     }
     
+    //TODO because we cannot really handle the key event here or prevent wakeup from slider without doing the screen bright hack
+    //we could convert this method to a screen on broadcast reaction
+    //i think the customization of the slider suppression is best suited only the the already customizable customlock setup
+    //Do we even need this activity when we want to behave with slider, power, and any keyboard button as unlock?
+    //I don't think so. Just have the mediator fire DoExit or StartDismiss at screen on
+    //it's only cosmetic but I still think it actually creates more lag
+    //let users just deal with the lag we occasionally get when breaking out of lockscreen at screen on.
     
-    public void StartDismiss(Context context) {
+    public void DoExit(Context context) {//try the alpha keyguard manager secure exit
     	
     	//ManageKeyguard.initialize(context);
     	PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
@@ -140,6 +151,7 @@ public class ShowWhenLockedActivity extends Activity {
     	}
     	else {//loses focus
     		Log.v("focus lost","finishing...");
+    		StartMediator();
     		finish();
     		//moveTaskToBack(true);
     		
@@ -170,23 +182,36 @@ public class ShowWhenLockedActivity extends Activity {
         ManageWakeLock.releaseFull();
     }*/
     
+    public void StartDismiss(Context context) {
+    	    	
+    	Class w = DismissKeyguardActivity.class; 
+	    	      
+		Intent dismiss = new Intent(context, w);
+		dismiss.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK//For some reason it requires this even though we're already an activity
+				| Intent.FLAG_ACTIVITY_NO_USER_ACTION//Just helps avoid conflicting with other important notifications
+		        | Intent.FLAG_ACTIVITY_NO_HISTORY//Ensures the activity WILL be finished after the one time use
+		        | Intent.FLAG_ACTIVITY_NO_ANIMATION);
+		        
+		context.startActivity(dismiss);
+    	
+    }
+    
     public void StartMediator() {
     Intent i = new Intent();
 	i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.NoLockService");
 	startService(i);
-    }
+    }//TODO try changing this back to the literal direct start dismiss as a child activity. then we could call finish on it
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
     	boolean up = event.getAction() == KeyEvent.ACTION_UP;
        
-    	if (up) StartMediator();
-    	//else ManageWakeLock.acquireFull(getApplicationContext());
-    	//I thought it was too quick re-sleep causing the bug while apps like dolphin or facebook are running
-    	//this doesn't solve it. I am actually not getting any key events
-    	//Camera key doesn't even work when we are in the bug circumstance.
-    	//once i wake with power, we are seeing the activity when we shouldnt
-    	//then on next try it works as expected.
+    	//if (up) StartMediator();
+    	if (up) StartDismiss(getApplicationContext());
+    	//seems we don't get the down event... if I force !up it won't be handled if happening simultaneously with wakeup
+    	//so conclusion is show when locked can't get ANYTHING while asleep
+    	//whereas dismiss keyguard activity can get that first down that wakes
+    	
     	
         return true;
     	//always claim we handled the key

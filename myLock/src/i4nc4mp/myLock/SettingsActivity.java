@@ -23,7 +23,8 @@ public class SettingsActivity extends Activity {
 	
 	public boolean persistentNotif = true;
     public boolean awake = false;
-    public boolean customLock = false;
+    //public boolean customLock = false;
+    public boolean customLock = true;
     public boolean boot = false;
     	
     @Override
@@ -64,7 +65,7 @@ public class SettingsActivity extends Activity {
                    }
                });
        
-       final CheckBox welcome = (CheckBox)findViewById(R.id.welcomeBox);
+       /*final CheckBox welcome = (CheckBox)findViewById(R.id.welcomeBox);
        
        welcome.setChecked((customLock));        
        
@@ -86,7 +87,7 @@ public class SettingsActivity extends Activity {
                        customLock = !customLock;//toggle it locally for reference of next toggle press
 
                    }
-               });
+               });*/
        
        final CheckBox fg = (CheckBox)findViewById(R.id.fgBox);
        
@@ -134,7 +135,7 @@ public class SettingsActivity extends Activity {
     	
         persistentNotif = settings.getBoolean("FG", true);
         awake = settings.getBoolean("StayAwake", false);
-        customLock = settings.getBoolean("welcome", false);
+        //customLock = settings.getBoolean("welcome", false);
         boot = settings.getBoolean("boot", false);
     }
     
@@ -167,15 +168,12 @@ public class SettingsActivity extends Activity {
     		Toast.makeText(SettingsActivity.this, "myLock has been stopped", Toast.LENGTH_SHORT).show();
     	}
     }
-    
-    //FIXME I noticed these don't actually work unless I have one of the mediator's running. 
-    //Guess the WL just gets destroyed if no process from the app is present.
-    //The solution is to handle this inside the mediators only.
-    private void ToggleWake() {
-    	
+
+    private void ToggleWake() {    	
     		Intent i = new Intent();
     		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.StayAwakeService");
     		startService(i);
+    		//service handles itself, closing if start is called while it is active
     	}
 
 protected void onDestroy() {

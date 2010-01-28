@@ -33,6 +33,25 @@ import android.view.WindowManager;
 //otherwise, we want to FINISH when we go to background in any fashion
 
 //the focus change method handles this fine. droid-fu lets you distinguish if it's you or other apps taking focus away
+
+
+
+
+//LIFE CYCLE
+//Mediator waits for screen off. If flag ShouldLock was received from last exiting lockscreen (or True by first start)---
+// ----------Flag PendingLock true & trigger 4 sec wait
+//If user had forced sleep, causing immediate guard, then wakes before 4 sec, mediator fires a Dismiss activity
+//If it was a timeout sleep, timer is aborted when user aborts by waking screen within the 5 sec
+//Else, this activity successfully starts, so we send a start intent back to mediator to tell it to flag PendingLock back false
+//This way mediator knows we got started
+//If mediator gets a screen on and still has PendingLock, it would know we were just starting at on
+//and can respond by doing the dismiss activity or sending a finish intent to us
+
+//If the bug happens where we failed to start till screen on, a screen on receiver happens here could flag NotPrimed to False
+//While NotPrimed is true we know that we were just created and didn't get the screen on broadcast
+//Allowing us to respond by exiting here if necessary
+
+//When we finish, send one more start back to mediator which flags Should back to true to catch next screen off
 public class Lockscreen extends Activity {
         
         //private ShakeListener mShaker;
@@ -230,18 +249,7 @@ public class Lockscreen extends Activity {
         		//timeleft is equal to 10 half-second ticks. when it gets to 0 then the flag is cleared
         		//when repeat calls happen we just put the int back at 5 sec worth (10 ticks)
         		if (shouldFinish) {
-        			/*call the dismiss activity up
-        			Class w = DismissKeyguardActivity.class; 
-  	    	      
-        			Intent dismiss = new Intent(getApplicationContext(), w);
-        			dismiss.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK//For some reason it requires this even though we're already an activity
-        					| Intent.FLAG_ACTIVITY_NO_USER_ACTION//Just helps avoid conflicting with other important notifications
-        			        | Intent.FLAG_ACTIVITY_NO_HISTORY//Ensures the activity WILL be finished after the one time use
-        			        | Intent.FLAG_ACTIVITY_NO_ANIMATION);
-        			        
-        			getApplicationContext().startActivity(dismiss);*/
-        			//starting this steals focus from the lockscreen, causing it to finish itself
-        			//and the dismiss also finishes self automatically after a half sec
+        			
         			wakeup();
         			finish();
         		}
@@ -258,13 +266,14 @@ public class Lockscreen extends Activity {
     }
     
     public void wakeup() {
-    	screenwake = true;
-    	timeleft = 0;//this way the task doesn't keep going
-    	    	
+    	
     	//poke user activity just to be safe that it won't flicker back off
     	PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
   	  	myPM.userActivity(SystemClock.uptimeMillis(), false);
   	  	
+    	screenwake = true;
+    	timeleft = 0;//this way the task doesn't keep going
+    	    	  	  	
   	  	setBright((float) 0.1);//tell screen to go on with 10% brightness
     }
     
@@ -278,10 +287,10 @@ public class Lockscreen extends Activity {
         	finish();
       	  	//let's instant unlock when slide open
      	}
-     	else {
+     	
      		//we will just do nothing if a config change comes and the hard keyboard is hidden
      		//we'll let sleep handle itself
-     	}
+     	
     	/*A flag indicating whether the hard keyboard has been hidden.
     	This will be set on a device with a mechanism to hide the keyboard from the user, when that mechanism is closed.
     	One of: HARDKEYBOARDHIDDEN_NO, HARDKEYBOARDHIDDEN_YES.
@@ -315,11 +324,7 @@ public class Lockscreen extends Activity {
        
        unregisterReceiver(screenoff);
       
-       Intent i = new Intent();
-		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
-		startService(i);//tells the mediator that user has unlocked
-       
-		//ManageWakeLock.releaseFull();
+       CallbackMediator();
     	
         Log.v("destroyWelcome","Destroying");
     }
@@ -342,16 +347,21 @@ public class Lockscreen extends Activity {
     	}
     	
     	//for now it assumes that user did home if this happened and screen was awake
-    	//looks like using the notification panel also loses focus.
-    	//possible to set ourselves as NO HISTORY only when wakeup happens?
+    	//FIXME looks like using the notification panel also loses focus.
+    	//TODO possible to set ourselves as NO HISTORY only when wakeup happens?
     }
     
-    /*public void onStart() {
+    public void onStart() {
     	super.onStart();
-    	Log.v("start lockscreen","onStart");
-    	ManageWakeLock.releasePartial();
-    	
-    }*/
+    	Log.v("lockscreen start success","calling back mediator");
+    	CallbackMediator();
+    }
+    
+    public void CallbackMediator() {
+        Intent i = new Intent();
+    	i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
+    	startService(i);
+        }
     
     
     //here's where most of the magic happens
@@ -385,7 +395,7 @@ public class Lockscreen extends Activity {
             //case KeyEvent.KEYCODE_VOLUME_UP:
             //case KeyEvent.KEYCODE_VOLUME_DOWN:
             case KeyEvent.KEYCODE_CAMERA:
-            	if (up) {
+            	if (!up) {
                    
                	Log.v("key event","wake key");
             	wakeup();
@@ -407,9 +417,8 @@ public class Lockscreen extends Activity {
             		finish();
             		//moveTaskToBack(true);
             	}
-            	else {//in the bug, wakeup gets started but fails because sleep event occurs before we can send user activity
-            		//so let's try a wakelock instead
-            		//ManageWakeLock.acquireFull(getApplicationContext());
+            	else {
+            		wakeup();
             		Log.v("key event","unlock key down");
             	}
             	   

@@ -11,7 +11,9 @@ import android.os.Handler;
 import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
 
-public class UnlockService extends MediatorService {
+//alpha 2c method utilizing the force delayed secure exit
+//really no better than just putting the self destroying dismiss activity at wakeup
+public class LockSkipService extends MediatorService {
 	private Handler serviceHandler;
 	private Task myTask = new Task();
 	//we use a handler and a task thread to cleanly get final keyguard exit on every wakeup
