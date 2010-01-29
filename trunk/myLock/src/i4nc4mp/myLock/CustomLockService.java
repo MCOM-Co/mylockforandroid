@@ -159,14 +159,24 @@ public class CustomLockService extends MediatorService {
 		
 		Context mCon = getApplicationContext();
 		
-		//Two cases exist where we have to force the dismiss activity
+		//next, get ourselves a one time wakelock using the on after release flag.
+		//user activity call on its own seems to still get ignored at times when user is aborting a power key sleep
+		PowerManager pm = (PowerManager)mCon.getSystemService(Context.POWER_SERVICE);
+		PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.ON_AFTER_RELEASE,
+            "mediatorWake");
+		wl.acquire();
+		
+		
+		
+		
+		//Two cases exist where we have to force the dismiss activity, in both the lockscreen would be active
 	
 			//1--- user aborts a Power key sleep before the 4 second mark where we startLock
 			//- force dismiss activity since no Lock activity exists yet
 						
 			//2--- the start of LockActivity was delayed to screen on (known bug case in CPU intensive apps)
 			//- force dismiss activity which will finish the newly created & primed lock activity.
-			//this avoids user need to relock and rewake
+			//this avoids user need to relock and rewake - there's a chance we won't detect the keyguard if the Lock activity is creating
 			
 			//the goal of this life cycle is to allow a big enough delay to always avoid the CPU lag bug
 			//then handle the side effect of user aborting an intentional power key sleep
@@ -175,15 +185,19 @@ public class CustomLockService extends MediatorService {
 			//--- user aborts an auto-sleep by re-waking with any key
 			//- flag off Pending to abort task loop.
 			ManageKeyguard.initialize(mCon);
-			if (!shouldLock) StartDismiss(getApplicationContext());
+			if (!shouldLock || ManageKeyguard.inKeyguardRestrictedInputMode()) StartDismiss(getApplicationContext());
 				//should goes false when we fire the Start Lock intent.
 				//Pending is still true in absence of success callback from Lock Activity
 				//force the dismiss activity since dismiss logic won't run in Lock Activity immediately after wakeup create
-			else if (ManageKeyguard.inKeyguardRestrictedInputMode()) StartDismiss(getApplicationContext());
+			//TODO i haven't seen this in action yet. the longer wait to start Lock seems to always avoid the delayed create bug
+			
 			//should is still true because we haven't fired Start Lock yet.
 			//we will only be guarded if it was a Power Key sleep that user is aborting
 			//need to fire the one time exit activity
-		
+			
+			wl.release();
+			//hopefully this stops the error where you can't abort the power key lock within a few seconds because it tries to sleep
+			
 		return;
 	}
 	
@@ -224,14 +238,11 @@ public class CustomLockService extends MediatorService {
 		         * so that the current app's notification management is not disturbed */
 		        Intent lockscreen = new Intent(context, w);
 		        
-		        //When a notification with persistent LED or vibration/sound was waiting
-		        //At times it seems to wake but then sleep again when it shouldn't despite our userActivity PM calls
-		        //Other times it just won't wake when notifications are waiting
 		        
 		      //new task required for our service activity start to succeed. exception otherwise
-		        lockscreen.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		                //| Intent.FLAG_ACTIVITY_NO_USER_ACTION);
-		        //not sure if no user action is necessary, the alarm alert used but appears just be for retaining notifications
+		        lockscreen.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+		                | Intent.FLAG_ACTIVITY_NO_USER_ACTION);
+		        //without this flag my alarm clock only buzzes once.
 		        
 		                //| Intent.FLAG_ACTIVITY_NO_HISTORY
 		                //this flag will tell OS to always finish the activity when user leaves it
@@ -264,8 +275,9 @@ public class CustomLockService extends MediatorService {
 	
 	public void StartDismiss(Context context) {
     	
-    	Class w = DismissKeyguardActivity.class; 
-	    	      
+    	Class w = DismissKeyguardActivity.class;
+    	
+    		    	      
 		Intent dismiss = new Intent(context, w);
 		dismiss.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK//For some reason it requires this even though we're already an activity
 				| Intent.FLAG_ACTIVITY_NO_USER_ACTION//Just helps avoid conflicting with other important notifications
