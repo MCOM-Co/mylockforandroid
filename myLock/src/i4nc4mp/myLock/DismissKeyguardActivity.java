@@ -26,7 +26,8 @@ public class DismissKeyguardActivity extends Activity {
         
         requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-        		| WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+        		| WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+        		| WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         Log.v("dismiss","creating dismiss window");
         
         //setVisible(false);
@@ -73,7 +74,11 @@ public class DismissKeyguardActivity extends Activity {
         
         	serviceHandler.removeCallbacks(myTask);
         	serviceHandler = null;
-       
+       //possibly add a user activity poke here, sometimes OS thinks it should sleep again after this guy gets destroyed
+        	//it appears the glitch and send back to sleep originates before this, the OS actually is trying to ignore the users wake command
+        	//since it comes so soon after the sleep command that apparently isn't done
+        	//we get "ignoring user action while going to sleep
+        	//the bug never happens while the stay awake service is running the persistent wakelock
         Log.v("destroy_dismiss","Destroying");
     }
 }
