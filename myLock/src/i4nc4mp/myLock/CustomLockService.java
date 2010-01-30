@@ -157,15 +157,7 @@ public class CustomLockService extends MediatorService {
 		if (!PendingLock) return;
 		//we don't have to do anything at on unless we get it before the StartLock success callback
 		
-		Context mCon = getApplicationContext();
-		
-		//next, get ourselves a one time wakelock using the on after release flag.
-		//user activity call on its own seems to still get ignored at times when user is aborting a power key sleep
-		PowerManager pm = (PowerManager)mCon.getSystemService(Context.POWER_SERVICE);
-		PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.ON_AFTER_RELEASE,
-            "mediatorWake");
-		wl.acquire();
-		
+		Context mCon = getApplicationContext();		
 		
 		
 		
@@ -185,18 +177,20 @@ public class CustomLockService extends MediatorService {
 			//--- user aborts an auto-sleep by re-waking with any key
 			//- flag off Pending to abort task loop.
 			ManageKeyguard.initialize(mCon);
-			if (!shouldLock || ManageKeyguard.inKeyguardRestrictedInputMode()) StartDismiss(getApplicationContext());
-				//should goes false when we fire the Start Lock intent.
-				//Pending is still true in absence of success callback from Lock Activity
+			if (!shouldLock || ManageKeyguard.inKeyguardRestrictedInputMode()) {
+				PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+		  	  	myPM.userActivity(SystemClock.uptimeMillis(), false);
+				StartDismiss(getApplicationContext());//DoExit(getApplicationContext());
+			}
+				//should goes false when we fire the Start Lock intent, Pending is still true in absence of success callback
 				//force the dismiss activity since dismiss logic won't run in Lock Activity immediately after wakeup create
-			//TODO i haven't seen this in action yet. the longer wait to start Lock seems to always avoid the delayed create bug
+			//TODO it seems to fail for the same reason a fast power key repeat fails, screen is simply re-sleeping despite action
+			//TODO try using the alpha 2c method as the workaround, that never seems to resleep itself
+			//FIXME how can we make the lockactivity bail out then?
 			
+			//if user aborts a deliberate power key sleep before StartLock fires
 			//should is still true because we haven't fired Start Lock yet.
-			//we will only be guarded if it was a Power Key sleep that user is aborting
-			//need to fire the one time exit activity
-			
-			wl.release();
-			//hopefully this stops the error where you can't abort the power key lock within a few seconds because it tries to sleep
+
 			
 		return;
 	}
@@ -210,6 +204,16 @@ public class CustomLockService extends MediatorService {
 		
 		if (shouldLock) {
         	PendingLock = true;
+        	
+        	//ManageWakeLock.acquireFull(getApplicationContext());
+        	//the wake lock does nothing to this sleep state. it simply ensures that a resleep will not occur after we next wake
+        	//The issue here is I am getting random ignores of the wakeup. they never duplicate if we are using stay awake mode
+        	//we need to ensure we will not re-sleep but also avoid keeping the quiet CPU wakes which act like screen wakeups
+        	//we can make the cpu wake detection logic always release wakelock first thing
+        	
+        	//FIXME stay awake mode is probably preventing the logic in the quiet wake that flags that off
+        	//---need to move more logic into the timeout task we have running as a screen off will never come in to flag cpuwake off
+        	
         	serviceHandler.postDelayed(myTask, 4000L);
         	//The error seems to still duplicate even at half to quarter second intervals
         	//the best fix seems to be just to let this first delay be 4 seconds
@@ -242,13 +246,13 @@ public class CustomLockService extends MediatorService {
 		      //new task required for our service activity start to succeed. exception otherwise
 		        lockscreen.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
 		                | Intent.FLAG_ACTIVITY_NO_USER_ACTION);
-		        //without this flag my alarm clock only buzzes once.
+		       //without this flag my alarm clock only buzzes once. but with it wakeup doesn't want to happen (also impacts handcent notifs)
+		               
 		        
 		                //| Intent.FLAG_ACTIVITY_NO_HISTORY
 		                //this flag will tell OS to always finish the activity when user leaves it
 		                //when this was on, it was exiting every time it got created. interesting unexpected behavior
-		                //might be able to be utilized as an all button instant unlock mode
-		                //need to investigate the focus loss to figure this out
+		                //even happening when i wait 4 seconds to create it.
 		                //| Intent.FLAG_ACTIVITY_NO_ANIMATION)
 		                //because we don't need to animate... O_o doesn't really seem to be for this
 		        

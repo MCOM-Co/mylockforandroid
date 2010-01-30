@@ -38,6 +38,8 @@ public class ManageWakeLock {
     int flags;
 
     flags = PowerManager.SCREEN_DIM_WAKE_LOCK;
+    //flags |= PowerManager.ON_AFTER_RELEASE;
+    //PowerManager.ACQUIRE_CAUSES_WAKEUP
     
 
     myWakeLock = myPM.newWakeLock(flags, "acquire");

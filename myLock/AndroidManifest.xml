@@ -14,7 +14,7 @@
        <activity android:name="Lockscreen"
                 android:excludeFromRecents="true"
                 android:theme="@android:style/Theme.Wallpaper"
-                android:launchMode="singleTask"
+                android:launchMode="singleInstance"
                 android:taskAffinity=""
                 android:screenOrientation="portrait"
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>

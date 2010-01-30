@@ -47,9 +47,6 @@ import android.view.WindowManager;
 //If mediator gets a screen on and still has PendingLock, it would know we were just starting at on
 //and can respond by doing the dismiss activity or sending a finish intent to us
 
-//If the bug happens where we failed to start till screen on, a screen on receiver happens here could flag NotPrimed to False
-//While NotPrimed is true we know that we were just created and didn't get the screen on broadcast
-//Allowing us to respond by exiting here if necessary
 
 //When we finish, send one more start back to mediator which flags Should back to true to catch next screen off
 public class Lockscreen extends Activity {
@@ -64,17 +61,21 @@ public class Lockscreen extends Activity {
         
         public int timeleft = 0;
         
+        
+/* Lifecycle flags */
+        public boolean starting = true;
+        public boolean waking = false;//any time quiet or active wake are up
+        public boolean finishing = false;
+        
+        public boolean paused = false;
+        
         public boolean shouldFinish = false;
         //flag it to true if user hits power to wake up but quiet wake was already active
         //this lets our task wait a half second, then actually wake up and finish
         
         public boolean screenwake = false;//set true when a wakeup key turns screen on
-        public boolean cpuwake = false;//set true when a locked key wakes CPU but not screen
         
-        public boolean firstwake = true;
-        //flag which will tell broadcast not to fire once
-        //due to an odd bug that happens when locking over certain apps
-        
+
         //very very complicated business.
         @Override
     protected void onCreate(Bundle icicle) {
@@ -83,6 +84,13 @@ public class Lockscreen extends Activity {
         
         requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+        		//| WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+		//| WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); //would behave like wakelock
+        //this would stop the re-sleeps we get when actual cpu is trying to re-sleep. 
+        //so screen off after that could be treated as shouldFinish always
+        //how to handle re-sleep of the woken lockscreen?
+        
+        //use the task. we would have to introduce abort flags in touch events, much more complicated user activity detections
         
         /*    | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
          * this flag pushes the activity up and gets it ready at screen off but lockscreen rules stay in effect
@@ -109,10 +117,10 @@ public class Lockscreen extends Activity {
         //ensures that the window will keep screen off
         //we will deliberately turn it on when a wakeup key occurs
         
-        takeKeyEvents(true);
+        //takeKeyEvents(true);
         //FORCE OUR STUPID KEY EVENTS TO GET HANDLED EVEN IF NO FOCUS!!
         //ANDRO-A.D.D.
-        getWindow().takeKeyEvents(true);//see if forcing the window also helps consistency
+        //getWindow().takeKeyEvents(true);//see if forcing the window also helps consistency
         //this still has inconsistency. when locked on top of certain apps with input windows, we sometimes fail to react to first key event
         //the failure actually appears to be that we start to wake, but that the screen off broadcast is occurring and should not be
         
@@ -121,8 +129,10 @@ public class Lockscreen extends Activity {
         
         serviceHandler = new Handler();
         
+        
+        //TODO -- move this to the mediator
       //retrieve the user's normal timeout setting - SCREEN_OFF_TIMEOUT
-    	try {
+    	/*try {
             timeoutpref = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.SCREEN_OFF_TIMEOUT);
     } catch (SettingNotFoundException e) {
             // TODO Auto-generated catch block
@@ -131,7 +141,7 @@ public class Lockscreen extends Activity {
     
     //Next, change the setting to 0 seconds
     android.provider.Settings.System.putInt(getContentResolver(), 
-            android.provider.Settings.System.SCREEN_OFF_TIMEOUT, 0);
+            android.provider.Settings.System.SCREEN_OFF_TIMEOUT, 0);*/
     //the device behavior ends up as just over 5 seconds when we do this.
     //when we set 1 here, it comes out 6.5 to 7 seconds between timeouts.
     
@@ -144,7 +154,7 @@ public class Lockscreen extends Activity {
       }
     });*/
     //try acquiring the minimum partial wakelock to see if it allows us to catch shakes
-    //ManageWakeLock.acquirePartial(getApplicationContext());
+
         }
         
     protected View inflateView(LayoutInflater inflater) {
@@ -160,16 +170,27 @@ public class Lockscreen extends Activity {
         
         @Override
     public void onBackPressed() {
-        	if (screenwake) finish();
+        	if (screenwake) {
+        		finishing = true;
+        		moveTaskToBack(true);//finish();
+        	}
         	//2.1 has a PM function is screen on
         	
         	//if screen is on we allow back to call finish. otherwise it does nothing
         	//a user can press back after cpu wake from a locked key, but nothing happens
         return;
     }
+        
+        //FIXME we have a bug where if the alarm clock goes off we get power key but we don't have any of our state flags set
+        //when the alarm is created it gets keep screen on, so power presses merely cause screen on and off receivers to happen
+        
+        //to fix this we can get potentially check in onresume or on screen on
+        //we aren't getting resumed but we lose focus, that's it. same reaction as if notif bar is pulled
+        //we're losing focus but not aware of any wakes, so we should do a wakeup
+        
     
     BroadcastReceiver screenoff = new BroadcastReceiver() {
-        //we have to use screen off to set bright back to 0.0
+        //we have to use screen off to set bright back to 0.0 so that true screen turn on is avoided for locked input
     	
     	//the OS is still going to call this as it is only our activity specifying the screen is off
     	//the OS still runs the flags that would make it be on for all other activities.
@@ -179,20 +200,16 @@ public class Lockscreen extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
                 if (!intent.getAction().equals(Screenoff)) return;
-        //if a wakeup key had turned screen on let's tell the window to keep it off now
-        if (screenwake) {
-        	//when the failure to wake happens i believe it is because the system is sending this event right away
-        	//causing the result of a screen sleep but where power sends it back into real sleep again.
-        	/*if (firstwake) {
-        		firstwake = false;
-        		return;
-        	}*/
+        //if a wakeup key had turned screen on, undo
+        if (screenwake && hasWindowFocus()) {
+        	//check for focus because another activity may still be waiting to return focus to us
+        	//like a handcent popup ---- this works awesome
         	screenwake = false;
         	setBright((float) 0.0);
         }
-        else if (cpuwake) {
+        else if (waking) {//no screen wake exists but waking was set by the silent wake handling
         	//Real sleep is happening after a quiet wake
-        	//either by 5 sec timeout or user is pressing power expecting wake
+        	//either by 5 sec timeout (when not in stay awake mode) or user is pressing power expecting wake
         	//by the time 5 seconds since last quiet wake pass we flag this false again in the task
 
         	shouldFinish=true;
@@ -200,6 +217,8 @@ public class Lockscreen extends Activity {
         	//but we actually need to wait a half second then call wakeup and finish.
         	//that's done by the task when this should flag is true;
         	}
+        
+        waking = false; //reset lifecycle
  
         
         return;//avoid unresponsive receiver error outcome
@@ -249,24 +268,28 @@ public class Lockscreen extends Activity {
         		//timeleft is equal to 10 half-second ticks. when it gets to 0 then the flag is cleared
         		//when repeat calls happen we just put the int back at 5 sec worth (10 ticks)
         		if (shouldFinish) {
-        			
-        			wakeup();
-        			finish();
+        			finishing=true;
+        			//wakeup();
+        			moveTaskToBack(true);finish();
         		}
         		else if (timeleft!=0) {
         			timeleft--;
         			serviceHandler.postDelayed(myTask,500L);//just decrement every half second
         		}
-        		else {
-        			cpuwake = false;
+        		else if (!screenwake) {
+        			waking = false;//no more wake flags unless the screen wake has cancelled the silent wake
         		}
         	}
-        	//this is working for the focus key but never works for the vol key. no idea why
         	//this workaround is only relevant to power key which we can't prevent from causing the go to sleep if any wake exists
+        	//this is the case during the 5 seconds in regular or always after a locked key in stay awake mode.
+        	//FIXME seems like not a good idea to leave that wake.. 
+        	//have the stay awake disengage once we know lock activity started, re-engage at exit callback
+        	
+        	
     }
     
     public void wakeup() {
-    	
+    	setBright((float) 0.1);//tell screen to go on with 10% brightness
     	//poke user activity just to be safe that it won't flicker back off
     	PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
   	  	myPM.userActivity(SystemClock.uptimeMillis(), false);
@@ -274,17 +297,20 @@ public class Lockscreen extends Activity {
     	screenwake = true;
     	timeleft = 0;//this way the task doesn't keep going
     	    	  	  	
-  	  	setBright((float) 0.1);//tell screen to go on with 10% brightness
+  	  	
     }
     
     
+    
+    //TODO --- make stay awake capable of activating when slide is opened
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
     	super.onConfigurationChanged(newConfig);
      	if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO) {
      		//this means that a config change happened and the keyboard is open
-     		wakeup();
-        	finish();
+     		finishing = true;
+     		//wakeup();
+        	moveTaskToBack(true);//finish();
       	  	//let's instant unlock when slide open
      	}
      	
@@ -304,27 +330,67 @@ public class Lockscreen extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
-        // Don't hang around.
-        finish();
+                
+        Log.v("lockscreen stop","checking if user left");
+        if (finishing) {
+        	Log.v("lock stop","onStop is telling mediator we have been unlocked by one touch unlock");
+        }
+        else if (screenwake && paused && !hasWindowFocus()) {
+        	//we were awake, we got paused, and lost focus
+        	//this only happens if user is navigating out via notif or home key shortcuts
+        	Log.v("lock stop","onStop is telling mediator we have been unlocked by user navigation");
+        	
+        }
+        else return;//I can't think of a stop that wouldn't be one of these two
+        starting = false;//this way if we get brought back we'll be aware of it
+        //not yet implemented
+        CallbackMediator();
+        //this works. it tells the service that start lock needs to be done
+        //next screen off, the Lock activity sleeping in the background is reset to started
+       //FIXME looks like we need to still wait a short time then destroy the activity
+        //otherwise it is possible for user to get back in to it in an usable state by navigating in via back key presses
+    }
+    
+    @Override
+    protected void onPause() {
+    	super.onPause();
+    	//appears we always pause when leaving the lockscreen but it also happens at times in sleep and wakeup
+    	//we don't have to destroy, as create can reset the lifecycle
+    	//we can send the second mediator callback when user leaves just as if they did instant unlock destroy
+    	Log.v("lock paused","setting pause flag");
+    	
+    	//since pauses also occur while it is asleep but focus is not lost, we will only send "exited" callback
+    	//when paused and !hasWindowFocus()
+    	paused = true;
+    }
+    
+    @Override
+    protected void onResume() {
+    	super.onResume();
+    	Log.v("lock resume","setting pause flag");
+    	paused = false;
     }
     
     @Override
     public void onDestroy() {
         super.onDestroy();
         
+        //TODO move this to the mediator callback handling for finished lock activity
       //restore the users preference for timeout so that the screen will sleep as they expect
+        /*
 		android.provider.Settings.System.putInt(getContentResolver(),
 				android.provider.Settings.System.SCREEN_OFF_TIMEOUT, timeoutpref);
 		//then send a new userActivity call to the power manager
 		PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
-    	pm.userActivity(SystemClock.uptimeMillis(), false);
+    	pm.userActivity(SystemClock.uptimeMillis(), false);*/
         
        serviceHandler.removeCallbacks(myTask);
        serviceHandler = null;
        
        unregisterReceiver(screenoff);
       
-       CallbackMediator();
+       //CallbackMediator();
+       //this will have already been done by stop logic
     	
         Log.v("destroyWelcome","Destroying");
     }
@@ -340,20 +406,46 @@ public class Lockscreen extends Activity {
     		//do nothing
     		Log.v("focus change","we have gained focus");
     	}
-    	else if (screenwake) {
-    		finish();//we aren't visible... need to unlock
-    		//moveTaskToBack(true);
-    		Log.v("focus loss","finishing because user probably did home");
+    	else {
+    		
+    		
+    		
+    		//if (!hasWindowFocus()) //seems to return same thing as this event reaction method
+    			Log.v("focus loss","lost focus, checking if we should wake to yield to other events");
+    			if (!waking && !finishing && paused) {
+    				//not aware of any deliberate action- we're paused, not awake, and not about to finish
+    				//this focus loss means something else needs us to wake up the screen (like a ringing alarm)
+    				waking=true;
+    				wakeup();
+    				//appears to be working the first time. (fully solved for alarms)
+    				//with a handcent wakeup, we're stuck back in the sleep if it isn't dismissed during that first wake
+    				//only solution is to also see if a screen on happens that we didn't account for in a key reaction
+    				//because in that case we already lost focus and never got it back
+    				
+    				//maybe see if we had focus when screen went off. if not don't setbright 0
+    			}
+    			// if (screenwake) finish();
+    		
+    		//if stopped meaning totally invisible then a finish is called in onStop
+    		//this will ensure that notification bar can be used
+    		//it seems like stop isn't getting called though when i task over to another app
+    		//it seems to be called only after sleep right at next wake
     	}
     	
     	//for now it assumes that user did home if this happened and screen was awake
     	//FIXME looks like using the notification panel also loses focus.
     	//TODO possible to set ourselves as NO HISTORY only when wakeup happens?
+    	//Perhaps we can now use no-history since we are delaying creation a safe distance from the screen off occurrence
     }
     
-    public void onStart() {
+    protected void onStart() {
     	super.onStart();
     	Log.v("lockscreen start success","calling back mediator");
+    	starting = false;//set our own lifecycle reference
+    	if (finishing) finishing = false;//since we are sometimes being brought back reset finishing
+    	//takeKeyEvents(true);
+        //getWindow().takeKeyEvents(true);
+        
     	CallbackMediator();
     }
     
@@ -370,38 +462,37 @@ public class Lockscreen extends Activity {
         // Do this on key down
         boolean up = event.getAction() == KeyEvent.ACTION_UP;
         //flags to true if the event we are getting is the up (release)
-        //most cases let down get CPU wake always and let up get reaction wake or unlock
+
         switch (event.getKeyCode()) {
             case KeyEvent.KEYCODE_VOLUME_UP:
             case KeyEvent.KEYCODE_VOLUME_DOWN:
             case KeyEvent.KEYCODE_FOCUS:
-                if (up) {
-                   
-                Log.v("key event","locked key has been released");
+               if (!screenwake) {
+            	   timeleft=30;//so that countdown is refreshed
+               //countdown won't be running in screenwakes
+            	if (!waking) {
+               //start up the quiet wake timer    
+                Log.v("key event","locked key timer starting");
 
-                if (!screenwake) {//we can ignore the key if already in a wakeup (user viewing lockscreen)
-                timeleft=10;//10 half sec ticks for the task to count off
-                if (!cpuwake) {
-                	cpuwake = true;
+                	waking = true;
                 	serviceHandler.postDelayed(myTask, 500L);
                 		}
-                	}
-                }
+               } 	
+               
+                
                 return true;
                 //returning true means we handled the event so don't pass it to other processes
                 
-                //With the focus press the timer works and wakes and unlocks after the forced sleep
-                //Volume key would never work despite the fact that the logic is being processed exactly the same for both events
+               
             //case KeyEvent.KEYCODE_VOLUME_UP:
             //case KeyEvent.KEYCODE_VOLUME_DOWN:
             case KeyEvent.KEYCODE_CAMERA:
-            	if (!up) {
-                   
+            	if (!screenwake) {
+                waking = true;
                	Log.v("key event","wake key");
             	wakeup();
             	}
                 return true;
-            	
             	
                	
                 //allow any keys we haven't locked down or defined as wake to instant unlock
@@ -413,14 +504,19 @@ public class Lockscreen extends Activity {
                
                 
             default:
-            	if (up) {
-            		finish();
-            		//moveTaskToBack(true);
-            	}
-            	else {
-            		wakeup();
-            		Log.v("key event","unlock key down");
-            	}
+            	if (!finishing) {
+            		
+            		finishing = true;
+            		
+            		//wakeup();
+            		moveTaskToBack(true);//finish();
+            		
+            		
+            		Log.v("key event","unlock key, commence send self to back");
+            	}//this code will fire the commands at the earliest key event that makes it to us
+            	//if we happen to have the down it will start there, otherwise it should be caught at up
+            	//TODO if a screen wakeup finishes and no wake flags are true (no screen wake and no CPU wake)
+            	//we can handle that too in a screen on receiver
             	   
             	//the only case we don't get this event is during a silent wake
             	//when user presses power
