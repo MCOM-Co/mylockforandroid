@@ -5,6 +5,7 @@
 <string name="toggleButton">Toggle myLock</string>
 <string name="fgBox">Persistent mode- Protects myLock from being killed by system, and provides settings shortcut notification</string>
 <string name="wakeBox">Keep screen and keypad backlight on</string>
+<string name="shakeBox">Shake will unlock from sleep (may impact battery life)</string>
 <string name="welcomeBox">Use widget lockscreen</string>
 <string name="bootBox">Start myLock at boot</string>
 </resources>
