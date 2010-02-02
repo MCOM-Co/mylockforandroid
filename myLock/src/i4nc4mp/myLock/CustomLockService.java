@@ -18,6 +18,8 @@ public class CustomLockService extends MediatorService {
 	
 	public boolean persistent = false;
 	
+	public int timeoutpref = 15;
+	
 	public int patternsetting = 0;
 	//we'll see if the user has pattern enabled when we startup
 	//so we can disable it and then restore when we finish
@@ -72,15 +74,43 @@ public class CustomLockService extends MediatorService {
 			//This is the start success callback from Lock Activity onStart
 				PendingLock = false;
 				Log.v("Received Callback","Lock Activity is primed");
-			//ensures that we know to handle screen on ourselves in case Lock Activity failed to complete start during off
+		//brought in the timeout settings changer -- this way all types of exits will restore the correct timeout
+				try {
+		            timeoutpref = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.SCREEN_OFF_TIMEOUT);
+		    } catch (SettingNotFoundException e) {
+		            // TODO Auto-generated catch block
+		            e.printStackTrace();
+		    }//this setting will be restored at finish
+		    
+		    //Next, change the setting to 0 seconds
+		    android.provider.Settings.System.putInt(getContentResolver(), 
+		            android.provider.Settings.System.SCREEN_OFF_TIMEOUT, 0);
+		    
+				ManageWakeLock.releasePartial();
+			
 			}
 			else {
 			//This is the finish callback when activity exits.
-				if (!receivingcall && !placingcall) shouldLock = true;
+				//if (!receivingcall && !placingcall) shouldLock = true;
 				//queue new lockscreen on next screen off if no calls active
-				//when calls are active the CallEnd reaction will take care of this
 				
-				Log.v("Received Callback","Lock Activity is finished");
+				//when calls are active the CallEnd reaction will take care of this
+				//removed redundant check to determine if any error in call state detection is occurring
+				shouldLock = true;
+				
+				
+				Log.v("Received Callback","Lock Activity is finished " + shouldLock);
+				
+				ManageWakeLock.acquirePartial(getApplicationContext());
+				//ensure the task can run, we'll release it on the startup callback
+				//FIXME we don't have  a partial for the first start....
+				
+				android.provider.Settings.System.putInt(getContentResolver(),
+						android.provider.Settings.System.SCREEN_OFF_TIMEOUT, timeoutpref);
+				//then send a new userActivity call to the power manager
+				PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
+		    	pm.userActivity(SystemClock.uptimeMillis(), false);
+				
 				}
 			}
 				
@@ -128,12 +158,14 @@ public class CustomLockService extends MediatorService {
 	    		*/
 		
 		serviceHandler = new Handler();
+		ManageWakeLock.acquirePartial(getApplicationContext());
+		//fix the fact that after first start we didn't have it from the lock callback. released at lock start callback
 	}
 	
 	class Task implements Runnable {
     	public void run() {
     		Context mCon = getApplicationContext();
-    		//Log.v("lock_delay","task executing");
+    		Log.v("startLock task","executing, PendingLock is " + PendingLock);
     		if (!PendingLock) return;//ensures break the attempt cycle if user has aborted the lock
     		//user can abort Power key lock by another power key, or timeout sleep by any key wakeup
     		
@@ -145,9 +177,8 @@ public class CustomLockService extends MediatorService {
     				shouldLock = false;
     				StartLock(mCon);//take over the lock
     			}
-    			else serviceHandler.postDelayed(myTask, 250L);
-    			//otherwise, we need to start lock once the keyguard kicks in
-    			//so keep trying until we succeed or user aborts
+    			else serviceHandler.postDelayed(myTask, 500L);
+    			
     				
     		}    		
     	}
@@ -181,6 +212,7 @@ public class CustomLockService extends MediatorService {
 				PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
 		  	  	myPM.userActivity(SystemClock.uptimeMillis(), false);
 				StartDismiss(getApplicationContext());//DoExit(getApplicationContext());
+				shouldLock = true;//ensure we get ready to lock again when this logic happens. seems to catch failure on slide open
 			}
 				//should goes false when we fire the Start Lock intent, Pending is still true in absence of success callback
 				//force the dismiss activity since dismiss logic won't run in Lock Activity immediately after wakeup create
@@ -200,30 +232,28 @@ public class CustomLockService extends MediatorService {
 	public void onScreenSleep() {
 		//when sleep after an unlock, start the lockscreen again
 		
-		if (receivingcall || placingcall) return;//don't handle during calls at all
+		if (receivingcall || placingcall) {
+			Log.v("mediator screen off","call flag in progress, aborting handling");
+			return;//don't handle during calls at all
+		}
 		
 		if (shouldLock) {
         	PendingLock = true;
-        	
-        	//ManageWakeLock.acquireFull(getApplicationContext());
-        	//the wake lock does nothing to this sleep state. it simply ensures that a resleep will not occur after we next wake
-        	//The issue here is I am getting random ignores of the wakeup. they never duplicate if we are using stay awake mode
-        	//we need to ensure we will not re-sleep but also avoid keeping the quiet CPU wakes which act like screen wakeups
-        	//we can make the cpu wake detection logic always release wakelock first thing
+        	//means trying to start lock (waiting for start callback from activity)
+        
         	
         	//FIXME stay awake mode is probably preventing the logic in the quiet wake that flags that off
         	//---need to move more logic into the timeout task we have running as a screen off will never come in to flag cpuwake off
         	
-        	serviceHandler.postDelayed(myTask, 4000L);
-        	//The error seems to still duplicate even at half to quarter second intervals
-        	//the best fix seems to be just to let this first delay be 4 seconds
-        	//if no KG on first try task retries every 500MS
+        	Log.v("mediator screen off","timeout sleep - starting check for keyguard task");
+
+        	//otherwise fire the task to wait 4.5 and try every 250ms
+        	serviceHandler.postDelayed(myTask, 500L);
+        	}
         	
-        	//operate on the assumption users won't normally be forcing sleep
-        	//with the intention of waking again in less then 2 to 5 seconds
-        	       	
-        	//StartLock(getApplicationContext());
-		}
+        	
+        	
+		
 		
 		return;//prevents unresponsive broadcast error
 	}
@@ -349,7 +379,7 @@ public class CustomLockService extends MediatorService {
 		//No need to get the mgr, since we aren't manually sending this for FG mode.
 		
 		int icon = R.drawable.icon;
-		CharSequence tickerText = "custom lockscreen mode";
+		CharSequence tickerText = "myLock is starting up";
 		
 		if (wakepref) tickerText = tickerText + " (Staying Awake)";
 		
@@ -359,7 +389,7 @@ public class CustomLockService extends MediatorService {
 		
 		Context context = getApplicationContext();
 		CharSequence contentTitle = "myLock - click to open settings";
-		CharSequence contentText = "custom lockscreen active";
+		CharSequence contentText = "lockscreen is disabled";
 
 		Intent notificationIntent = new Intent(this, SettingsActivity.class);
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);

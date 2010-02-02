@@ -26,6 +26,7 @@ public class SettingsActivity extends Activity {
     //public boolean customLock = false;
     public boolean customLock = true;
     public boolean boot = false;
+    public boolean shakewake = false;
     	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -62,6 +63,35 @@ public class SettingsActivity extends Activity {
                        else Toast.makeText(SettingsActivity.this, "stay awake disabled", Toast.LENGTH_SHORT).show();
                        //at boot when option is enabled the service starts wake
                        //wake is never stopped, except by the user here
+                   }
+               });
+       
+       final CheckBox shake = (CheckBox)findViewById(R.id.shakeBox);
+
+       shake.setChecked((shakewake));        
+               
+       shake.setOnClickListener(new OnClickListener() {
+
+                   public void onClick(View v) {
+                	   SharedPreferences set = getSharedPreferences("myLock", 0);
+                	   SharedPreferences.Editor editor = set.edit(); 
+                	   
+                	   editor.putBoolean("ShakeWakeup", shake.isChecked());
+
+                       // Don't forget to commit your edits!!!
+                       editor.commit();
+                       //finally, do the change
+                       Intent i = new Intent();
+               			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.ShakeWakeupService");
+               			
+                       if (shake.isChecked()) {
+                    	   startService(i);
+                    	   Toast.makeText(SettingsActivity.this, "shake wakeup initialized", Toast.LENGTH_SHORT).show();
+                       }
+                       else {
+                    	   stopService(i);
+                    	   Toast.makeText(SettingsActivity.this, "shake wakeup disabled", Toast.LENGTH_SHORT).show();
+                       }
                    }
                });
        
@@ -137,6 +167,7 @@ public class SettingsActivity extends Activity {
         awake = settings.getBoolean("StayAwake", false);
         //customLock = settings.getBoolean("welcome", false);
         boot = settings.getBoolean("boot", false);
+        shakewake = settings.getBoolean("ShakeWakeup", false);
     }
     
     /*start and stop methods rely on pref and are only used by toggle button*/
