@@ -25,12 +25,12 @@ http://mylockforandroid.googlecode.com/files/home_widgetbutton.jpg
 
 
 == Alpha 3 test build ==
-  * Toggles for Start at boot, Stay awake, Persistent Mode, and widget lockscreen.
-  * Widget lockscreen only has notification panel implemented. The camera key or vol/cam focus followed by a shake will wake up to the custom lockscreen. It is in this build so we can eliminate a few bugs. Power and slide open still instant unlock like in regular mode.
+  * Toggles for Start at boot, Stay awake, shake wakeup, & Persistent Mode.
+  * Widget lockscreen only has notification panel implemented. Current revision has no wakeup of this implemented. It will only unlock on slide open or power key.
   * Automatic pattern mode toggle occurs like in the Lite v1a.
   * Lite mode widget comes with this version, the plan is the include it while continuing to offer the standalone download.
 
 == Upcoming enhancements ==
   * More tools for pattern users in both modes such as the option to have pattern mode turn back on automatically after an idle period you set
   * Widget toggle & quick mode option in complete release
-  * More features & smoother operation for the lockscreen replacement option- add widgets & app shortcuts as well as a useful clock display with brightness and sound mode toggle buttons. Customize keys to your liking- any key (even double presses and long presses) can either instant unlock or wakeup the widget lockscreen.
+  * More features & smoother operation for the lockscreen replacement option- add widgets & app shortcuts as well as a useful clock display with brightness and sound mode toggle buttons. Customize keys to your liking- any key can either instant unlock or wakeup the widget lockscreen.
