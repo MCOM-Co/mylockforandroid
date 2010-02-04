@@ -68,6 +68,8 @@
     android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission
     android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission
+    android:name="android.permission.PERSISTENT_ACTIVITY" />
     <uses-sdk android:minSdkVersion="5" />
     <uses-sdk android:targetSdkVersion="6" />
 </manifest> 

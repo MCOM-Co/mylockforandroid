@@ -1,6 +1,5 @@
 package i4nc4mp.myLock;
 
-import i4nc4mp.myLock.CustomLockService.Task;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -13,7 +12,6 @@ import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.os.SystemClock;
 import android.util.Log;
 
 
