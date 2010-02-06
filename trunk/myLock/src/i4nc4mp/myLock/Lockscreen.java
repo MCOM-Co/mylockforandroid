@@ -312,7 +312,11 @@ public class Lockscreen extends Activity {
     public void onConfigurationChanged(Configuration newConfig) {
     	super.onConfigurationChanged(newConfig);
      	if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO) {
-     		//this means that a config change happened and the keyboard is open
+     		//this means that a config change happened and the keyboard is open. we only 
+     		if (starting) {
+     			Log.v("slide-open lock","aborting handling, slide was opened before this lock");
+     		}
+     		else {
      		finishing = true;
      		
      		//it's more complicated than just starting the service.
@@ -329,10 +333,21 @@ public class Lockscreen extends Activity {
      		setBright((float) 0.1);
         	moveTaskToBack(true);//finish();
       	  	//let's instant unlock when slide open
+        	//this command is potentially causing the issue of failure to start after closed unlock, slide open, then relock
+        	//Log shows we get this for every change. So user unlocks, the sliding open queues this logic.
+        	//When we resume, this gets called to respond to the slide open.
+        	//as a result we're telling ourselves to stop
+     		}
      	}
      	else if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES)
      		Log.v("slide closed","lockscreen activity got the config change from background");
+     	//This comes in if we had slide unlocked, then user closes it, we get this first thing as we re-lock
+     	//so this doesn't help us disengage stay awake immediately at close
+     	//FIXME is it possible to get the slide close event without an activity up?
      	
+     	//FIXME a quiet wake happens when user closes slide while asleep. we need to handle it as such
+     	//we get this immediately at that time since we are active
+     	//unlike the delayed receipt of the changes user does while lockscreen is in the background
      	
     	/*A flag indicating whether the hard keyboard has been hidden.
     	This will be set on a device with a mechanism to hide the keyboard from the user, when that mechanism is closed.
@@ -489,6 +504,9 @@ public class Lockscreen extends Activity {
     	}
     	//takeKeyEvents(true);
         //getWindow().takeKeyEvents(true);
+    	
+    	//FIXME we get started but never gain focus if user unlocks with slide closed, then opens slide, then locks
+    	//OnStop is called instead after the onstart, resume, pause.
     }
     
     public void CallbackMediator() {

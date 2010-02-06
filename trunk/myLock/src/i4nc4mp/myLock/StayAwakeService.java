@@ -6,7 +6,8 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
-
+//deprecating this class and using managewakelock commands in the main mediator
+//this will ensure the wakelock starts at Lock Activity exit, and stops when the user initiated sleep causes lock activity to come back
 public class StayAwakeService extends Service {
 	//users might want to have stay awake running but not a lock mediator
 	//The settings activity wakelocks don't work unless a mediator service is running
