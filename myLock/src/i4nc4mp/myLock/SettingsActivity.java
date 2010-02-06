@@ -58,11 +58,11 @@ public class SettingsActivity extends Activity {
                        // Don't forget to commit your edits!!!
                        editor.commit();
                        //finally, do the change
-                       ToggleWake();
+                       //ToggleWake();
+                       //no longer use independent service, we need specific start and stops to cooperate with lock activity
                        if (wake.isChecked()) Toast.makeText(SettingsActivity.this, "stay awake initialized", Toast.LENGTH_SHORT).show();
                        else Toast.makeText(SettingsActivity.this, "stay awake disabled", Toast.LENGTH_SHORT).show();
-                       //at boot when option is enabled the service starts wake
-                       //wake is never stopped, except by the user here
+                       startService();//repeat start will detect the change
                    }
                });
        

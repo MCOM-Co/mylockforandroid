@@ -47,17 +47,14 @@
         	<action android:name="android.intent.action.BOOT_COMPLETED" />
         </intent-filter>
         </receiver>
-        <service android:name=".CustomLockService">
-        </service>
-        <service android:name=".Toggler">
-        </service>
-        <service android:name=".NoLockService">
-        </service>
-        <service android:name=".BootHandler">
-        </service>
+        <service android:name=".CustomLockService"></service>
+        <service android:name=".Toggler"></service>
+        <service android:name=".NoLockService"></service>
+        <service android:name=".BootHandler"></service>
         <service android:name=".LiteLockMediator"></service>
         <service android:name=".StayAwakeService"></service>
         <service android:name=".ShakeWakeupService"></service>
+        <service android:name=".UserPresentService"></service>
     </application>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission

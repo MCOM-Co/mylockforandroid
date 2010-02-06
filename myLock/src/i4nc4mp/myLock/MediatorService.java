@@ -28,7 +28,7 @@ public class MediatorService extends Service {
 	
 	private boolean awake = false;
 	//flag toggled by screen broadcast events
-	
+
 		
 /*Phone Status Flags*/
 	public int lastphonestate = 42;
@@ -183,14 +183,19 @@ PhoneStateListener Detector = new PhoneStateListener() {
                 return;
 }};
 
+
 void activate() {
 	if (active) return;//protect from bad redundant calls
 	
 	//register the receivers
 	IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
 	IntentFilter offfilter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
+	
+
+	
 	registerReceiver(screenon, onfilter);
 	registerReceiver (screenoff, offfilter);
+
 	active = true;
 }
 

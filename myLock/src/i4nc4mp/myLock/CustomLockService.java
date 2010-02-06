@@ -17,6 +17,7 @@ import android.util.Log;
 public class CustomLockService extends MediatorService {
 	
 	public boolean persistent = false;
+	public boolean stayawake = false;
 	
 	public int timeoutpref = 15;
 	
@@ -43,35 +44,46 @@ public class CustomLockService extends MediatorService {
 	public void onDestroy() {
 		super.onDestroy();
 		
+		if (stayawake) ManageWakeLock.releaseFull();
+		
 		if (patternsetting == 1) {
 			android.provider.Settings.System.putInt(getContentResolver(), 
     			android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
     	//re-enable pattern lock if applicable
-			
+		}
 			serviceHandler.removeCallbacks(myTask);
 		    serviceHandler = null;
-	}
+		    
+		    ManageWakeLock.releasePartial();
+		    
 }
 
 	@Override
 	public void onRestartCommand() {
-//restart is triggered if user changes the persistent mode setting
+//restart is triggered if user changes the settings, also when lock activity needs to signal it has started or stopped
 		
 		SharedPreferences settings = getSharedPreferences("myLock", 0);
 		boolean fgpref = settings.getBoolean("FG", true);
 		boolean wake = settings.getBoolean("StayAwake", false);
 		
-		if (persistent != fgpref) {//user changed pref
+		if (stayawake != wake) {
+			//this start is coming from user toggle of stay awake
+			//react by getting or releasing the wakelock as this can only come while screen is on
+			if (wake) ManageWakeLock.acquireFull(getApplicationContext());
+			else ManageWakeLock.releaseFull();
+			stayawake = wake;
+		}//else is used to ensure neither setting change happened before proceeding to treat as a Lock Activity callback
+		else if (persistent != fgpref) {//user changed pref
 			if (persistent) {
 					stopForeground(true);//kills the ongoing notif
 					persistent = false;
 			}
-			else doFGstart(wake);//so FG mode is started again
+			else doFGstart(stayawake);//so FG mode is started again
 		}
-		else {//so if the pref isn't being changed, it means this is a callback from Lock Activity
-		
+		else {
+		//handle the callback from Lock Activity start or stop
 			if (PendingLock) {
-			//This is the start success callback from Lock Activity onStart
+			//start success, let's toggle pending off and set timeout setting
 				PendingLock = false;
 				Log.v("Received Callback","Lock Activity is primed");
 //brought in the timeout settings changer -- this way all types of exits will restore the correct timeout
@@ -86,7 +98,7 @@ public class CustomLockService extends MediatorService {
 		    android.provider.Settings.System.putInt(getContentResolver(), 
 		            android.provider.Settings.System.SCREEN_OFF_TIMEOUT, 0);
 		    
-				ManageWakeLock.releasePartial();
+		    //right here I would release partial if only holding during the creation of lockscreen (acquired at screen off)
 			
 			}
 			else {
@@ -101,8 +113,10 @@ public class CustomLockService extends MediatorService {
 				
 				Log.v("Received Callback","Lock Activity is finished");
 				
-				ManageWakeLock.acquirePartial(getApplicationContext());
+				//ManageWakeLock.acquirePartial(getApplicationContext());
 				//ensure the task can run, we'll release it on the startup callback
+				//as of now, always holding partial just to get key events correctly.
+				//we run no load on the cpu while device is asleep, so causes no power use or battery life reduction
 								
 				android.provider.Settings.System.putInt(getContentResolver(),
 						android.provider.Settings.System.SCREEN_OFF_TIMEOUT, timeoutpref);
@@ -110,7 +124,7 @@ public class CustomLockService extends MediatorService {
 				PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
 		    	pm.userActivity(SystemClock.uptimeMillis(), false);
 				
-		    	//TODO engage stay awake service right here if user has it enabled
+		    	if (stayawake) ManageWakeLock.acquireFull(getApplicationContext());
 				}
 			}
 				
@@ -121,17 +135,11 @@ public class CustomLockService extends MediatorService {
 	public void onFirstStart() {
 		SharedPreferences settings = getSharedPreferences("myLock", 0);
 		persistent = settings.getBoolean("FG", true);
-		boolean wake = settings.getBoolean("StayAwake", false);
+		stayawake = settings.getBoolean("StayAwake", false);
 		//boolean bootstart = settings.getBoolean("boot", false);
 		
-		
-		//if(wake) ManageWakeLock.acquireFull(getApplicationContext());
-        //probably not a common case
-        //if user happens to leave stay awake on all the time
-        //initialize it here, otherwise always done at time of toggle in settings
-	//FIXME change this so the boot handler starts the StayAwake Service instead.
-		
-		if (persistent) doFGstart(wake);
+		if(stayawake) ManageWakeLock.acquireFull(getApplicationContext());
+		if (persistent) doFGstart(stayawake);
 		//else send a toast telling user what mode is starting and whether stay awake is active
 		//perhaps do that in the boot handler service
 		
@@ -159,7 +167,8 @@ public class CustomLockService extends MediatorService {
 		
 		serviceHandler = new Handler();
 		ManageWakeLock.acquirePartial(getApplicationContext());
-		//fix the fact that after first start we didn't have it from the lock callback. released at lock start callback
+		//if not always holding partial we would only acquire at Lock activity exit callback
+		//we found we always need it to ensure key events will not occasionally drop on the floor from idle state wakeup
 	}
 	
 	class Task implements Runnable {
@@ -217,7 +226,7 @@ public class CustomLockService extends MediatorService {
 			*/
 				
 			//the failure to start at off bug appears to be fully eliminated.
-			//we have logic in the activity lifecycle now which can handle the starting at screen on
+			//TODO might be smart to have logic in the activity lifecycle which can handle the starting at screen on case
 			//FIXME we still don't have any good reaction to a user aborting a Power key sleep by shortly doing a 2nd power key press
 			
 		return;
@@ -252,6 +261,10 @@ public class CustomLockService extends MediatorService {
 	
 	private void StartLock(Context context) {
 
+		//now release wake lock if in stay awake mode
+		if (stayawake) ManageWakeLock.releaseFull();
+		//this is because we want the lock activity to do a 5 second timeout, that's the best handling for locked down key events
+		
 		Intent closeDialogs = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
 		        context.sendBroadcast(closeDialogs);
 		        
@@ -320,6 +333,9 @@ public class CustomLockService extends MediatorService {
 	//2- call ends while screen is on, user sees the lockscreen. if sleep, next wakeup still has lockscreen
 	//3- incoming call is missed or ignored results in seeing the lockscreen also
 	//TODO use 2.1 pm check for screen on to make these more effective
+	
+	//TODO call start and end may need to attempt to release/gain wakelock while in stayawake mode.
+	//might not matter so i will add it if i find unexpected behavior for calls
 	
 	@Override
 	public void onCallStart() {
