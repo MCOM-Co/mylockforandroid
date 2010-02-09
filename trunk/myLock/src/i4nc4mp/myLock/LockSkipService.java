@@ -13,6 +13,7 @@ import android.util.Log;
 
 //alpha 2c method utilizing the force delayed secure exit
 //really no better than just putting the self destroying dismiss activity at wakeup
+
 public class LockSkipService extends MediatorService {
 	private Handler serviceHandler;
 	private Task myTask = new Task();

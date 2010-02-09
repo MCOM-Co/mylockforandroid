@@ -8,4 +8,10 @@
 <string name="shakeBox">Shake will unlock from sleep (may impact battery life)</string>
 <string name="welcomeBox">Use widget lockscreen</string>
 <string name="bootBox">Start myLock when phone is first unlocked after boot</string>
+
+<string name="PwrTitle">Power Key</string>
+<string name="CamTitle">Camera Key</string>
+<string name="LockedOpt">Locked</string>
+<string name="WakeupOpt">Wake Lockscreen</string>
+<string name="UnlockOpt">Instant Unlock</string>
 </resources>

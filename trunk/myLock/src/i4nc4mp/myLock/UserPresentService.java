@@ -27,6 +27,7 @@ public class UserPresentService extends Service {
 		Log.d(getClass().getSimpleName(),"onDestroy()");
 		
 		unregisterReceiver(unlockdone);
+		unregisterReceiver(screenoff);
 		
 		
 		}
@@ -35,11 +36,23 @@ public class UserPresentService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		super.onStartCommand(intent, flags, startId);
 		IntentFilter userunlock = new IntentFilter (Intent.ACTION_USER_PRESENT);
+		IntentFilter off = new IntentFilter (Intent.ACTION_SCREEN_OFF);
 		
 		registerReceiver (unlockdone, userunlock);
+		registerReceiver (screenoff, off);
 		
 		return 1;
 	}
+	
+	BroadcastReceiver screenoff = new BroadcastReceiver() {
+       //just for debugging purposes (log when screen turns off from emulator env
+        public static final String Screenoff = "android.intent.action.SCREEN_OFF";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+                if (!intent.getAction().equals(Screenoff)) return;
+        Log.v("userpresent","screen off broadcast");
+        }};
 
 	BroadcastReceiver unlockdone = new BroadcastReceiver() {
 	    

@@ -3,8 +3,10 @@ package i4nc4mp.myLock;
 import i4nc4mp.myLock.ManageKeyguard.LaunchOnKeyguardExit;
 import android.app.Notification;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.PowerManager;
@@ -37,6 +39,9 @@ public class CustomLockService extends MediatorService {
 	
 
 	
+	public boolean idle = false;
+	//when the idle alarm intent comes in we set this true to properly start closing down
+	
 	Handler serviceHandler;
 	Task myTask = new Task();
 	
@@ -53,6 +58,8 @@ public class CustomLockService extends MediatorService {
 		}
 			serviceHandler.removeCallbacks(myTask);
 		    serviceHandler = null;
+		    
+		    unregisterReceiver(idleExit);
 		    
 		    ManageWakeLock.releasePartial();
 		    
@@ -98,33 +105,54 @@ public class CustomLockService extends MediatorService {
 		    android.provider.Settings.System.putInt(getContentResolver(), 
 		            android.provider.Settings.System.SCREEN_OFF_TIMEOUT, 0);
 		    
-		    //right here I would release partial if only holding during the creation of lockscreen (acquired at screen off)
-			
+		    //========right here I would release partial if only holding during the creation of lockscreen (acquired at screen off)
+		    
+		    IdleTimer.start(getApplicationContext());
+		    
+		    
+		    //if we don't get user unlock callback within user-set idle timeout
+		    //this alarm kills off the lock activity and this service, restores KG, & starts the user present service
+		    
+		    //TODO we're going to want to start at stop it within the activity wakeup as well
+		    //example: stop when user deliberately wakes lockscreen to use it
+		    //start again if sleeping again from that screenwake
 			}
 			else {
 			//This is the finish callback when activity exits.
-				//if (!receivingcall && !placingcall) shouldLock = true;
-				//queue new lockscreen on next screen off if no calls active
-				
-				//when calls are active the CallEnd reaction will take care of this
-				//removed redundant check to determine if any error in call state detection is occurring
 				shouldLock = true;
 				
 				
 				Log.v("Received Callback","Lock Activity is finished");
+				
 				
 				//ManageWakeLock.acquirePartial(getApplicationContext());
 				//ensure the task can run, we'll release it on the startup callback
 				//as of now, always holding partial just to get key events correctly.
 				//we run no load on the cpu while device is asleep, so causes no power use or battery life reduction
 								
-				android.provider.Settings.System.putInt(getContentResolver(),
-						android.provider.Settings.System.SCREEN_OFF_TIMEOUT, timeoutpref);
-				//then send a new userActivity call to the power manager
+				
+				if (!idle) {
+				IdleTimer.cancel(getApplicationContext());
+					
+				android.provider.Settings.System.putInt(getContentResolver(), android.provider.Settings.System.SCREEN_OFF_TIMEOUT, timeoutpref);
+				
 				PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
 		    	pm.userActivity(SystemClock.uptimeMillis(), false);
-				
+		    	
 		    	if (stayawake) ManageWakeLock.acquireFull(getApplicationContext());
+				}
+				else {				
+					ManageKeyguard.reenableKeyguard();
+					//funny - you will see the regular lockscreen after this call because it is restoring it from time that pattern was off
+					//if you slide that, you land at the security pattern screen ;]
+					//otherwise if it sleeps like that, next wakeup places us at pattern screen
+					
+					Intent u = new Intent();
+			    	u.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UserPresentService");
+			    	//service that reacts to the completion of the keyguard to start this mediator again
+			    	startService(u);
+					stopSelf();
+				}
 				}
 			}
 				
@@ -136,7 +164,7 @@ public class CustomLockService extends MediatorService {
 		SharedPreferences settings = getSharedPreferences("myLock", 0);
 		persistent = settings.getBoolean("FG", true);
 		stayawake = settings.getBoolean("StayAwake", false);
-		//boolean bootstart = settings.getBoolean("boot", false);
+		boolean timeout = settings.getBoolean("timeout", false);
 		
 		if(stayawake) ManageWakeLock.acquireFull(getApplicationContext());
 		if (persistent) doFGstart(stayawake);
@@ -169,7 +197,28 @@ public class CustomLockService extends MediatorService {
 		ManageWakeLock.acquirePartial(getApplicationContext());
 		//if not always holding partial we would only acquire at Lock activity exit callback
 		//we found we always need it to ensure key events will not occasionally drop on the floor from idle state wakeup
+		
+		IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLock.intent.action.IDLE_TIMEOUT");
+		registerReceiver(idleExit, idleFinish);
 	}
+	
+	BroadcastReceiver idleExit = new BroadcastReceiver() {
+		@Override
+	    public void onReceive(Context context, Intent intent) {
+		if (!intent.getAction().equals("i4nc4mp.myLock.intent.action.IDLE_TIMEOUT")) return;
+		
+		idle = true;
+		PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+	  	myPM.userActivity(SystemClock.uptimeMillis(), true);
+	  	
+	  	Log.v("mediator idle reaction","preparing to restore KG. timeout pref is " + timeoutpref);
+	  	
+	  	android.provider.Settings.System.putInt(getContentResolver(),
+				android.provider.Settings.System.SCREEN_OFF_TIMEOUT, timeoutpref);
+	  	
+	  	//the idle flag will cause proper handling on receipt of the exit callback from lockscreen
+	  	//we basically instant unlock as if user requested, but then force KG back on.
+	}};
 	
 	class Task implements Runnable {
     	public void run() {
@@ -214,16 +263,6 @@ public class CustomLockService extends MediatorService {
 				//possible we might need to implement a special intent that we could send at this occurrence
 				//to notify the existing instance of the lockscreen
 			}
-			
-			/*
-			ManageKeyguard.initialize(mCon);
-			if (!shouldLock || ManageKeyguard.inKeyguardRestrictedInputMode()) {
-				PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-		  	  	myPM.userActivity(SystemClock.uptimeMillis(), false);
-				StartDismiss(getApplicationContext());//DoExit(getApplicationContext());
-				shouldLock = true;//ensure we get ready to lock again when this logic happens. seems to catch failure on slide open
-			}
-			*/
 				
 			//the failure to start at off bug appears to be fully eliminated.
 			//TODO might be smart to have logic in the activity lifecycle which can handle the starting at screen on case
@@ -267,7 +306,10 @@ public class CustomLockService extends MediatorService {
 		
 		Intent closeDialogs = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
 		        context.sendBroadcast(closeDialogs);
+		
 		        
+		ManageKeyguard.disableKeyguard(getApplicationContext());
+		//this just calls a temporary KG pause. doing this allows us to be recognized when we later want to re-enable
 
 		        Class w = Lockscreen.class;
 		        //Class w = ShowWhenLockedActivity.class; no button customize, uses secure exit to unlock
@@ -312,18 +354,18 @@ public class CustomLockService extends MediatorService {
                }});    	
     }
 	
-	public void StartDismiss(Context context) {
+	public void StartShowWhenLocked(Context context) {
     	//FIXME the activity happens but screen goes off immediately when it exits except in USB debug environment
-    	Class w = DismissKeyguardActivity.class;
+    	Class w = ShowWhenLockedActivity.class;
     	
     		    	      
-		Intent dismiss = new Intent(context, w);
-		dismiss.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK//For some reason it requires this even though we're already an activity
+		Intent locked = new Intent(context, w);
+		locked.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK//For some reason it requires this even though we're already an activity
 				| Intent.FLAG_ACTIVITY_NO_USER_ACTION//Just helps avoid conflicting with other important notifications
 		        | Intent.FLAG_ACTIVITY_NO_HISTORY//Ensures the activity WILL be finished after the one time use
 		        | Intent.FLAG_ACTIVITY_NO_ANIMATION);
 		        
-		context.startActivity(dismiss);
+		context.startActivity(locked);
     	
     }
 	

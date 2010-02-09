@@ -80,13 +80,13 @@ public class Lockscreen extends Activity {
         //we will also come into this state where a wake or unlock key is being done
         //but those states then set themselves within the first second.
         
+        public boolean idle = false;
         
 
         //very very complicated business.
         @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-
         
         requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
@@ -130,6 +130,9 @@ public class Lockscreen extends Activity {
         IntentFilter offfilter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
 		registerReceiver(screenoff, offfilter);
         
+		IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLock.intent.action.IDLE_TIMEOUT");
+		registerReceiver(idleExit, idleFinish);
+		
         serviceHandler = new Handler();
         
         
@@ -218,7 +221,22 @@ public class Lockscreen extends Activity {
         return;//avoid unresponsive receiver error outcome
              
 }};
-    
+
+BroadcastReceiver idleExit = new BroadcastReceiver() {
+	@Override
+    public void onReceive(Context context, Intent intent) {
+	if (!intent.getAction().equals("i4nc4mp.myLock.intent.action.IDLE_TIMEOUT")) return;
+	
+	finishing = true;
+	idle = true;
+	 //PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+	  	//myPM.userActivity(SystemClock.uptimeMillis(), true);
+	  	//cause a quiet wake in the short timeout, so that when it ends the system will restore keyguard
+	
+	finish();
+}};
+
+
     public void setBright(float value) {
     	Window mywindow = getWindow();
     	
@@ -307,7 +325,6 @@ public class Lockscreen extends Activity {
     
     
     
-    //TODO --- make stay awake capable of activating when slide is opened
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
     	super.onConfigurationChanged(newConfig);
@@ -319,11 +336,6 @@ public class Lockscreen extends Activity {
      		else {
      		finishing = true;
      		
-     		//it's more complicated than just starting the service.
-     		//we need a way to know when the slide has been closed again
-     		//and we also still need the wakelock to start and stop and screen on/off
-     		//TODO put that functionality into the stay awake mediator
-     		
      		/*
      		Intent i = new Intent();
     		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.StayAwakeService");
@@ -332,11 +344,6 @@ public class Lockscreen extends Activity {
      		
      		setBright((float) 0.1);
         	moveTaskToBack(true);//finish();
-      	  	//let's instant unlock when slide open
-        	//this command is potentially causing the issue of failure to start after closed unlock, slide open, then relock
-        	//Log shows we get this for every change. So user unlocks, the sliding open queues this logic.
-        	//When we resume, this gets called to respond to the slide open.
-        	//as a result we're telling ourselves to stop
      		}
      	}
      	else if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES)
@@ -376,7 +383,8 @@ public class Lockscreen extends Activity {
         starting = true;//this way if we get brought back we'll be aware of it
         resumedwithfocus = false;
 
-        CallbackMediator();        
+        CallbackMediator();
+
        //FIXME looks like we need to still wait a short time, then destroy the activity
        //otherwise it is possible for user to get back in to it in an usable state by navigating in via back key presses
     }
@@ -442,8 +450,24 @@ public class Lockscreen extends Activity {
        serviceHandler = null;
        
        unregisterReceiver(screenoff);
+       unregisterReceiver(idleExit);
+       
+       /*if (idle) {//we got closed by idle alarm, so shut down the mediator also, allowing next wake to be keyguarded
+    	   
+    	   Intent i = new Intent();
+    	   i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
+    	   stopService(i);
+       
+    	   Intent u = new Intent();
+    	   u.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UserPresentService");
+    	   startService(u);
+       }*/
+       //this will be handled by mediator who also receives the idle timeout intent
+       
     	
         Log.v("destroyWelcome","Destroying");
+        
+        //if (idle) ManageKeyguard.reenableKeyguard();
     }
         
     //public void takeKeyEvents (boolean get)
@@ -461,20 +485,6 @@ public class Lockscreen extends Activity {
     			starting = false;//set our own lifecycle reference now that we know we started and got focus properly
     			CallbackMediator();//tell mediator it is no longer waiting for us to start up
     		}
-    		/* we no longer fail to get focus after start.
-    		 * a bug where since we forced portrait only it wasn't liking this while slide was open
-    		 * and the behavior was we started but couldn't get focus (come to front over top of lockscreen
-    		 * user would see lockscreen after locking with slide open, then trying to wake
-    		 * 
-    		 * to fix it i changed the orientation to nosensor so that it will take landscape if slide is open
-    		 * 
-    		 * 
-    		 * to be effective with the other bug where we didn't start till screen on
-    		 * we need to check our lifecycle flags in a screen on receiver
-    		 * we probably wouldn't even get ON if we were starting at on
-    		 * I think the better solution is going to be a custom implicit intent sent from mediator when it gets a screen on
-    		 * while still waiting for our start callback - the intent will cause us to do the exit
-    		*/
     	}
     	else {    		    		   		
     		//if (!hasWindowFocus()) //seems to return same thing as this event reaction method
@@ -504,9 +514,6 @@ public class Lockscreen extends Activity {
     	}
     	//takeKeyEvents(true);
         //getWindow().takeKeyEvents(true);
-    	
-    	//FIXME we get started but never gain focus if user unlocks with slide closed, then opens slide, then locks
-    	//OnStop is called instead after the onstart, resume, pause.
     }
     
     public void CallbackMediator() {
