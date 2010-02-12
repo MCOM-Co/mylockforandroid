@@ -31,6 +31,8 @@ http://mylockforandroid.googlecode.com/files/home_widgetbutton.jpg
   * Lite mode widget comes with this version, the plan is the include it while continuing to offer the standalone download.
 
 == Upcoming enhancements ==
-  * More tools for pattern users in both modes such as the option to have pattern mode turn back on automatically after an idle period you set
-  * Widget toggle & quick mode option in complete release
-  * More features & smoother operation for the lockscreen replacement option- add widgets & app shortcuts as well as a useful clock display with brightness and sound mode toggle buttons. Customize keys to your liking- any key can either instant unlock or wakeup the widget lockscreen.
+  * The first actual myLock lockscreen - featuring clock display, controls for vibrate/sound, brightness level, and music player (album art will be able to display), and optional unlock slider interfaces. Available in secure mode or customized mode-
+  * secure lockscreen mode - display the custom lockscreen on top of the pattern lockscreen so you can control music in one wakeup even while locked down with your pattern. Exit this lockscreen by pressing the back key, then completing your pattern. No button customization is available in secure mode.
+  * custom lockscreen mode - customize Power, Camera, slider-open, keypad buttons, volume keys to choose which will remain locked, wakeup the custom lockscreen, or skip it for instant unlock.
+  * simple lockscreen disabled mode - no customization, just exits the lockscreen anytime it would normally be shown. 
+  * in the non-secure modes, pattern security will be disabled at the time myLock is started. You can choose an idle timeout if you would like pattern security to turn on again after a number of minutes idle, disabling myLock until the pattern is unlocked.
