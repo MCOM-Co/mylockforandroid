@@ -1,17 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:id="@+id/mylockscreen"
-    android:gravity="center">
-    <TextView
-android:id="@+id/unlockmsg"
+<RelativeLayout
+android:id="@+id/mylockscreen"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+xmlns:android="http://schemas.android.com/apk/res/android"
+>
+<RelativeLayout
+android:id="@+id/musicButtons"
+android:layout_width="fill_parent"
+android:layout_height="wrap_content"
+android:layout_centerVertical="true"
+android:layout_centerHorizontal="true"
+>
+<Button android:text="Prev" android:id="@+id/PrevButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentTop="true"
+android:layout_toLeftOf="@+id/PlayToggle"></Button>
+<Button android:text="Play" android:id="@+id/PlayToggle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentTop="true"
+android:layout_centerHorizontal="true"
+></Button>
+<Button android:text="Next" android:id="@+id/NextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentTop="true"
+android:layout_toRightOf="@+id/PlayToggle"
+></Button>
+</RelativeLayout>
+<TextView
+android:id="@+id/minText"
 android:layout_width="wrap_content"
 android:layout_height="wrap_content"
-android:text="unLockScreen - please wait"
-android:textSize="20sp"
-android:gravity="left"
+android:textSize="120sp"
+android:layout_alignParentTop="true"
+android:layout_toRightOf="@+id/divider"
 >
 </TextView>
-</LinearLayout>
+<TextView
+android:id="@+id/divider"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:text=":"
+android:textSize="120sp"
+android:layout_alignParentTop="true"
+android:layout_centerHorizontal="true"
+>
+</TextView>
+<TextView
+android:id="@+id/hourText"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:textSize="120sp"
+android:layout_alignParentTop="true"
+android:layout_toLeftOf="@+id/divider"
+>
+</TextView>
+
+</RelativeLayout>

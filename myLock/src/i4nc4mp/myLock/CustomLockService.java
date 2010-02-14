@@ -20,6 +20,7 @@ public class CustomLockService extends MediatorService {
 	
 	public boolean persistent = false;
 	public boolean stayawake = false;
+	public boolean timeoutenabled = false;
 	
 	public int timeoutpref = 15;
 	
@@ -36,8 +37,6 @@ public class CustomLockService extends MediatorService {
 	
 	public boolean Lockaftercall = false;
 	//just a flag we set when calls wake the device.
-	
-
 	
 	public boolean idle = false;
 	//when the idle alarm intent comes in we set this true to properly start closing down
@@ -67,12 +66,11 @@ public class CustomLockService extends MediatorService {
 
 	@Override
 	public void onRestartCommand() {
-//restart is triggered if user changes the settings, also when lock activity needs to signal it has started or stopped
 		
 		SharedPreferences settings = getSharedPreferences("myLock", 0);
 		boolean fgpref = settings.getBoolean("FG", true);
 		boolean wake = settings.getBoolean("StayAwake", false);
-		
+/*========Settings change re-start commands that come from settings activity*/
 		if (stayawake != wake) {
 			//this start is coming from user toggle of stay awake
 			//react by getting or releasing the wakelock as this can only come while screen is on
@@ -88,12 +86,13 @@ public class CustomLockService extends MediatorService {
 			else doFGstart(stayawake);//so FG mode is started again
 		}
 		else {
-		//handle the callback from Lock Activity start or stop
+/*========LockActivity restart calls that happen when it finishes starting or stopping*/
 			if (PendingLock) {
 			//start success, let's toggle pending off and set timeout setting
 				PendingLock = false;
 				Log.v("Received Callback","Lock Activity is primed");
-//brought in the timeout settings changer -- this way all types of exits will restore the correct timeout
+				
+				//brought in the timeout settings changer -- this way all types of exits will restore the correct timeout
 				try {
 		            timeoutpref = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.SCREEN_OFF_TIMEOUT);
 		    } catch (SettingNotFoundException e) {
@@ -107,7 +106,7 @@ public class CustomLockService extends MediatorService {
 		    
 		    //========right here I would release partial if only holding during the creation of lockscreen (acquired at screen off)
 		    
-		    IdleTimer.start(getApplicationContext());
+		    if (timeoutenabled) IdleTimer.start(getApplicationContext());
 		    
 		    
 		    //if we don't get user unlock callback within user-set idle timeout
@@ -117,8 +116,8 @@ public class CustomLockService extends MediatorService {
 		    //example: stop when user deliberately wakes lockscreen to use it
 		    //start again if sleeping again from that screenwake
 			}
-			else {
-			//This is the finish callback when activity exits.
+			else if (!shouldLock) {
+					//this is the actual case that we just exited lockscreen
 				shouldLock = true;
 				
 				
@@ -132,7 +131,7 @@ public class CustomLockService extends MediatorService {
 								
 				
 				if (!idle) {
-				IdleTimer.cancel(getApplicationContext());
+				if (timeoutenabled) IdleTimer.cancel(getApplicationContext());
 					
 				android.provider.Settings.System.putInt(getContentResolver(), android.provider.Settings.System.SCREEN_OFF_TIMEOUT, timeoutpref);
 				
@@ -154,9 +153,11 @@ public class CustomLockService extends MediatorService {
 					stopSelf();
 				}
 				}
-			}
-				
-		
+			else {
+/*========Safety start that ensures the settings activity toggle button can work, first press to start, 2nd press to stop*/
+				Log.v("toggle request","user first press of toggle after a startup at boot");
+			}		
+		}
 	}
 	
 	@Override
@@ -164,7 +165,7 @@ public class CustomLockService extends MediatorService {
 		SharedPreferences settings = getSharedPreferences("myLock", 0);
 		persistent = settings.getBoolean("FG", true);
 		stayawake = settings.getBoolean("StayAwake", false);
-		boolean timeout = settings.getBoolean("timeout", false);
+		timeoutenabled = settings.getBoolean("timeout", false);
 		
 		if(stayawake) ManageWakeLock.acquireFull(getApplicationContext());
 		if (persistent) doFGstart(stayawake);
@@ -308,8 +309,9 @@ public class CustomLockService extends MediatorService {
 		        context.sendBroadcast(closeDialogs);
 		
 		        
-		ManageKeyguard.disableKeyguard(getApplicationContext());
+		if (timeoutenabled) ManageKeyguard.disableKeyguard(getApplicationContext());
 		//this just calls a temporary KG pause. doing this allows us to be recognized when we later want to re-enable
+		//we only need this when the timeout mode is active
 
 		        Class w = Lockscreen.class;
 		        //Class w = ShowWhenLockedActivity.class; no button customize, uses secure exit to unlock

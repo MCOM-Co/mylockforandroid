@@ -173,7 +173,7 @@ public class SettingsActivity extends Activity {
     /*start and stop methods rely on pref and are only used by toggle button*/
     private void startService(){
    			Intent i = new Intent();
-   			if (!customLock) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.NoLockService");
+   			if (!customLock) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LockSkipService");
    			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
    			startService(i);
    			Log.d( getClass().getSimpleName(), "startService()" );
@@ -181,12 +181,14 @@ public class SettingsActivity extends Activity {
     
     private void stopService() {
 			Intent i = new Intent();
-			if (!customLock) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.NoLockService");
+			if (!customLock) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LockSkipService");
 			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
 			stopService(i);
 			Log.d( getClass().getSimpleName(), "stopService()" );
     }
-   
+    
+    
+   //TODO get binding working or a way to look for whether the service is running so I can use a toggleButton instead
     private void TryToggle() {
     	if (!triedstart) {
     		startService();

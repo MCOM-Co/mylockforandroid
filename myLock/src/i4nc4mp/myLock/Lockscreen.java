@@ -1,5 +1,7 @@
 package i4nc4mp.myLock;
 
+import java.util.GregorianCalendar;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -10,13 +12,14 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.SystemClock;
-import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.TextView;
 
 //starting point is the alarmalert prompt.
 //this window itself dismisses keyguard.
@@ -82,6 +85,15 @@ public class Lockscreen extends Activity {
         
         public boolean idle = false;
         
+        
+        private Button mrewindIcon;
+        private Button mplayIcon;
+        private Button mpauseIcon;
+        private Button mforwardIcon;
+        
+        public TextView curhour;
+        public TextView curmin;
+        
 
         //very very complicated business.
         @Override
@@ -110,6 +122,7 @@ public class Lockscreen extends Activity {
          * how we accomplish this is by setting the window's brightness to 0.0
          * this is screen off, so it stays off even if the CPU is actually waking when vol is pressed
         */
+               
         
         updateLayout();
         
@@ -127,6 +140,60 @@ public class Lockscreen extends Activity {
         //setPersistent(true);
         //doesn't affect the unhandled key event bug
         
+        curhour = (TextView) findViewById(R.id.hourText);
+        
+        curmin = (TextView) findViewById(R.id.minText);
+        
+       updateClock();
+        
+        mrewindIcon = (Button) findViewById(R.id.PrevButton); 
+        
+        mrewindIcon.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+             Intent intent;
+             intent = new Intent("com.android.music.musicservicecommand.previous");
+             getApplicationContext().sendBroadcast(intent);
+             }
+          });
+ 
+        mplayIcon = (Button) findViewById(R.id.PlayToggle); 
+ 
+        mplayIcon.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+             Intent intent;
+             intent = new Intent("com.android.music.musicservicecommand.togglepause");
+             getApplicationContext().sendBroadcast(intent);
+             /*if (!am.isMusicActive()) {
+                 mpauseIcon.setVisibility(View.VISIBLE);
+                 mplayIcon.setVisibility(View.GONE);
+                 }*/
+             }
+          });
+ 
+        /*mpauseIcon = (ImageButton) findViewById(R.id.pauseIcon); 
+ 
+        mpauseIcon.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+             Intent intent;
+             intent = new Intent("com.android.music.musicservicecommand.togglepause");
+             getBaseContext().sendBroadcast(intent);
+             if (am.isMusicActive()) {
+                 mplayIcon.setVisibility(View.VISIBLE);
+                 mpauseIcon.setVisibility(View.GONE);
+                 }
+             }
+          });*/
+ 
+        mforwardIcon = (Button) findViewById(R.id.NextButton); 
+ 
+        mforwardIcon.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+             Intent intent;
+             intent = new Intent("com.android.music.musicservicecommand.next");
+             getApplicationContext().sendBroadcast(intent);
+             }
+          });
+        
         IntentFilter offfilter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
 		registerReceiver(screenoff, offfilter);
         
@@ -134,24 +201,25 @@ public class Lockscreen extends Activity {
 		registerReceiver(idleExit, idleFinish);
 		
         serviceHandler = new Handler();
-        
-        
- //This is now done by the mediator service
-      //retrieve the user's normal timeout setting - SCREEN_OFF_TIMEOUT
-    	/*try {
-            timeoutpref = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.SCREEN_OFF_TIMEOUT);
-    } catch (SettingNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-    }//this setting will be restored at finish
-    
-    //Next, change the setting to 0 seconds
-    android.provider.Settings.System.putInt(getContentResolver(), 
-            android.provider.Settings.System.SCREEN_OFF_TIMEOUT, 0);*/
-    //the device behavior ends up as just over 5 seconds when we do this.
-    //when we set 1 here, it comes out 6.5 to 7 seconds between timeouts.
     
         }
+        
+    public void updateClock() {
+    	GregorianCalendar Calendar = new GregorianCalendar();         
+        
+        String hour = new String("");
+        hour = hour + Calendar.get(GregorianCalendar.HOUR_OF_DAY);
+        String minute = new String("");
+        minute =  minute + Calendar.get(GregorianCalendar.MINUTE);
+        
+        
+        curhour.setText(hour);
+        curmin.setText(minute);
+        //we call this anytime user is creating a wakeup and also at first create
+        //we could register for the time changed event which goes off every minute
+        //but it doesn't seem we need to really care about this case where user wakes, and minute changes before re-sleep
+        //it will be rare and no impact on the ongoing functionality
+    }
         
     protected View inflateView(LayoutInflater inflater) {
         return inflater.inflate(R.layout.lockactivity, null);
@@ -168,7 +236,7 @@ public class Lockscreen extends Activity {
     public void onBackPressed() {
         	if (screenwake) {
         		finishing = true;
-        		setBright((float) 0.1);
+        		//setBright((float) 0.1);
         		moveTaskToBack(true);//finish();
         	}
         	//2.1 has a PM function is screen on
@@ -191,11 +259,6 @@ public class Lockscreen extends Activity {
         public void onReceive(Context context, Intent intent) {
                 if (!intent.getAction().equals(Screenoff)) return;
                 
-        //right now I'm not deliberately finishing the activity, though I have no way to keep it out of stack history
-        /*if (starting) {
-        	//this case is the screen off following Stop. Next start would normally come when mediator does startLock
-        	finish();
-        }*/
                 
         //if anything had turned screen on, undo
         if (screenwake && hasWindowFocus()) {
@@ -204,6 +267,7 @@ public class Lockscreen extends Activity {
         	screenwake = false;
         	setBright((float) 0.0);
         	}
+        //discovered a bug with this - we don't have focus if user exited, so I now have onStop reset the screenwake flag also.
         else if (waking) {
         	//no screen wake exists but waking was set by the silent wake handling (or unhandled wakeup where we still had focus)
         	//this case should only happen if user is pressing power to unlock but they have bumped a locked key on the way
@@ -214,8 +278,8 @@ public class Lockscreen extends Activity {
         	//but we actually need to wait a half second then call wakeup and finish.
         	//that's done by the task when this should flag is true;
         	}
-        takeKeyEvents(true);
-        getWindow().takeKeyEvents(true);
+        //takeKeyEvents(true);
+        //getWindow().takeKeyEvents(true);
         waking = false; //reset lifecycle
         
         return;//avoid unresponsive receiver error outcome
@@ -271,21 +335,24 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
     
     	class Task implements Runnable {
         	public void run() {                
-        		//the task will turn off the quiet wake 5 seconds after the button press happened
-        		//essentially if a 2nd press happens before the 5 seconds is up we need to restart
-        		//since that's what the real timeout does
         		
-        		//timeleft is equal to 10 half-second ticks. when it gets to 0 then the flag is cleared
-        		//when repeat calls happen we just put the int back at 10
-        		if (shouldFinish) {
+        		
+        		
+        		/*if (starting) {
+                	//I am calling this with a 5 sec delay when we stop
+        			//this just seems like a good practice to destroy the activity
+        			//this makes so user can not land back in it with back key presses
+                	finish();
+        		}
+        		else*/ 
+        			if (shouldFinish) {
         			finishing=true;
         			
         			PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
          	  	  	myPM.userActivity(SystemClock.uptimeMillis(), false);
          	  	  	Log.v("silent wake task","power sleep occurred, forcing wake and exit");
-        			//wakeup();
-        			setBright((float) 0.1); //tried moving this to the step that sets this flag and posts the delay
-        			moveTaskToBack(true);//finish();
+        			setBright((float) 0.1);
+        			moveTaskToBack(true);
         		}
         		else if (timeleft!=0) {
         			timeleft--;
@@ -382,7 +449,12 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
         
         starting = true;//this way if we get brought back we'll be aware of it
         resumedwithfocus = false;
-
+        screenwake = false;
+        
+        //set task which sees if starting flag is true. if so, it actually destroys the activity
+        //serviceHandler.postDelayed(myTask, 5000L);
+        //doesn't seem necessary right now
+        //the only benefit to doing this is to avoid user accidental recovery of lockscreen window by back key (history stack)
         CallbackMediator();
 
        //FIXME looks like we need to still wait a short time, then destroy the activity
@@ -438,13 +510,6 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
     public void onDestroy() {
         super.onDestroy();
         
-        //moved to mediator at finish callback
-        /*
-		android.provider.Settings.System.putInt(getContentResolver(),
-				android.provider.Settings.System.SCREEN_OFF_TIMEOUT, timeoutpref);
-		//then send a new userActivity call to the power manager
-		PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
-    	pm.userActivity(SystemClock.uptimeMillis(), false);*/
         
        serviceHandler.removeCallbacks(myTask);
        serviceHandler = null;
@@ -452,22 +517,9 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
        unregisterReceiver(screenoff);
        unregisterReceiver(idleExit);
        
-       /*if (idle) {//we got closed by idle alarm, so shut down the mediator also, allowing next wake to be keyguarded
-    	   
-    	   Intent i = new Intent();
-    	   i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
-    	   stopService(i);
-       
-    	   Intent u = new Intent();
-    	   u.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UserPresentService");
-    	   startService(u);
-       }*/
-       //this will be handled by mediator who also receives the idle timeout intent
        
     	
         Log.v("destroyWelcome","Destroying");
-        
-        //if (idle) ManageKeyguard.reenableKeyguard();
     }
         
     //public void takeKeyEvents (boolean get)
@@ -510,6 +562,7 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
     		finishing = false;//since we are sometimes being brought back, safe to ensure flags are like at creation
     		shouldFinish = false;
     		waking = false;
+    		screenwake = false;
     		setBright((float) 0.0);
     	}
     	//takeKeyEvents(true);
@@ -523,43 +576,55 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
         }
     
     //here's where most of the magic happens
-    // ----- we actually can't get a key down from sleep state
-    //that event causes a resume and we will have focus already when it happens.
-    //so we have to handle up if we want to get shit done here
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        // Do this on key down
+
         boolean up = event.getAction() == KeyEvent.ACTION_UP;
         //flags to true if the event we are getting is the up (release)
+        //when we are coming from sleep, the down gets taken by power manager to cause wakeup
+        
         int code = event.getKeyCode();
-        //for next alpha release I am not going to have a wakeup lockscreen, until I have slide to unlock implemented
-       if (code == KeyEvent.KEYCODE_POWER) {//|| code == KeyEvent.KEYCODE_CAMERA || 
-       //wakeup lockscreen on up --- first of all I am testing as in the alpha 2b method using a short delay before we Stop
-    	   //this way down can be handled first in case of long press
-    	   /*if (up && !screenwake) {
-                   waking = true;
-                  	Log.v("key event","wake key");
-               	wakeup();
-    	   }*/
+        Log.v("dispatching a key event","Is this the up? -" + up);
+        
+       //TODO replace this with a method to check the pref for the key to see how to handle it
+        int reaction = 0;//locked
+                
+        if (code == KeyEvent.KEYCODE_BACK) reaction = 3;//check for wake, if yes, exit
+        else if (code == KeyEvent.KEYCODE_POWER) reaction = 2;//unlock
+        else if (code == KeyEvent.KEYCODE_CAMERA) reaction = 1;//wake
+       
+        	switch (reaction) {
+        	case 3:
+        		onBackPressed();
+        		return true;
+        	case 2:
     	   //if (!up) Log.v("power key","we can get power key down... *~*");
     	   if (up && !finishing) {
     		   //shouldFinish = true;
     		   Log.v("unlock key","power key UP, unlocking");
     		   finishing = true;
-    		   PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-    	  	  	myPM.userActivity(SystemClock.uptimeMillis(), false);//since the error seems to be the fact it is flickering off,
+    		  //PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+    	  	  //myPM.userActivity(SystemClock.uptimeMillis(), false);
     	  	  	
     		   setBright((float) 0.1);
-    		   
-    		  
+    		       		       		  
     		   //serviceHandler.postDelayed(myTask, 50L);
     		   moveTaskToBack(true);
     		  
     	   }
                    return true;
-       }
-       else {//if (code != KeyEvent.KEYCODE_CAMERA){//locked all other keys but camera which will come thru in long press
-    	   
+       
+        	case 1:
+    	   if (up && !screenwake) {
+                   waking = true;
+                  	Log.v("key event","wake key");
+                updateClock();
+               	wakeup();
+    	   }
+    	   return true;
+       
+        case 0:
+        	//essentially the default
     	   //if (!up) Log.v("locked key","we can get a non power key down");
     	   
     	   if (!screenwake && up) {
@@ -572,79 +637,14 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
              	waking = true;
              	serviceHandler.postDelayed(myTask, 500L);
              		}
-            }//this seems to be broken if i allow it to fully run... it worked on the 5 sec timeout
-    	   //when it runs this long, the screen inexplicably lights up again, then when it sleeps the power key code runs
-           //trying counting 10 secs of the 15
-    	   //still inexplicably goes bright, but now the timer is done so we aren't getting the wrong shouldFinish logic
-            //definitely seems to be the 11th second that bright happens
-    	   
-    	   //probably need to go back to the timeout adjustment and get it integrated in the lifecycle
-    	   //just at the mediator start and stop callbacls
+            }
              
-             return true;
+             
+    	   return true;
        }
-       //else return false;
-        
-        //switch (code) {
-            //case KeyEvent.KEYCODE_VOLUME_UP:
-            //case KeyEvent.KEYCODE_VOLUME_DOWN:
-            //case KeyEvent.KEYCODE_FOCUS:
-            //case KeyEvent.KEYCODE_POWER:
-               //moved locked down logic to default
-            	
-                
-               
-            //case KeyEvent.KEYCODE_VOLUME_UP:
-            //case KeyEvent.KEYCODE_VOLUME_DOWN:
-            /*case KeyEvent.KEYCODE_CAMERA:
-            	if (!screenwake && up) {
-                waking = true;
-               	Log.v("key event","wake key");
-            	wakeup();
-            	
-                return true;
-            	}
-            	else return false;*/
-            	
-               	
-                
-               
-               
-            /*case KeyEvent.KEYCODE_POWER:
- 				if (!finishing) {
-            		
-            		finishing = true;
-            		
-            		//wakeup();
-            		moveTaskToBack(true);//finish();
-            		
-            		
-            		Log.v("key event","unlock key, commence send self to back");
-            	}
-            	return false;//allow this key to register with the system in a way that will stabilize the wakeup
-            	*/
-            //default:
-            	/*if (!finishing) {
-            		
-            		finishing = true;
-            		
-            		//wakeup();
-            		moveTaskToBack(true);//finish();
-            		
-            		
-            		Log.v("key event","unlock key, commence send self to back");*/
-            	
-                
-                
-            	}
-    
-            	//TODO if a screen wakeup finishes and no wake flags are true (no screen wake and no CPU wake)
-            	//we can handle that too in a screen on receiver, by checking if we have focus
-    //otherwords an unexpected wake where nothing stole focus (unhandled wake needs to cause exit also)
-            	   
-            	//the only case we don't get this event is during a silent wake
-            	//when user presses power
-            	//timeleft & the task handle this case
+        	return false;
+    }
+      
         
     
 }
