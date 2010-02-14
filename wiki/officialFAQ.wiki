@@ -10,7 +10,7 @@ The guiding principle is one simple fact: we don't like having to slide to unloc
 We want to use the device on the first interaction, and not require a redundant slide action. It's a little surprising that the option not to have the lockscreen isn't already built into the OS. Off, keyguard, or pattern lock seem like suitable choices for end users, so myLock wants to step in to provide the Off category. Although the OS has provided tools for making the lockscreen go away, they are only designed for use cases like pushing a popup to the screen automatically (such as the default alarm clock). As a result we might go as far as doing a firmware mod for install on root devices to accomplish parts of the goal that are off-limits to regular apps.
 
 = But I want a quick way to disable pattern lock also, can myLock do this? =
-Yes we can. The Lite version implements this currently (started in v1a), automatically pausing pattern mode when myLock starts. It will automatically retain your pattern in the system settings and restart lockdown mode when you stop myLock.
+Yes we can. The Lite version implements this currently (started in v1a), automatically pausing pattern mode when myLock starts. It will automatically retain your pattern in the system settings and restart lockdown mode when you stop myLock. We are also going to provide an idle timeout option where myLock will disable itself and restore the pattern lock after a number of minutes left idle.
 
 = Will myLock also offer customization for backlight timers? =
 Probably. Don't confuse the lockscreen functionality with auto-sleep or auto-dim functionalities, which are governed separately. We're working on this to see how much we can do in the boundaries set for apps. Currently we offer a stay awake toggle to prevent the timeout lock.
@@ -34,16 +34,16 @@ Not sure yet. This is a really good idea, as the "call lockscreen" does stand in
 We are designing a very simple emulation of the stock homescreen with just a single screen, capable of displaying any widget of your choice in addition to any shortcut or app launch icon. The inspiration to create this was the existing silencer slider/clock display on the default lockscreen. Why not just make it an extra homescreen and let the user decide what to put there?
 
 = Will the custom lockscreen support the option to still use the slide to unlock? =
-Yes. Once catch with this is that Android blocks apps from taking full control of the home key, so the home key will always unlock as well. But if you would like, the option for slide to unlock will be included once the custom lockscreen hits a full-featured release. 
+Yes. One catch with this is that Android blocks apps from taking full control of the home key, so the home key will always unlock as well. But if you would like, the option for slide to unlock will be included once the custom lockscreen hits a full-featured release.
+
+= Can you make a custom lockscreen we can bring up in front of the pattern lock screen, for controlling music, etc? =
+Yes. This is a priority for the a3 we have been working on. 
 
 = What's notification preview? =
 This is a plan for the full final version of the app, way down the road. We think it would be excellent to have a timeline of missed events displayed on the wakeup screen, customized by user to what types of events have the priority of being shown there. A converged view for the timeline of any unread IMs, twitter, sms, email, missed call, voicemail. We might limit this to gmail, sms, gtalk, & gvoice and see how it goes.
 
 = It makes <insert app name> stop working... WTF? =
 It is hard to make the app play nice with other home or screenwake mods because they all rely on workarounds in android to work cleanly. when all these workarounds go in and try to execute in near-tandem, unexpected results will happen. See the Troubleshooting FAQ for more details and info on apps that may interfere with myLock's operation.
-
-= I can't find you on the market? =
-That's because myLock isn't on the market yet. I would really like to be, but I'm going to need some donations, as it costs a $25 fee for devs to join the market. I am choosing to create this app as a free & open source project to benefit android lovers, so I imagine once I place it in the app store I will have a donation version also allowing people to buy it for 2 dollars alongside the free download. myLock will never contain ads.
 
 = How do I send you my idea/feedback/bug complaint? =
 Email the project mylockandroid at gmail. You can also follow us on twitter and tweet at us if your comment is short. Can't guarantee I'll notice your comments elsewhere like blog, wiki, or will be aware of posts on forums.
