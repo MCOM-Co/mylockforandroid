@@ -17,8 +17,8 @@ import android.view.Window;
 
 import android.view.WindowManager;
 
-//solved the same thing this activity did by using disable / reenable kg calls in the mediator service
-//this activity is no longer used, was just a stepping stone to the better solution
+//The lockscreen that comes up over the top of secure pattern mode. This will be placed by a subclass of the mediator
+//No key handling since we can't handle keys with the show when locked flag
 
 public class ShowWhenLockedActivity extends Activity {
                 
@@ -33,20 +33,11 @@ public class ShowWhenLockedActivity extends Activity {
 
         //Log.v("create nolock","about to request window params");
         requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
-        //getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
         //we could actually delete this param and then allow the activity to get sent to back when system restores the KG. \
         //this would be the place to call the go to sleep we designed in the first iteration of custom lock
        
        updateLayout();
-       
-       setBright((float) 0.0);
-       
-       //not sure what effect these calls will have while KG is actually already dismissed. 
-       //I still have to call disable to get a secure exit during a show when locked activity, normally
-       //ManageKeyguard.disableKeyguard(getApplicationContext());
-       //ManageKeyguard.reenableKeyguard();
-       //these worked one time when the setbright call happened before the update layout
-       //log showed screen on, half sec later screen off, and then immediately keyguard was up
        
 
        //serviceHandler = new Handler();
@@ -55,35 +46,7 @@ public class ShowWhenLockedActivity extends Activity {
            
         }
         
-        public void setBright(float value) {
-        	Window mywindow = getWindow();
-        	
-        	WindowManager.LayoutParams lp = mywindow.getAttributes();
-
-    		lp.screenBrightness = value;
-
-    		mywindow.setAttributes(lp);
-        }
-        
-        //call this task to turn off the screen in a fadeout.
-
-        /*
-        class Task implements Runnable {
-        	public void run() {                
-        		if (bright != 0) {
-        			setBright(bright/100); //start at 10% bright and go to 0 (screen off)
-
-        			bright--;
-        			serviceHandler.postDelayed(myTask, 100L);
-                    }
-        		else {
-        			setBright((float) 0.0); 
-        			
-        			bright = 10;//put bright back
-        		}
-        	}
-        }*/
-                
+            
     protected View inflateView(LayoutInflater inflater) {
         return inflater.inflate(R.layout.lockactivity, null);
     }

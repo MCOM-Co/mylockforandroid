@@ -70,10 +70,7 @@ public class LockSkipService extends MediatorService {
 		
 		serviceHandler = new Handler();
 		
-		if(wake) ManageWakeLock.acquireFull(getApplicationContext());
-        //probably not a common case
-        //if user happens to leave stay awake on all the time
-        //initialize it here, otherwise always done at time of toggle in settings
+
         
         if (persistent) doFGstart(wake);
         
