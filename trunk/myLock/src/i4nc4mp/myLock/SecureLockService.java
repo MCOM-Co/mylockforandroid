@@ -26,9 +26,6 @@ public class SecureLockService extends MediatorService {
 	public boolean PendingLock = false;
 	//Flagged true upon sleep, remains true until StartLock happens or user aborts the sleep within the 5 sec grace period
 	
-	public boolean Lockaftercall = false;
-	//just a flag we set when calls wake the device.
-	
 	
 	Handler serviceHandler;
 	Task myTask = new Task();
@@ -201,44 +198,11 @@ public class SecureLockService extends MediatorService {
 		}
 	
 	
-//Still not sure how these cases vary, I believe it is only whether the call came while device was in full sleep.
-	//1- call ends while screen was off. user turns on screen to find the regular lockscreen
-	//2- call ends while screen is on, user sees the lockscreen. if sleep, next wakeup still has lockscreen
-	//3- incoming call is missed or ignored results in seeing the lockscreen also
-	//TODO use 2.1 pm check for screen on to make these more effective
-	
 	//TODO call start and end may need to attempt to release/gain wakelock while in stayawake mode.
 	//might not matter so i will add it if i find unexpected behavior for calls
 	
-	@Override
-	public void onCallStart() {
-		//Account for the case that a call starts while screen is asleep
-		
-	}
-	
-	@Override
-	public void onCallEnd() {
-		//Account for the case that a call ends while screen is asleep
-		
-		if (Lockaftercall) {
-			Lockaftercall = false;
-			StartLock(getApplicationContext());
-		}
-		//the phone app is actually keeping the CPU state wakelocked
-		//then forcing screen dark like our regular lockscreen would.
-		
-		//the only case we still can't detect here pre-2.1 is if the screen was off at call end
-		//if so, not even a check for keyguard mode via the manage keyguard class will return correctly due to the 5 sec grace period
-		//however it is possible the grace period doesn't happen in that scenario
-	}
-	
-	@Override
-	public void onCallMiss() {
-		if (!IsAwake()) {
-			//We actually need to start lock since screen is off and lockscreened
-			StartLock(getApplicationContext());//lock again since user didn't react to this wake
-		}
-	}
+	//FIXME in this mode since we never care about cancelling the lockscreen ourselves
+	//we don't need to handle any specific call event.
 	
 	void doFGstart(boolean wakepref) {
 		//putting ongoing notif together for start foreground
@@ -258,7 +222,7 @@ public class SecureLockService extends MediatorService {
 		
 		Context context = getApplicationContext();
 		CharSequence contentTitle = "myLock - click to open settings";
-		CharSequence contentText = "lockscreen is disabled";
+		CharSequence contentText = "secure mode lockscreen active";
 
 		Intent notificationIntent = new Intent(this, SettingsActivity.class);
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);

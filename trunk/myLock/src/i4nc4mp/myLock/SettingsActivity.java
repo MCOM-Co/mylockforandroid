@@ -16,9 +16,21 @@ import android.widget.CheckBox;
 import android.widget.Toast;
 
 //settings - we need a few branches. we will have 3 modes - (radio selector)
+
 //Basic lockscreen disable - (a2c, pre 2.0 keyguard manager interaction)
+//		====DO WE NEED THIS MODE?
+
 //Utility lockscreen - dismiss_keyguard activity, allows button customization dialogue
+/*User Types
+	+any key instant unlock (IMPATIENT: never want guarding) they should just use screen mode widget
+	+customizable lockscreen (MODERATE: may want a specific key or all keys to wake lockscreen but may want instant unlock too)
+	+slide to unlock + util lockscreen, with any key wake (WORRIERS: never want instant unlock)
+ */
+
 //Secure mode - show_when_locked activity, no button customization. just gives the utility lockscreen on top of pattern mode
+//=====special type of user who has secure mode and wants to access the util lock before having to do pattern
+
+//=====most reasonable moderate = want pattern to come on if phone is left idle for too long
 //If not in secure mode, idle timeout option is set. User enters a number of minutes. if 0, no timeout gets enabled
 //when set to 1 or more, idle timer will run
 
@@ -32,10 +44,12 @@ public class SettingsActivity extends Activity {
     public boolean awake = false;
     
     //public boolean customLock = false;
-    public boolean customLock = true;
+    //public boolean customLock = true;
     
     public boolean boot = false;
     //public boolean shakewake = false;
+    
+    public boolean secure = false;
     	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -102,19 +116,19 @@ public class SettingsActivity extends Activity {
                     	   Toast.makeText(SettingsActivity.this, "shake wakeup disabled", Toast.LENGTH_SHORT).show();
                        }
                    }
-               });
+               });*/
        
-       final CheckBox welcome = (CheckBox)findViewById(R.id.welcomeBox);
+       final CheckBox security = (CheckBox)findViewById(R.id.secureBox);
        
-       welcome.setChecked((customLock));        
+       security.setChecked((secure));        
        
-       welcome.setOnClickListener(new OnClickListener() {
+       security.setOnClickListener(new OnClickListener() {
 
                    public void onClick(View v) {
                 	   SharedPreferences set = getSharedPreferences("myLock", 0);
                 	   SharedPreferences.Editor editor = set.edit(); 
                 	   
-                	   editor.putBoolean("welcome", welcome.isChecked());
+                	   editor.putBoolean("secure", security.isChecked());
 
                        // Don't forget to commit your edits!!!
                        editor.commit();
@@ -123,10 +137,10 @@ public class SettingsActivity extends Activity {
                        stopService();//it will go by the existing pref
                        triedstart = false;//ensures next toggle command will start the new mode
                        Toast.makeText(SettingsActivity.this, "Press toggle to complete mode change", Toast.LENGTH_SHORT).show();
-                       customLock = !customLock;//toggle it locally for reference of next toggle press
+                       secure = !secure;//toggle it locally for reference of next toggle press
 
                    }
-               });*/
+               });
        
        final CheckBox fg = (CheckBox)findViewById(R.id.fgBox);
        
@@ -177,12 +191,14 @@ public class SettingsActivity extends Activity {
         //customLock = settings.getBoolean("welcome", false);
         boot = settings.getBoolean("boot", false);
         //shakewake = settings.getBoolean("ShakeWakeup", false);
+        secure = settings.getBoolean("secure", false);
     }
     
     /*start and stop methods rely on pref and are only used by toggle button*/
     private void startService(){
    			Intent i = new Intent();
-   			if (!customLock) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LockSkipService");
+   			//if (!customLock) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LockSkipService");
+   			if (secure) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.SecureLockService");
    			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
    			startService(i);
    			Log.d( getClass().getSimpleName(), "startService()" );
@@ -190,7 +206,8 @@ public class SettingsActivity extends Activity {
     
     private void stopService() {
 			Intent i = new Intent();
-			if (!customLock) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LockSkipService");
+			//if (!customLock) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LockSkipService");
+			if (secure) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.SecureLockService");
 			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
 			stopService(i);
 			Log.d( getClass().getSimpleName(), "stopService()" );

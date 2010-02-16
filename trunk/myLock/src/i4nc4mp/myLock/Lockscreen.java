@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
@@ -94,6 +95,7 @@ public class Lockscreen extends Activity {
         public TextView curhour;
         public TextView curmin;
         
+        public TextView batt;
 
         //very very complicated business.
         @Override
@@ -143,6 +145,8 @@ public class Lockscreen extends Activity {
         curhour = (TextView) findViewById(R.id.hourText);
         
         curmin = (TextView) findViewById(R.id.minText);
+        
+        batt = (TextView) findViewById(R.id.batt);
         
        updateClock();
         
@@ -204,22 +208,34 @@ public class Lockscreen extends Activity {
     
         }
         
-    public void updateClock() {
-    	GregorianCalendar Calendar = new GregorianCalendar();         
-        
-        String hour = new String("");
-        hour = hour + Calendar.get(GregorianCalendar.HOUR_OF_DAY);
-        String minute = new String("");
-        minute =  minute + Calendar.get(GregorianCalendar.MINUTE);
-        
-        
-        curhour.setText(hour);
-        curmin.setText(minute);
-        //we call this anytime user is creating a wakeup and also at first create
-        //we could register for the time changed event which goes off every minute
-        //but it doesn't seem we need to really care about this case where user wakes, and minute changes before re-sleep
-        //it will be rare and no impact on the ongoing functionality
-    }
+        public void updateClock() {
+        	GregorianCalendar Calendar = new GregorianCalendar();         
+            
+        	int mHour = Calendar.get(GregorianCalendar.HOUR_OF_DAY);
+        	int mMin = Calendar.get(GregorianCalendar.MINUTE);
+        	
+        	String hour = new String("");
+        	String min = new String("");
+        	
+            if (mHour <10) hour = hour + "0";
+            hour = hour + mHour;
+            
+            if (mMin <10) min = min + "0";
+            min = min + mMin;
+            
+            curhour.setText(hour);
+            curmin.setText(min);
+            
+            
+            //update battery as it is also a form of time passing
+            
+            SharedPreferences settings = getSharedPreferences("myLock", 0);
+            int battlevel = settings.getInt("BattLevel", 0);
+            
+            batt.setText(battlevel + "%");
+            
+            
+        }
         
     protected View inflateView(LayoutInflater inflater) {
         return inflater.inflate(R.layout.lockactivity, null);
