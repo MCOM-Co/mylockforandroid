@@ -48,6 +48,7 @@
         </intent-filter>
         </receiver>
         <service android:name=".CustomLockService"></service>
+        <service android:name=".SecureLockService"></service>
         <service android:name=".Toggler"></service>
         <service android:name=".NoLockService"></service>
         <service android:name=".BootHandler"></service>

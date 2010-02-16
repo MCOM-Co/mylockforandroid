@@ -64,7 +64,11 @@ public class UserPresentService extends Service {
 	    	Log.v("user unlocking","Keyguard was completed by user");
 	    	//send myLock start intent
 	    	Intent i = new Intent();
-			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
+	    	
+	    	//here we need to check the mode, actually
+	    	
+			//i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
+	    	i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.SecureLockService");
 			startService(i);
 	    	//call stopSelf
 			stopSelf();

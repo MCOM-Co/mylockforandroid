@@ -14,6 +14,9 @@ import android.util.Log;
 //alpha 2c method utilizing the force delayed secure exit
 //really no better than just putting the self destroying dismiss activity at wakeup
 
+
+//at call end we need to launch a KG checker service that tries to do the exit if inkeyguardrestrictedinputmode after 1 second.
+
 public class LockSkipService extends MediatorService {
 	private Handler serviceHandler;
 	private Task myTask = new Task();
