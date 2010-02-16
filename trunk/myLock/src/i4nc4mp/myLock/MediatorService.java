@@ -183,6 +183,8 @@ PhoneStateListener Detector = new PhoneStateListener() {
                 return;
 }};
 
+	BroadcastReceiver battchange = new BatteryInfo(); 
+
 
 void activate() {
 	if (active) return;//protect from bad redundant calls
@@ -190,11 +192,13 @@ void activate() {
 	//register the receivers
 	IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
 	IntentFilter offfilter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
+	IntentFilter battfilter = new IntentFilter (Intent.ACTION_BATTERY_CHANGED);
 	
 
 	
 	registerReceiver(screenon, onfilter);
 	registerReceiver (screenoff, offfilter);
+	registerReceiver (battchange, battfilter);
 
 	active = true;
 }
@@ -205,6 +209,7 @@ void pause() {
 	//destroy the receivers
 	unregisterReceiver(screenon);
     unregisterReceiver(screenoff);
+    unregisterReceiver (battchange);
 	active = false;
 }
 

@@ -15,6 +15,13 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.Toast;
 
+//settings - we need a few branches. we will have 3 modes - (radio selector)
+//Basic lockscreen disable - (a2c, pre 2.0 keyguard manager interaction)
+//Utility lockscreen - dismiss_keyguard activity, allows button customization dialogue
+//Secure mode - show_when_locked activity, no button customization. just gives the utility lockscreen on top of pattern mode
+//If not in secure mode, idle timeout option is set. User enters a number of minutes. if 0, no timeout gets enabled
+//when set to 1 or more, idle timer will run
+
 
 public class SettingsActivity extends Activity {
 	
@@ -23,10 +30,12 @@ public class SettingsActivity extends Activity {
 	
 	public boolean persistentNotif = true;
     public boolean awake = false;
+    
     //public boolean customLock = false;
     public boolean customLock = true;
+    
     public boolean boot = false;
-    public boolean shakewake = false;
+    //public boolean shakewake = false;
     	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -66,7 +75,7 @@ public class SettingsActivity extends Activity {
                    }
                });
        
-       final CheckBox shake = (CheckBox)findViewById(R.id.shakeBox);
+       /*final CheckBox shake = (CheckBox)findViewById(R.id.shakeBox);
 
        shake.setChecked((shakewake));        
                
@@ -95,7 +104,7 @@ public class SettingsActivity extends Activity {
                    }
                });
        
-       /*final CheckBox welcome = (CheckBox)findViewById(R.id.welcomeBox);
+       final CheckBox welcome = (CheckBox)findViewById(R.id.welcomeBox);
        
        welcome.setChecked((customLock));        
        
@@ -167,7 +176,7 @@ public class SettingsActivity extends Activity {
         awake = settings.getBoolean("StayAwake", false);
         //customLock = settings.getBoolean("welcome", false);
         boot = settings.getBoolean("boot", false);
-        shakewake = settings.getBoolean("ShakeWakeup", false);
+        //shakewake = settings.getBoolean("ShakeWakeup", false);
     }
     
     /*start and stop methods rely on pref and are only used by toggle button*/
