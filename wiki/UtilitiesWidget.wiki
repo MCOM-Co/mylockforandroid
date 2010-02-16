@@ -23,3 +23,4 @@ This idea is first going to be implemented by coding the functionality into a ut
 First iteration will incorporate the clock, battery status, & buttons that can control music. 
 Next priority after that will be to update with the brightness & sound toggles.
 
+I've got the idea that long press will control the toggles. Music will be one button when nothing is playing that you long press to start it and show the full controls. Brightness and sound mode also long press to do the switch/toggling
