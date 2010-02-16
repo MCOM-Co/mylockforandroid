@@ -35,8 +35,9 @@ public class CustomLockService extends MediatorService {
 	public boolean PendingLock = false;
 	//Flagged true upon sleep, remains true until StartLock sends first callback indicating Create success.
 	
-	public boolean Lockaftercall = false;
-	//just a flag we set when calls wake the device.
+	public boolean HandlingCallEnd = false;
+	//the task will intercept if lockscreen comes back at the end of call
+	public int count = 4;//only try for 2 seconds at end of call, then assume it's not locked
 	
 	public boolean idle = false;
 	//when the idle alarm intent comes in we set this true to properly start closing down
@@ -185,15 +186,7 @@ public class CustomLockService extends MediatorService {
     			android.provider.Settings.System.LOCK_PATTERN_ENABLED, 0); 
 		}
 		
-		/*when we got started at boot we need to exit the initial lockscreen*/
-		//not critical, this an end user experience improver. disable for now
-	    		/*
-				ManageKeyguard.initialize(getApplicationContext());
-	    		
-	    		ManageKeyguard.disableKeyguard(getApplicationContext());
-	    		serviceHandler.postDelayed(myTask, 50L);//unlock will be set by this callback
-	    		*/
-		
+				
 		serviceHandler = new Handler();
 		ManageWakeLock.acquirePartial(getApplicationContext());
 		//if not always holding partial we would only acquire at Lock activity exit callback
@@ -225,9 +218,17 @@ public class CustomLockService extends MediatorService {
     	public void run() {
     		Context mCon = getApplicationContext();
     		Log.v("startLock task","executing, PendingLock is " + PendingLock);
-    		if (!PendingLock) return;//ensures break the attempt cycle if user has aborted the lock
+    		if (!PendingLock && !HandlingCallEnd) return;//ensures break the attempt cycle if user has aborted the lock
     		//user can abort Power key lock by another power key, or timeout sleep by any key wakeup
     		
+    		if (HandlingCallEnd) {
+    			if (count == 0) {
+        			count = 4;
+        			HandlingCallEnd = false;
+        			return;
+        		} 
+    			else count--;
+    		}
     		//see if any keyguard exists yet
     			ManageKeyguard.initialize(mCon);
     			if (ManageKeyguard.inKeyguardRestrictedInputMode()) {
@@ -356,26 +357,13 @@ public class CustomLockService extends MediatorService {
                }});    	
     }
 	
-	public void StartShowWhenLocked(Context context) {
-    	//FIXME the activity happens but screen goes off immediately when it exits except in USB debug environment
-    	Class w = ShowWhenLockedActivity.class;
-    	
-    		    	      
-		Intent locked = new Intent(context, w);
-		locked.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK//For some reason it requires this even though we're already an activity
-				| Intent.FLAG_ACTIVITY_NO_USER_ACTION//Just helps avoid conflicting with other important notifications
-		        | Intent.FLAG_ACTIVITY_NO_HISTORY//Ensures the activity WILL be finished after the one time use
-		        | Intent.FLAG_ACTIVITY_NO_ANIMATION);
-		        
-		context.startActivity(locked);
-    	
-    }
+//============Phone call case handling
 	
+	//Because we have so many cases where the phone reloads the lockscreen even while screen is awake at call end
+	//we will launch the task at call end the same as we would at sleep
+	//this way, if it IS a sleep, we will catch the KG when it happens
+	//even if it isn't we react to KG by starting up lock activity
 	
-//Still not sure how these cases vary, I believe it is only whether the call came while device was in full sleep.
-	//1- call ends while screen was off. user turns on screen to find the regular lockscreen
-	//2- call ends while screen is on, user sees the lockscreen. if sleep, next wakeup still has lockscreen
-	//3- incoming call is missed or ignored results in seeing the lockscreen also
 	//TODO use 2.1 pm check for screen on to make these more effective
 	
 	//TODO call start and end may need to attempt to release/gain wakelock while in stayawake mode.
@@ -383,42 +371,32 @@ public class CustomLockService extends MediatorService {
 	
 	@Override
 	public void onCallStart() {
-		//Account for the case that a call starts while screen is asleep
 		
-		if (!shouldLock) {
-			//when should was false and a call started, it means the call woke device
-			Lockaftercall = true;
-		}
-		else shouldLock = false;
-		//flag so that lockscreen won't try to happen if screen off goes off in the middle of a call
-		//it doesn't seem like we even get the broadcasts- phone app is forcing the screen component off
+		shouldLock = false;
+		
 	}
 	
 	@Override
 	public void onCallEnd() {
 		//Account for the case that a call ends while screen is asleep
 		
-		if (Lockaftercall) {
-			Lockaftercall = false;
-			StartLock(getApplicationContext());
-		}
+		
 		//the phone app is actually keeping the CPU state wakelocked
 		//then forcing screen dark like our regular lockscreen would.
-		else shouldLock = true;//awake and unlocked state => ensure next screen off does StartLock
 		
-		//the only case we still can't detect here pre-2.1 is if the screen was off at call end
-		//if so, not even a check for keyguard mode via the manage keyguard class will return correctly due to the 5 sec grace period
-		//however it is possible the grace period doesn't happen in that scenario
+		shouldLock = true;
+		//HandlingCallEnd = true;
+		//serviceHandler.postDelayed(myTask, 500L);
+		//it doesn't like this, getting exception, maybe we can't launch this thread from the method being called by the phone state listener
+		//we will have to do an intent that gets received instead
 	}
 	
 	@Override
 	public void onCallMiss() {
-		if (!IsAwake()) {
-			//We actually need to start lock since screen is off and lockscreened
-			StartLock(getApplicationContext());//lock again since user didn't react to this wake
-		}
-		else shouldLock = true;
+		shouldLock = true;
 	}
+	
+//============================
 	
 	void doFGstart(boolean wakepref) {
 		//putting ongoing notif together for start foreground

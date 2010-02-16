@@ -24,6 +24,7 @@ public class BootHandler extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		SharedPreferences settings = getSharedPreferences("myLock", 0);
 		boolean boot = settings.getBoolean("boot", false);//retrieve user's start at boot pref
+		boolean secure = settings.getBoolean("secure", false);
 		
 		
 		
@@ -39,9 +40,10 @@ public class BootHandler extends Service {
 		//if (!custom) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.NoLockService");
 		//else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
 		
-		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UserPresentService");
+		if (!secure) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UserPresentService");
 		//the service will wait for user to complete the first lockscreen - this protects phone from a restart security circumvention
-		
+		else i.setClassName("i4nc4mp.myLock","i4nc4mp.myLock.SecureLockService");
+			
 		startService(i);
 		
 		stopSelf();

@@ -65,10 +65,12 @@ public class UserPresentService extends Service {
 	    	//send myLock start intent
 	    	Intent i = new Intent();
 	    	
-	    	//here we need to check the mode, actually
+	    	//this only is used with the non-secure modes when security is restored
+	    	//boothandler should start the secure mode immediately at boot
 	    	
-			//i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
-	    	i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.SecureLockService");
+	    	
+			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
+	    	//i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.SecureLockService");
 			startService(i);
 	    	//call stopSelf
 			stopSelf();

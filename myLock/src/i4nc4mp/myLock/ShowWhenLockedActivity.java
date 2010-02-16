@@ -4,19 +4,13 @@ package i4nc4mp.myLock;
 import java.util.GregorianCalendar;
 
 import android.app.Activity;
-
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-
-
+import android.media.AudioManager;
 import android.os.Bundle;
-
-
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-
-
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
@@ -45,6 +39,9 @@ public class ShowWhenLockedActivity extends Activity {
     public TextView curmin;
     
     public TextView batt;
+    
+    
+    //private AudioManager am = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
 	
         @Override
     protected void onCreate(Bundle icicle) {
@@ -82,8 +79,15 @@ public class ShowWhenLockedActivity extends Activity {
        mplayIcon.setOnClickListener(new View.OnClickListener() {
            public void onClick(View v) {
             Intent intent;
-            intent = new Intent("com.android.music.musicservicecommand.togglepause");
-            getApplicationContext().sendBroadcast(intent);
+            //if (am.isMusicActive()) {
+            	intent = new Intent("com.android.music.musicservicecommand.togglepause");
+                getApplicationContext().sendBroadcast(intent);
+            //}
+            /*else {
+            	intent = new Intent();
+            	intent.setClassName("com.android.music","com.android.music.MediaPlaybackService");
+            	startService(intent);
+            }*/
             /*if (!am.isMusicActive()) {
                 mpauseIcon.setVisibility(View.VISIBLE);
                 mplayIcon.setVisibility(View.GONE);
@@ -168,13 +172,5 @@ public class ShowWhenLockedActivity extends Activity {
     public void onResume() {
     	super.onResume();
     	updateClock();
-    }
-
-    
-    @Override
-    public void onDestroy() {
-        super.onDestroy();  
-        	//serviceHandler.removeCallbacks(myTask);
-        	//serviceHandler = null;
     }
 }
