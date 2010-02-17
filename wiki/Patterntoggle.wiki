@@ -33,9 +33,9 @@ if (patternsetting == 1) {
 }}}
 
 = Levels of security needs =
-  1. no security, any key full unlock
-  2. minimal to moderate- want some or all keys to wake up a lockscreen but also some actions to complete immediate unlock
-  3. full guarding - want only certain actions to cause any wakeup and want a safety check like slide to unlock
-  4. full lockdown - want to retain pattern security or alternative pin code security at all times in conjunction with an enhanced lockscreen.
+  * no security, any key full unlock
+  * minimal to moderate- want some or all keys to wake up a lockscreen but also some actions to complete immediate unlock
+  * full guarding - want only certain actions to cause any wakeup and want a safety check like slide to unlock
+  * full lockdown - want to retain pattern security or alternative pin code security at all times in conjunction with an enhanced lockscreen.
 
 Idle timeout security - with any lesser security method allow a time period (or locale preference) where the most secure mode starts itself.
