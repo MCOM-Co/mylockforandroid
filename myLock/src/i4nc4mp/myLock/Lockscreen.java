@@ -309,6 +309,8 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
 	
 	finishing = true;
 	idle = true;
+	
+	Log.v("exit intent received","calling finish");
 	 //PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
 	  	//myPM.userActivity(SystemClock.uptimeMillis(), true);
 	  	//cause a quiet wake in the short timeout, so that when it ends the system will restore keyguard
@@ -471,10 +473,9 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
         //serviceHandler.postDelayed(myTask, 5000L);
         //doesn't seem necessary right now
         //the only benefit to doing this is to avoid user accidental recovery of lockscreen window by back key (history stack)
+        
+        //also, this could eliminate the recovery of the screen after a received-from-sleep call is over
         CallbackMediator();
-
-       //FIXME looks like we need to still wait a short time, then destroy the activity
-       //otherwise it is possible for user to get back in to it in an usable state by navigating in via back key presses
     }
     
     @Override

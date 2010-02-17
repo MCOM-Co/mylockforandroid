@@ -200,8 +200,12 @@ public class CustomLockService extends MediatorService {
 		@Override
 	    public void onReceive(Context context, Intent intent) {
 		if (!intent.getAction().equals("i4nc4mp.myLock.intent.action.IDLE_TIMEOUT")) return;
+		//we don't respond to this if in call because that means we sent it ourselves to kill the lockactivity.
+		//also provides a safety check since the alarm might not be cancelled if a call starts
+		//we don't want to shut ourselves down if user answered a call.
+		if (!receivingcall && !placingcall) {
+			idle = true;
 		
-		idle = true;
 		PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
 	  	myPM.userActivity(SystemClock.uptimeMillis(), true);
 	  	
@@ -212,23 +216,17 @@ public class CustomLockService extends MediatorService {
 	  	
 	  	//the idle flag will cause proper handling on receipt of the exit callback from lockscreen
 	  	//we basically instant unlock as if user requested, but then force KG back on.
+		}
 	}};
 	
 	class Task implements Runnable {
     	public void run() {
     		Context mCon = getApplicationContext();
     		Log.v("startLock task","executing, PendingLock is " + PendingLock);
-    		if (!PendingLock && !HandlingCallEnd) return;//ensures break the attempt cycle if user has aborted the lock
+    		if (!PendingLock) return;//ensures break the attempt cycle if user has aborted the lock
     		//user can abort Power key lock by another power key, or timeout sleep by any key wakeup
     		
-    		if (HandlingCallEnd) {
-    			if (count == 0) {
-        			count = 4;
-        			HandlingCallEnd = false;
-        			return;
-        		} 
-    			else count--;
-    		}
+    		
     		//see if any keyguard exists yet
     			ManageKeyguard.initialize(mCon);
     			if (ManageKeyguard.inKeyguardRestrictedInputMode()) {
@@ -359,13 +357,11 @@ public class CustomLockService extends MediatorService {
 	
 //============Phone call case handling
 	
-	//Because we have so many cases where the phone reloads the lockscreen even while screen is awake at call end
-	//we will launch the task at call end the same as we would at sleep
-	//this way, if it IS a sleep, we will catch the KG when it happens
-	//even if it isn't we react to KG by starting up lock activity
+	//we have many cases where the phone reloads the lockscreen even while screen is awake at call end
+	//my testing shows it actually comes back after any timeout sleep plus 5 sec grace period
+	//then phone is doing a KM disable command at re-wake. and restoring at call end
 	
-	//TODO use 2.1 pm check for screen on to make these more effective
-	
+
 	//TODO call start and end may need to attempt to release/gain wakelock while in stayawake mode.
 	//might not matter so i will add it if i find unexpected behavior for calls
 	
@@ -373,27 +369,67 @@ public class CustomLockService extends MediatorService {
 	public void onCallStart() {
 		
 		shouldLock = false;
+		//send the idle exit intent to the lock activity
+		//this way we don't exit it till call is answered, allowing it to be restored if call was ignored or missed
+		
+		Intent intent = new Intent("i4nc4mp.myLock.intent.action.IDLE_TIMEOUT");
+		getApplicationContext().sendBroadcast(intent);
 		
 	}
 	
 	@Override
 	public void onCallEnd() {
-		//Account for the case that a call ends while screen is asleep
+		//TODO 2.1 lets us check whether the screen is on
 		
+		//all timeout sleep causes KG to visibly restore after the 5 sec grace period
+		//the phone appears to be doing a KM disable to pause it should user wake up again, and then re-enables at call end
 		
-		//the phone app is actually keeping the CPU state wakelocked
-		//then forcing screen dark like our regular lockscreen would.
+		//if call ends while asleep and not in the KG-restored mode (watching for prox wake)
+		//then KG is still restored, and we can't catch it due to timing
 		
-		shouldLock = true;
-		//HandlingCallEnd = true;
-		//serviceHandler.postDelayed(myTask, 500L);
-		//it doesn't like this, getting exception, maybe we can't launch this thread from the method being called by the phone state listener
-		//we will have to do an intent that gets received instead
+		//therefore, all calls ending while screen is off result in restart lockactivity
+		//if screen is awake we check for KG, exit if needed, and reset shouldLock to true
+		
+		Context mCon = getApplicationContext();
+		
+		/*ManageKeyguard.initialize(mCon);
+		 
+		if (ManageKeyguard.inKeyguardRestrictedInputMode()) {
+			Log.v("call end","lockscreen was restored due to screen timeout during the call, trying to exit");
+			if (IsAwake()) {
+				shouldLock = true;
+				DoExit(mCon);
+			}
+			else {
+				PendingLock = true;
+				StartLock(mCon);
+			}
+		}
+		else if(IsAwake()) shouldLock = true;
+		else {
+			PendingLock = true;
+			StartLock(mCon);
+		}*/
+		
+		if (IsAwake()) {
+			Log.v("call end, screen awake","checking if we need to exit KG");
+			shouldLock = true;
+			ManageKeyguard.initialize(mCon);
+			if (ManageKeyguard.inKeyguardRestrictedInputMode()) DoExit(mCon);
+		}
+		else {
+			Log.v("call end, screen asleep","restarting lock activity.");
+			PendingLock = true;
+			StartLock(mCon);
+		}
 	}
 	
 	@Override
 	public void onCallMiss() {
-		shouldLock = true;
+		//implemented finish intent sent to lockscreen when call is actually answered.
+		//here, the lockscreen will be back on only able to be exited by home key (since it will not be in screenwake state)
+		//for now i am not going to change this
+		//shouldLock = true;
 	}
 	
 //============================

@@ -234,6 +234,11 @@ public class SettingsActivity extends Activity {
     		startService(i);
     		//service handles itself, closing if start is called while it is active
     	}
+    
+    @Override
+    public void onBackPressed() {
+    	finish();
+    }
 
 protected void onDestroy() {
 	  super.onDestroy();
