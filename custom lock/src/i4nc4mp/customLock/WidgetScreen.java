@@ -9,15 +9,18 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.RelativeLayout;
 
 
-public class Lockscreen extends Activity {
+public class WidgetScreen extends Activity {
 //for testing we have set this up as a Launcher/Main icon
 //for implementation we will make it subclass LockActivity
 	
@@ -36,14 +39,26 @@ static final int APPWIDGET_HOST_ID = 2037;
 private static final int REQUEST_CREATE_APPWIDGET = 5;
 private static final int REQUEST_PICK_APPWIDGET = 9;
 
-private AppWidgetHostView widgetview;
+private AppWidgetHostView widgets[] = new AppWidgetHostView[16];
+private int widgCount = 0;
+//up to 16 widgets could be made, we have to have our reference be 16 items long
+//we also need to know how many the actual user has added so we can reference them in the array
+
+
+//the mediator service needs to actually maintain the created widget references since the activity
+//is destroyed and recreated. this way they don't need to be spawned every time
+//prefs can store which widgets have been added so they can be re-done at first lock
+
 
 @Override
 protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    //next two are copied from LockActivity
-    //TODO comment out when subclassing from it
+
     requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+    
+    //widgets = (FrameLayout)findViewById(R.id.widgets); 
+
+  
     updateLayout();
     
     //mInflater = getLayoutInflater();
@@ -60,17 +75,16 @@ private void updateLayout() {
     LayoutInflater inflater = LayoutInflater.from(this);
 
     setContentView(inflateView(inflater));
-    //if (mInflater != null) mInflater = inflater;
 }
 
 //override is for when we subclass LockActivity for purpose pass the blank slate layout
 //@Override
 protected View inflateView(LayoutInflater inflater) {
-    if(widgetview==null) return inflater.inflate(R.layout.mylockscreen, null);
-    else return inflater.inflate(R.layout.mylockscreen, widgetview);
-    //tries to pass the widget host view
-    //what this will do once implemented is pass the view that is parent to all widget children
+	
+  
+	return inflater.inflate(R.layout.mylockscreen, null);
 }
+
 
 public boolean onCreateOptionsMenu(Menu menu) {
     menu.add(0, 1, 0, "Add Widget");
@@ -94,7 +108,7 @@ public boolean onOptionsItemSelected(MenuItem item) {
 //they insert it into the list when pick intent is called, and if you don't insert a custom item 
 //you get a null pointer exception when trying to start 
 protected void doWidgetPick() {
-	int appWidgetId = Lockscreen.this.mAppWidgetHost.allocateAppWidgetId();
+	int appWidgetId = WidgetScreen.this.mAppWidgetHost.allocateAppWidgetId();
 
     Intent pickIntent = new Intent(AppWidgetManager.ACTION_APPWIDGET_PICK);
     pickIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
@@ -163,6 +177,7 @@ private void completeAddAppWidget(Intent data){
     int appWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, -1);
 
     AppWidgetProviderInfo appWidgetInfo = mAppWidgetManager.getAppWidgetInfo(appWidgetId);
+    
 
     /* Launcher would calculate the grid spans needed to fit this widget
      * It would also do a check operation to abort if the cell user picked wasn't acceptable
@@ -182,22 +197,43 @@ it adds the spawned object to the array list for widgetinfos
 the array list is a member of LauncherInfo helper object
 the model seems to retain the references to everything that's been placed on the Launcher
 */
+    //we can get a reference to our main view here, and then add a relative layout to it.
+    //I can probably directly reference the relative layout I want and then add widgets filling in from the top
+    //just need to figure out how to determine if the widget being selected is too long to fit on existing row
+    //to decide whether to place it on right of last widget or on the bottom
+    RelativeLayout parent= (RelativeLayout) findViewById(R.id.mylockscreen); 
 
+    AppWidgetHostView newWidget = mAppWidgetHost.createView(this, appWidgetId, appWidgetInfo);
 
-        widgetview = mAppWidgetHost.createView(this, appWidgetId, appWidgetInfo);
+    //we need to store this widget in an array. the views can be recreated but we need to have a persistent ref    
+
+    widgets[widgCount] = attachWidget(newWidget);
+    parent.addView(widgets[widgCount]); 
+    widgCount++;
+    
+    
+    
         //launcher is doing something to pass this view to their the workspace or the celllayout
         //I have to learn how to maintain a framelayout so i can attach the widgets to it
         //it seems in the Launcher a workspace contains all the screens and the CellLayout is one screen
         
-        updateLayout();
-        //the inflate method will see if widgetview is null - when not null it passes the widgetview as the parent.
-        //that operation creates the widget you chose in the center of the screen
-        //and the widget works.
-        
-        //to get it working the inflate method would pass a parent that we interact with to place each widgets
         //so every single widget that gets created is one instance of the AppWidgetHostView.
         //the viewgroup we would have to maintain holds all the appwidgethostviews/
 }
+
+private AppWidgetHostView attachWidget(AppWidgetHostView widget){ 
+         
+    RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams 
+    (LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT); 
+    params.addRule(RelativeLayout.CENTER_HORIZONTAL);
+    //params.addRule(RelativeLayout.CENTER_VERTICAL); 
+     
+    widget.setLayoutParams(params); 
+    widget.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT,LayoutParams.WRAP_CONTENT)); 
+        
+     
+    return widget; 
+    } 
 
 public AppWidgetHost getAppWidgetHost() {
     return mAppWidgetHost;

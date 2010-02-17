@@ -10,7 +10,7 @@
                 android:launchMode="singleTask"
                 android:taskAffinity=""
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>
-<activity android:name="Lockscreen"
+<activity android:name="WidgetScreen"
                 android:excludeFromRecents="true"
                 android:theme="@android:style/Theme.Wallpaper"
                 android:launchMode="singleTask"
@@ -37,6 +37,6 @@
     android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission
     android:name="android.permission.DISABLE_KEYGUARD" />
-    <uses-sdk android:minSdkVersion="6" />
+    <uses-sdk android:minSdkVersion="5" />
 
 </manifest> 
