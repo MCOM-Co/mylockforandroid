@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 <string name="welcome">myLock Settings</string>
-<string name="app_name">myLock</string>
+<string name="app_name">myLock beta</string>
 <string name="toggleButton">Toggle myLock</string>
 <string name="fgBox">Persistent mode- Protects myLock from being killed by system, and provides settings shortcut notification</string>
 <string name="wakeBox">Keep screen and keypad backlight on</string>
