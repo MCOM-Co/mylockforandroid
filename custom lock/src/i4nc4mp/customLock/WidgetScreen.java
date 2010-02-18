@@ -9,8 +9,9 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -40,23 +41,28 @@ private static final int REQUEST_CREATE_APPWIDGET = 5;
 private static final int REQUEST_PICK_APPWIDGET = 9;
 
 private AppWidgetHostView widgets[] = new AppWidgetHostView[16];
+//the views will be repopulated at oncreate
+private int[] widgetId = new int[16];
+//the id is how we get back to the persistent state of what widget was assigned by the user
+//the id points to the object on the appwidgetmanager which remembers the user picked widget
 private int widgCount = 0;
-//up to 16 widgets could be made, we have to have our reference be 16 items long
 //we also need to know how many the actual user has added so we can reference them in the array
+
+//the id array and the value of widgCount will be persisted in the state bundle.
+//when re-created, another method which does the completeAdd for each widgetId we have makes all the views again.
 
 
 //the mediator service needs to actually maintain the created widget references since the activity
 //is destroyed and recreated. this way they don't need to be spawned every time
-//prefs can store which widgets have been added so they can be re-done at first lock
+
 
 
 @Override
 protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
     
-    //widgets = (FrameLayout)findViewById(R.id.widgets); 
+    requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
 
   
     updateLayout();
@@ -67,6 +73,26 @@ protected void onCreate(Bundle savedInstanceState) {
 
     mAppWidgetHost = new AppWidgetHost(this, APPWIDGET_HOST_ID);
     mAppWidgetHost.startListening();
+    
+    if (savedInstanceState == null || savedInstanceState.isEmpty()) {
+    	Log.v("no state","first start, no views to repopulate");
+    	return;
+    }
+    
+    //obtain how many widgetIds existed in the saved state
+    int idCount = savedInstanceState.getInt("idcount");
+            
+    Log.v("repopulate","Need to restore this many widget views: " + idCount);
+    
+  //Set our own widgetId array so we have the Ids
+    widgetId = savedInstanceState.getIntArray("idlist");
+    
+    //do a RepopulateWidgetView for each one we have
+    for (int i = 0; i != idCount; i++) {
+    	RepopulateWidgetView(widgetId[i]);
+    }
+    //once that is done, our own widgCount will equal the IdCount we saved
+    //so it is ready for user to add a new one, also
 
 }
 
@@ -83,6 +109,33 @@ protected View inflateView(LayoutInflater inflater) {
 	
   
 	return inflater.inflate(R.layout.mylockscreen, null);
+}
+
+@Override
+protected void onSaveInstanceState (Bundle outState) {
+//this should work. the problem is i need to test it
+	//when i answer a call i choose to kill the activity
+	//how i cause this state data to be persisted?
+	
+	
+	//I believe I will just have to store all of this to prefs file instead
+	
+	
+	super.onSaveInstanceState(outState);
+
+	//put count int
+	outState.putInt("idcount", widgCount);
+	//put Ids array
+	outState.putIntArray("idlist", widgetId);
+	
+	//these are used to literally make new views for all the widgets.
+	//the system widget manager actually keeps these IDs persistent unless we tell it to delete one. 
+}
+
+@Override
+public void onBackPressed() {
+	moveTaskToBack(true);
+	//this makes sure we don't get killed unless system forces it
 }
 
 
@@ -216,8 +269,10 @@ the model seems to retain the references to everything that's been placed on the
     parent.addView(widgets[widgCount]); 
     
     
-    Log.v("widget was added","the ID of the widget view is " + widgets[widgCount].getId());
+    Log.v("widget was added","the manager ID of the widget is " + appWidgetId);
     
+    
+    widgetId[widgCount] = appWidgetId;
     widgCount++;
     
     
@@ -244,7 +299,25 @@ private AppWidgetHostView attachWidget(AppWidgetHostView widget, int w, int h){
     
     widget.setId(100+widgCount);
     return widget; 
-    } 
+    }
+
+private void RepopulateWidgetView(int Id) {
+	
+	AppWidgetProviderInfo appWidgetInfo = mAppWidgetManager.getAppWidgetInfo(Id);
+    
+
+    
+    int width = appWidgetInfo.minWidth;
+    int height = appWidgetInfo.minHeight;
+    
+    RelativeLayout parent= (RelativeLayout) findViewById(R.id.mylockscreen); 
+
+    widgets[widgCount] = attachWidget(mAppWidgetHost.createView(this, Id, appWidgetInfo), width, height);
+    
+    
+    parent.addView(widgets[widgCount]);
+    widgCount++;
+}
 
 public AppWidgetHost getAppWidgetHost() {
     return mAppWidgetHost;
@@ -298,4 +371,5 @@ public void onDestroy() {
         Log.w("lockscreen destroy", "problem while stopping AppWidgetHost during Lockscreen destruction", ex);
     }
 }
+
 }

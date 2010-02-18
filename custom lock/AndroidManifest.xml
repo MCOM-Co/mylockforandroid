@@ -11,6 +11,7 @@
                 android:taskAffinity=""
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>
 <activity android:name="WidgetScreen"
+				android:alwaysRetainTaskState="true"
                 android:excludeFromRecents="true"
                 android:theme="@android:style/Theme.Wallpaper"
                 android:launchMode="singleTask"
