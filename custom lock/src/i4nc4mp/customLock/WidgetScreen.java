@@ -186,8 +186,8 @@ private void completeAddAppWidget(Intent data){
     
     //What we'll do is log the info about the widget for help in letting user reposition it
     
-    int widgetwidth = appWidgetInfo.minWidth;
-    int widgetheight = appWidgetInfo.minHeight;
+    int width = appWidgetInfo.minWidth;
+    int height = appWidgetInfo.minHeight;
     
 /*
 next we need to make a record of where we are adding this widget
@@ -202,36 +202,47 @@ the model seems to retain the references to everything that's been placed on the
     //just need to figure out how to determine if the widget being selected is too long to fit on existing row
     //to decide whether to place it on right of last widget or on the bottom
     RelativeLayout parent= (RelativeLayout) findViewById(R.id.mylockscreen); 
+    
+    //Log.v("getting parent ref","the ID of the parent is " + parent.getId());
 
-    AppWidgetHostView newWidget = mAppWidgetHost.createView(this, appWidgetId, appWidgetInfo);
+    //AppWidgetHostView newWidget = mAppWidgetHost.createView(this, appWidgetId, appWidgetInfo);
 
-    //we need to store this widget in an array. the views can be recreated but we need to have a persistent ref    
+    //we need to store this widget in an array. the views can be recreated but we need to have a persistent ref
+    //FIXME currently we aren't persistent, need to learn how to make activity save persistent state
 
-    widgets[widgCount] = attachWidget(newWidget);
+    widgets[widgCount] = attachWidget(mAppWidgetHost.createView(this, appWidgetId, appWidgetInfo), width, height);
+    
+    
     parent.addView(widgets[widgCount]); 
+    
+    
+    Log.v("widget was added","the ID of the widget view is " + widgets[widgCount].getId());
+    
     widgCount++;
     
     
     
+    
+    
         //launcher is doing something to pass this view to their the workspace or the celllayout
-        //I have to learn how to maintain a framelayout so i can attach the widgets to it
-        //it seems in the Launcher a workspace contains all the screens and the CellLayout is one screen
         
         //so every single widget that gets created is one instance of the AppWidgetHostView.
         //the viewgroup we would have to maintain holds all the appwidgethostviews/
 }
 
-private AppWidgetHostView attachWidget(AppWidgetHostView widget){ 
+
+//the created new widget is passed raw with the data about its size, then we figure out how to position it
+private AppWidgetHostView attachWidget(AppWidgetHostView widget, int w, int h){ 
          
     RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams 
     (LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT); 
-    params.addRule(RelativeLayout.CENTER_HORIZONTAL);
-    //params.addRule(RelativeLayout.CENTER_VERTICAL); 
+    if (widgCount == 0) params.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+    //first widget goes at the top of the relative view widget area
+    else params.addRule(RelativeLayout.RIGHT_OF, widgets[widgCount-1].getId());
      
     widget.setLayoutParams(params); 
-    widget.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT,LayoutParams.WRAP_CONTENT)); 
-        
-     
+    
+    widget.setId(100+widgCount);
     return widget; 
     } 
 
