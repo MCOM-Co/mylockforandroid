@@ -1,4 +1,4 @@
-#summary Known solutions for problems we can't fix in the code
+#summary Known solutions for problems we can't fix in the code - these are almost entirely applicable only to the first market beta and release alpha 2c and earlier.
 #labels Featured
 
 = I can't install it, getting "error parsing package" =
