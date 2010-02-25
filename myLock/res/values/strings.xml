@@ -7,7 +7,7 @@
 <string name="wakeBox">Keep screen and keypad backlight on</string>
 <string name="shakeBox">Shake will unlock from sleep (may impact battery life)</string>
 <string name="welcomeBox">Use widget lockscreen</string>
-<string name="secureBox">Secure mode- Use the utility lockscreen but still require pattern to unlock.</string>
+<string name="secureBox">Secure mode- Use with pattern security to see the utility lockscreen first.</string>
 <string name="bootBox">Start myLock when phone is first unlocked after boot</string>
 
 <string name="PwrTitle">Power Key</string>
