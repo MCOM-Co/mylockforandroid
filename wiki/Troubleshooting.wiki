@@ -1,9 +1,11 @@
 #summary Known solutions for problems we can't fix in the code - these are almost entirely applicable only to the first market beta and release alpha 2c and earlier.
 #labels Featured
 
-= I can't install it, getting "error parsing package" =
+= Why isn't there an option to get rid of the status icon =
+There is. We've tried, but there is no way to work around having the icon in place. You might experience a sudden loss of functionality and have to go back into settings & re-toggle the app if you operate without the persistent icon. In my testing this seems quite rare but every user's setup will be different depending on everything they regularly use on the device. For more about this, check out the official android development post that explains- http://android-developers.blogspot.com/2010/02/service-api-changes-starting-with.html
 
-Resolved on test builds of alpha 3 so ongoing releases will not experience it. Sorry!
+= Why do the volume or camera buttons wake it back up sometimes? =
+This is one of the rules of the lockscreen. When a timeout sleep occurs you have a short grace period in which the lockscreen isn't yet engaged, thus allowing any action at all to awaken it again quickly. That means any button, as well as even sliding the slider closed which normally doesn't trigger a wakeup.
 
 = How do I use the app and still get handcent popups? =
 In handcent go to settings > poup setting > enable 'Screen on for Popup', disable 'Show on locked'. This will ensure myLock still works and the two don't cause havoc as they both attempt to react to wakeup. This is only applicable to the market v1 (alpha 2c download here on the project page). We have fixed handcent interaction for the a3 revision.
@@ -20,13 +22,10 @@ This appears to be something that happens regardless of myLock. An example is if
 = Sometimes I see the  lockscreen flash for an instant, or even linger for a moment after the phone wakes up=
 This happens in alpha 2b and beyond, because we have to tell the main android system that the lockscreen has been dismissed. That fails unless the screen has been awakened and a temporary lockscreen bypass has been initiated. Then we have to create a short delay (50 milliseconds) that the OS expects because the scenario they designed lockscreen bypassing for is where your app ends up getting input from the user that needs to launch something else, at which point it goes back and checks if a password lock was set. For whatever reason, when it does that the flash occurs when secure mode isn't on. If the CPU is loaded it can be up longer. That happens even if you are using the regular unlock of the lockscreen at load.
 
-= Why do the volume or camera buttons wake it back up sometimes? =
-This is one of the rules of the lockscreen. When a timeout sleep occurs you have a short grace period in which the lockscreen isn't yet engaged, thus allowing any action at all to awaken it again quickly. That means any button, as well as even sliding the slider closed which normally doesn't trigger a wakeup.
-
 = It goes to sleep too fast when I wake it up and don't immediately take further action =
 This currently only impacts lite mode (activated with the widget button). This is because the lockscreen is only being paused. It is not actually cleared unless home key is used. Therefore, it follows the rule of the lockscreen that times out in 5 seconds unless interaction triggers the regular timeout delay. Lite mode will likely become retired once the beta is released because we use a custom lockscreen to get more consistent performance.
 
-= Known apps that conflict with stable myLock operation =
+= Known apps that conflict with stable myLock operation (alpha 2c/market beta 1 & earlier) =
   * Not confirmed but it is likely sms popup has an issue because it relies on pre-2.0 lockscreen and wakeup interaction. I recommend using executive assistant and putting the widget on your homescreen. The sms tab is a great replacement for the popup feature.
   * Screebl - seems to work by reading the screen on and off events myLock also relies on but as far as I know it doesn't use lockscreen disabling. Users have reported it doesn't work correctly.
   * AutoLock - can't function to restore pattern unlock mode due to interference from our lockscreen disable commands. Auto pattern lockdown is planned for a future release.
