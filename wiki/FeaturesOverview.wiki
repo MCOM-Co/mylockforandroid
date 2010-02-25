@@ -1,7 +1,7 @@
-#summary Quick breakdown of features in the current release builds
+#summary Quick breakdown of features in the current release builds - please go to the market to download the latest featured releases.
 #labels Featured
 
-= myLock complete alpha 2c =
+= myLock complete alpha 2c / market beta version 1=
 http://mylockforandroid.googlecode.com/files/myLock_alpha2c.apk
 
 
@@ -22,9 +22,7 @@ http://mylockforandroid.googlecode.com/files/myLock-lite_v1a.apk
 
 http://mylockforandroid.googlecode.com/files/home_widgetbutton.jpg
 
-
-
-== Alpha 3 test build ==
+== Alpha 3 - 0204 test build ==
   * Toggles for Start at boot, Stay awake, shake wakeup, & Persistent Mode.
   * Widget lockscreen only has notification panel implemented. Current revision has no wakeup of this implemented. It will only unlock on slide open or power key.
   * Automatic pattern mode toggle occurs like in the Lite v1a.
