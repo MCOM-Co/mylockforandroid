@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?> 
 <RelativeLayout
 android:id="@+id/mylockscreen"
 android:layout_width="fill_parent"
@@ -34,7 +34,7 @@ android:layout_height="wrap_content"
 android:text="00"
 android:textSize="120sp"
 android:layout_alignParentTop="true"
-android:layout_toRightOf="@+id/divider"
+android:layout_toRightOf="@id/divider"
 >
 </TextView>
 <TextView
