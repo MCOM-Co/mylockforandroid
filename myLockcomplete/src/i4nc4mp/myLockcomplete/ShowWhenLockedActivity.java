@@ -23,7 +23,9 @@ import android.widget.TextView;
 
 //the real point of this mode though is for users who always want that level of security in place behind their lockscreen experience.
 
-//we can use this also for guarded mode which will then complete a lockscreen exit if user unlocks it.
+//we can use this also for guarded mode
+//I believe we can simply call securely exit here, which will require pattern screen in pattern mode, but otherwise dismisses keyguard.
+//we can call finish upon kg exit success callback.
 
 public class ShowWhenLockedActivity extends Activity {
                 

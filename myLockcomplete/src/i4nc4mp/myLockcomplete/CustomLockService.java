@@ -19,7 +19,6 @@ import android.util.Log;
 public class CustomLockService extends MediatorService {
 	
 	public boolean persistent = false;
-	public boolean stayawake = false;
 	public boolean timeoutenabled = false;
 	
 	public int timeoutpref = 15;
@@ -49,8 +48,6 @@ public class CustomLockService extends MediatorService {
 	public void onDestroy() {
 		super.onDestroy();
 		
-		if (stayawake) ManageWakeLock.releaseFull();
-		
 		if (patternsetting == 1) {
 			android.provider.Settings.System.putInt(getContentResolver(), 
     			android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
@@ -70,21 +67,15 @@ public class CustomLockService extends MediatorService {
 		
 		SharedPreferences settings = getSharedPreferences("myLock", 0);
 		boolean fgpref = settings.getBoolean("FG", true);
-		boolean wake = settings.getBoolean("StayAwake", false);
+		
 /*========Settings change re-start commands that come from settings activity*/
-		if (stayawake != wake) {
-			//this start is coming from user toggle of stay awake
-			//react by getting or releasing the wakelock as this can only come while screen is on
-			if (wake) ManageWakeLock.acquireFull(getApplicationContext());
-			else ManageWakeLock.releaseFull();
-			stayawake = wake;
-		}//else is used to ensure neither setting change happened before proceeding to treat as a Lock Activity callback
-		else if (persistent != fgpref) {//user changed pref
+	
+		if (persistent != fgpref) {//user changed pref
 			if (persistent) {
 					stopForeground(true);//kills the ongoing notif
 					persistent = false;
 			}
-			else doFGstart(stayawake);//so FG mode is started again
+			else doFGstart();//so FG mode is started again
 		}
 		else {
 /*========LockActivity restart calls that happen when it finishes starting or stopping*/
@@ -139,8 +130,7 @@ public class CustomLockService extends MediatorService {
 				PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
 		    	pm.userActivity(SystemClock.uptimeMillis(), false);
 		    	
-		    	if (stayawake) ManageWakeLock.acquireFull(getApplicationContext());
-				}
+		    	}
 				else {				
 					ManageKeyguard.reenableKeyguard();
 					//funny - you will see the regular lockscreen after this call because it is restoring it from time that pattern was off
@@ -165,11 +155,11 @@ public class CustomLockService extends MediatorService {
 	public void onFirstStart() {
 		SharedPreferences settings = getSharedPreferences("myLock", 0);
 		persistent = settings.getBoolean("FG", true);
-		stayawake = settings.getBoolean("StayAwake", false);
+		
 		timeoutenabled = settings.getBoolean("timeout", false);
 		
-		if(stayawake) ManageWakeLock.acquireFull(getApplicationContext());
-		if (persistent) doFGstart(stayawake);
+		
+		if (persistent) doFGstart();
 		//else send a toast telling user what mode is starting and whether stay awake is active
 		//perhaps do that in the boot handler service
 		
@@ -299,10 +289,6 @@ public class CustomLockService extends MediatorService {
 	}
 	
 	private void StartLock(Context context) {
-
-		//now release wake lock if in stay awake mode
-		if (stayawake) ManageWakeLock.releaseFull();
-		//this is because we want the lock activity to do a 5 second timeout, that's the best handling for locked down key events
 		
 		Intent closeDialogs = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
 		        context.sendBroadcast(closeDialogs);
@@ -434,7 +420,7 @@ public class CustomLockService extends MediatorService {
 	
 //============================
 	
-	void doFGstart(boolean wakepref) {
+	void doFGstart() {
 		//putting ongoing notif together for start foreground
 		
 		//String ns = Context.NOTIFICATION_SERVICE;
@@ -443,8 +429,6 @@ public class CustomLockService extends MediatorService {
 		
 		int icon = R.drawable.icon;
 		CharSequence tickerText = "myLock is starting up";
-		
-		if (wakepref) tickerText = tickerText + " (Staying Awake)";
 		
 		long when = System.currentTimeMillis();
 

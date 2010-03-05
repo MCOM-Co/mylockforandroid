@@ -511,6 +511,7 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
     		resumedwithfocus = true;
     		//serviceHandler.postDelayed(myTask, 1000L);
     	}
+    	updateClock();
     }
     
 /* Key event bug ---- device wakes but we aren't getting the event so screen stays at 0.0 bright
@@ -635,7 +636,6 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
     	   if (up && !screenwake) {
                    waking = true;
                   	Log.v("key event","wake key");
-                updateClock();
                	wakeup();
     	   }
     	   return true;
