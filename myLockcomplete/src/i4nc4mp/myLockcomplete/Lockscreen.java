@@ -475,7 +475,8 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
         //the only benefit to doing this is to avoid user accidental recovery of lockscreen window by back key (history stack)
         
         //also, this could eliminate the recovery of the screen after a received-from-sleep call is over
-        CallbackMediator();
+        //CallbackMediator();
+        StopCallback();
     }
     
     @Override
@@ -553,7 +554,9 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
     		//this allows us to know if we actually got as far as having focus (expected but bug sometimes prevents
     		if (starting) {
     			starting = false;//set our own lifecycle reference now that we know we started and got focus properly
-    			CallbackMediator();//tell mediator it is no longer waiting for us to start up
+    			//CallbackMediator();
+    			//tell mediator it is no longer waiting for us to start up
+    			StartCallback();
     		}
     	}
     	else {    		    		   		
@@ -592,6 +595,16 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
     	i.setClassName("i4nc4mp.myLockcomplete", "i4nc4mp.myLockcomplete.CustomLockService");
     	startService(i);
         }
+    
+    public void StartCallback() {
+    	Intent i = new Intent("i4nc4mp.myLockcomplete.lifecycle.LOCKSCREEN_PRIMED");
+        getApplicationContext().sendBroadcast(i);
+    }
+    
+    public void StopCallback() {
+    	Intent i = new Intent("i4nc4mp.myLockcomplete.lifecycle.LOCKSCREEN_EXITED");
+        getApplicationContext().sendBroadcast(i);
+    }
     
     //here's where most of the magic happens
     @Override

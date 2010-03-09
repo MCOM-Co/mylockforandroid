@@ -68,6 +68,11 @@ public class CustomLockService extends MediatorService {
 		SharedPreferences settings = getSharedPreferences("myLock", 0);
 		boolean fgpref = settings.getBoolean("FG", true);
 		
+		//int newtimeout = 0;
+		
+		//FIXME - implementing implicit intent for lifecycle callbacks.
+		//we can use plain broadcast receivers like we do for the idle event.
+		
 /*========Settings change re-start commands that come from settings activity*/
 	
 		if (persistent != fgpref) {//user changed pref
@@ -77,8 +82,9 @@ public class CustomLockService extends MediatorService {
 			}
 			else doFGstart();//so FG mode is started again
 		}
-		else {
-/*========LockActivity restart calls that happen when it finishes starting or stopping*/
+		/*else {
+/*========LockActivity restart calls that happen when it finishes starting or stopping
+
 			if (PendingLock) {
 			//start success, let's toggle pending off and set timeout setting
 				PendingLock = false;
@@ -86,11 +92,19 @@ public class CustomLockService extends MediatorService {
 				
 				//brought in the timeout settings changer -- this way all types of exits will restore the correct timeout
 				try {
-		            timeoutpref = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.SCREEN_OFF_TIMEOUT);
+		            newtimeout = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.SCREEN_OFF_TIMEOUT);
 		    } catch (SettingNotFoundException e) {
 		            // TODO Auto-generated catch block
 		            e.printStackTrace();
-		    }//this setting will be restored at finish
+		    }
+		    
+		    if (newtimeout != 0) timeoutpref = newtimeout;
+		    else Log.v("lockscreen prime reaction","the system timeout is already 0, our stored pref is " + timeoutpref);
+		    //TODO - check if we have a UserTimeout pref in sharedPrefs
+		    //if so, and it is not this one, and it is not "0", (or if we don't have one) update it
+		    //this will prevent the case where we can accidentally set our own timeoutpref to 0
+		    //for now this code will stop any action if we see the setting is already 0
+		    
 		    
 		    //Next, change the setting to 0 seconds
 		    android.provider.Settings.System.putInt(getContentResolver(), 
@@ -109,6 +123,7 @@ public class CustomLockService extends MediatorService {
 		    //start again if sleeping again from that screenwake
 			}
 			else if (!shouldLock) {
+			//"i4nc4mp.myLockcomplete.lifecycle.LOCKSCREEN_EXITED"
 					//this is the actual case that we just exited lockscreen
 				shouldLock = true;
 				
@@ -144,11 +159,18 @@ public class CustomLockService extends MediatorService {
 					stopSelf();
 				}
 				}
+				
+				*
+				* commented out the restart logic to test handling by broadcast receivers
+				* 
+				* 
+				* 
+				*/
+				
 			else {
 /*========Safety start that ensures the settings activity toggle button can work, first press to start, 2nd press to stop*/
 				Log.v("toggle request","user first press of toggle after a startup at boot");
 			}		
-		}
 	}
 	
 	@Override
@@ -184,7 +206,91 @@ public class CustomLockService extends MediatorService {
 		
 		IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLockcomplete.intent.action.IDLE_TIMEOUT");
 		registerReceiver(idleExit, idleFinish);
+		
+		IntentFilter lockStart = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.LOCKSCREEN_PRIMED");
+		registerReceiver(lockStarted, lockStart);
+		
+		IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.LOCKSCREEN_EXITED");
+		registerReceiver(lockStopped, lockStop);
 	}
+	
+	BroadcastReceiver lockStarted = new BroadcastReceiver() {
+		@Override
+	    public void onReceive(Context context, Intent intent) {
+		int newtimeout = 0;
+			
+		if (!intent.getAction().equals("i4nc4mp.myLockcomplete.lifecycle.LOCKSCREEN_PRIMED")) return;
+
+		if (!PendingLock) Log.v("lock start callback","did not expect this call");
+		else PendingLock = false;
+		
+		Log.v("lock start callback","Lock Activity is primed");
+				
+			try {
+		            newtimeout = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.SCREEN_OFF_TIMEOUT);
+		    } catch (SettingNotFoundException e) {
+		            // TODO Auto-generated catch block
+		            e.printStackTrace();
+		    }
+		    
+		    if (newtimeout != 0) timeoutpref = newtimeout;
+		    else Log.v("lock start callback","the system timeout is already 0, our stored pref is " + timeoutpref);
+		    //TODO - check if we have a UserTimeout pref in sharedPrefs
+		    //if so, and it is not this one, and it is not "0", (or if we don't have one) update it
+		    //this will prevent the case where we can accidentally set our own timeoutpref to 0
+		    //for now this code will stop any action if we see the setting is already 0
+		    
+		    
+		    //Next, change the setting to 0 seconds
+		    android.provider.Settings.System.putInt(getContentResolver(), 
+		            android.provider.Settings.System.SCREEN_OFF_TIMEOUT, 0);
+		    
+		   		    
+		    if (timeoutenabled) IdleTimer.start(getApplicationContext());
+		    		    
+		    //if we don't get user unlock callback within user-set idle timeout
+		    //this alarm kills off the lock activity and this service, restores KG, & starts the user present service
+		    
+		    //TODO we're going to want to start at stop it within the activity wakeup as well
+		    //example: stop when user deliberately wakes lockscreen to use it
+		    //start again if sleeping again from that screenwake
+					
+	}};
+	
+	BroadcastReceiver lockStopped = new BroadcastReceiver() {
+		@Override
+	    public void onReceive(Context context, Intent intent) {
+		if (!intent.getAction().equals("i4nc4mp.myLockcomplete.lifecycle.LOCKSCREEN_EXITED")) return;
+
+		if (shouldLock) Log.v("lock exit callback","did not expect this call"); 
+		else shouldLock = true;
+				
+				
+		Log.v("lock exit callback","Lock Activity is finished");
+										
+			
+		if (!idle) {
+			if (timeoutenabled) IdleTimer.cancel(getApplicationContext());
+					
+			android.provider.Settings.System.putInt(getContentResolver(), android.provider.Settings.System.SCREEN_OFF_TIMEOUT, timeoutpref);
+				
+			PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
+		   	pm.userActivity(SystemClock.uptimeMillis(), false);
+		   	
+		   	}
+		else {				
+				ManageKeyguard.reenableKeyguard();
+				//funny - you will see the regular lockscreen after this call because it is restoring it from time that pattern was off
+				//if you slide that, you land at the security pattern screen ;]
+				//otherwise if it sleeps like that, next wakeup places us at pattern screen
+					
+				Intent u = new Intent();
+		    	u.setClassName("i4nc4mp.myLockcomplete", "i4nc4mp.myLockcomplete.UserPresentService");
+		    	//service that reacts to the completion of the keyguard to start this mediator again
+		    	startService(u);
+				stopSelf();
+			}			
+	}};
 	
 	BroadcastReceiver idleExit = new BroadcastReceiver() {
 		@Override
