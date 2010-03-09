@@ -13,16 +13,13 @@ We want to use the device on the first interaction, and not require a redundant 
 Yes we can. The Lite version implements this currently (started in v1a), automatically pausing pattern mode when myLock starts. It will automatically retain your pattern in the system settings and restart lockdown mode when you stop myLock. We are also going to provide an idle timeout option where myLock will disable itself and restore the pattern lock after a number of minutes left idle.
 
 = Will myLock also offer customization for backlight timers? =
-Probably. Don't confuse the lockscreen functionality with auto-sleep or auto-dim functionalities, which are governed separately. We're working on this to see how much we can do in the boundaries set for apps. Currently we offer a stay awake toggle to prevent the timeout lock.
+Probably. At the moment we have very little priority on this. The only implementation will be under the Custom mode lockscreen. This will offer advanced power save options which can stop the screen from waking up with specific buttons or reduce the timeout to a minimal 5 or 6 seconds while lockscreen is showing. Don't confuse the lockscreen functionality with auto-sleep or auto-dim functionalities, which are governed separately. 
 
 = Can you program customization for different buttons or touching the screen or touch buttons to wake it or unlock it? =
-No. The android operating system gives us two choices only. Either stick to power button, slide open, any key on slideout (the rules set by the existing lockscreen) or else allow all keys to wake it unconditionally. We can't discriminate once in the all key mode. Keyguard disabler and screenmodewidget are examples of that mode, very simple, a bit obtuse since camera and volume keys are easy to accidental press in the pocket.
-
-== Are you serious? You can't make a custom lockscreen and define any unlock method you want? I thought android was the bleeding edge of open development and applications without boundaries... wtf? ==
-Ok, I've been thinking the same thing. So I've been working on different avenues to still get it working. In my custom lockscreen pre-alpha test build I am using code introduced in 2.0 that is used in the alarm clock to pop up an alarm that skips the lockscreen. The way it is used in the alarm clock is to let the user snooze that alarm with the volume or camera keys if that is their preference. The way I'm using it is to let the user unlock/wake up the screen with keys of their preference and keep the other keys locked down so that the screen won't come on if those keys get accidentally pressed. This test build keeps volume keys and camera focus (first stage press) locked, allows camera full press to wake the screen on a 5 second timeout so you could use the notification panel, or press back to unlock, and the power key just instantly unlocks.
+We can, but it is a little bit complicated due to the functions that allow us access are new to android 2.0 and so offer very little flexibility. Two modes will be available in the complete version - Custom, which has any key/event waking up the screen, and Guarded, which only wakes up with power, slider, and keypad buttons.
 
 = So, does this mean you can also program shake unlocking? =
-Yes. The featured alpha 3 release is planned to include a simple mode where shake does the same thing as power key from sleep. That way if all you want to do is shake to get the lockscreen up then slide to unlock, you can. In other modes you'll get the instant unlock also.
+Yes. We have learned how to get shake implemented but it is also pretty complicated and won't be a big priority for support till later in development.
 
 = Can you create a custom lockdown mode requiring a password? =
 We're researching this. It is definitely possible. There is an app called wave secure which has a lockdown like this. We just aren't sure how useful a standalone lockdown would be in the long run. It wouldn't be able to stop incoming call usage.
@@ -30,14 +27,17 @@ We're researching this. It is definitely possible. There is an app called wave s
 = Can you give preferences to answer incoming call without using the touchscreen too? =
 Not sure yet. This is a really good idea, as the "call lockscreen" does stand in your way just like the regular one.
 
+= Can you have a favorite app launch at every unlock? =
+Yes, we can have the app put out an App Start request, for example I've had one user request that the phone dialer launch after instant unlock.
+
 = What's the custom lockscreen? =
-We are designing a very simple emulation of the stock homescreen with just a single screen, capable of displaying any widget of your choice in addition to any shortcut or app launch icon. The inspiration to create this was the existing silencer slider/clock display on the default lockscreen. Why not just make it an extra homescreen and let the user decide what to put there?
+The inspiration to create this was the existing silencer slider/clock display on the default lockscreen. Why not just make it an extra homescreen and let the user decide what to put there? So far we almost have widget adding fully functional & a clock, battery readout, and basic music buttons
 
 = Will the custom lockscreen support the option to still use the slide to unlock? =
 Yes. One catch with this is that Android blocks apps from taking full control of the home key, so the home key will always unlock as well. But if you would like, the option for slide to unlock will be included once the custom lockscreen hits a full-featured release.
 
 = Can you make a custom lockscreen we can bring up in front of the pattern lock screen, for controlling music, etc? =
-Yes. This is a priority for the a3 we have been working on. 
+Yes. This is a priority for the updates we have been working on. 
 
 = What's notification preview? =
 This is a plan for the full final version of the app, way down the road. We think it would be excellent to have a timeline of missed events displayed on the wakeup screen, customized by user to what types of events have the priority of being shown there. A converged view for the timeline of any unread IMs, twitter, sms, email, missed call, voicemail. We might limit this to gmail, sms, gtalk, & gvoice and see how it goes.
