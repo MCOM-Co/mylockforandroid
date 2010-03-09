@@ -1,7 +1,7 @@
 #summary Quick breakdown of features in the current release builds - please go to the market to download the latest featured releases.
 #labels Featured
 
-= myLock complete alpha 2c / market beta version 1=
+= myLock alpha 2c / market beta version 1=
 http://mylockforandroid.googlecode.com/files/myLock_alpha2c.apk
 
 
@@ -10,27 +10,9 @@ http://mylockforandroid.googlecode.com/files/myLock_alpha2c.apk
   * Toggle stay awake mode to keep the screen from sleeping, perfect for web browsing. Very easy to check on or off whenever you need it paired with the foreground mode shortcut.
   * Toggle a preview version of our lockscreen replacement. It cannot yet house widgets & shortcuts so I don't recommend keeping it on but feel free to check it out. The beta version performs much faster and will preview notification panel and button customization in the next alpha release
 
-http://mylockforandroid.googlecode.com/files/Settings_alphaoptions.jpg http://mylockforandroid.googlecode.com/files/Notif_settingsshortcut.jpg 
+http://mylockforandroid.googlecode.com/files/Settings_alphaoptions.jpg http://mylockforandroid.googlecode.com/files/Notif_settingsshortcut.jpg
 
-= myLock lite release 1a =
-http://mylockforandroid.googlecode.com/files/myLock-lite_v1a.apk
-
-  * Toggle myLock on & off via a widget button. No settings screen.
-  * Toggling myLock lite also turns off secure pattern mode. It does not erase your pattern though- so you can re-enter pattern lockdown instantly by pressing the widget button again anytime you like.
-  * myLock runs in quick mode, meaning no presence in notifications and the process may be killed by the OS if memory gets low. This occurrence seems very rare.
-  * Important to know: the quick mode pauses the lockscreen only, to minimize CPU lag. This means that the recent app switcher shortcut (home long press) and the search key may not respond immediately after unlock. To access these features, press home. The OS clears the hidden lockscreen when you do this, enabling those 2 features.
-
-http://mylockforandroid.googlecode.com/files/home_widgetbutton.jpg
-
-== Alpha 3 - 0204 test build ==
-  * Toggles for Start at boot, Stay awake, shake wakeup, & Persistent Mode.
-  * Widget lockscreen only has notification panel implemented. Current revision has no wakeup of this implemented. It will only unlock on slide open or power key.
-  * Automatic pattern mode toggle occurs like in the Lite v1a.
-  * Lite mode widget comes with this version, the plan is the include it while continuing to offer the standalone download.
-
-== Upcoming enhancements ==
-  * The first actual myLock lockscreen - featuring clock display, controls for vibrate/sound, brightness level, and music player (album art will be able to display), and optional unlock slider interfaces. Available in secure mode or customized mode-
-  * secure lockscreen mode - display the custom lockscreen on top of the pattern lockscreen so you can control music in one wakeup even while locked down with your pattern. Exit this lockscreen by pressing the back key, then completing your pattern. No button customization is available in secure mode.
-  * custom lockscreen mode - customize Power, Camera, slider-open, keypad buttons, volume keys to choose which will remain locked, wakeup the custom lockscreen, or skip it for instant unlock.
-  * simple lockscreen disabled mode - no customization, just exits the lockscreen anytime it would normally be shown. 
-  * in the non-secure modes, pattern security will be disabled at the time myLock is started. You can choose an idle timeout if you would like pattern security to turn on again after a number of minutes idle, disabling myLock until the pattern is unlocked.
+= myLock complete, alpha 3 revision =
+  * Secure or custom mode, choosing whether to skip the regular unlock sliders or display them after exiting the custom lockscreen
+  * Toggle the persistent mode icon
+  * Toggle startup automatically after first lockscreen - the phone will show lockscreen after a reboot for security reasons. myLock will start after it is completed.
