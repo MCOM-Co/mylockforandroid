@@ -1,6 +1,9 @@
 #summary Known solutions for problems we can't fix in the code - these are almost entirely applicable only to the first market beta and release alpha 2c and earlier.
 #labels Featured
 
+= MOST IMPORTANT: DOWNLOAD LOG COLLECTOR =
+If you can email me a log immediately after a problem happens, I can know exactly why the problem happened and actually roll out a fix or a message to the dev of the app that caused the issue if it was a conflict. All you have to do is open Log Collector and put in our email (mylockandroid at gmail). In the subject, put the time you think the problem happened and what the problem was (IE: Lockscreen came back and wouldn't go away, Screen Came on but flashed back off, etc)
+
 = Why isn't there an option to get rid of the status icon =
 There is. We've tried, but there is no way to work around having the icon in place. You might experience a sudden loss of functionality and have to go back into settings & re-toggle the app if you operate without the persistent icon. In my testing this seems quite rare but every user's setup will be different depending on everything they regularly use on the device. For more about this, check out the official android development post that explains- http://android-developers.blogspot.com/2010/02/service-api-changes-starting-with.html
 
@@ -27,7 +30,8 @@ This currently only impacts lite mode (activated with the widget button). This i
 
 = Known apps that conflict with stable myLock operation (alpha 2c/market beta 1 & earlier) =
   * Not confirmed but it is likely sms popup has an issue because it relies on pre-2.0 lockscreen and wakeup interaction. I recommend using executive assistant and putting the widget on your homescreen. The sms tab is a great replacement for the popup feature.
-  * Screebl - seems to work by reading the screen on and off events myLock also relies on but as far as I know it doesn't use lockscreen disabling. Users have reported it doesn't work correctly.
+  * Screebl - seems to work by reading the screen on and off events myLock also relies on but as far as I know it doesn't use lockscreen disabling. Users have reported it doesn't work correctly in the first market version. I have been using screebl pro with the complete version beta with slim to no issue.
+  * Handcent actually causes a rare occasionally functionality glitch in the market complete ver beta because it takes over immediately at screen off occasionally, preventing myLock from starting up the replacement lockscreen. I've commented to the dev about this to see if they can find some other time to do the lengthy operation that seems to be happening right then.
   * AutoLock - can't function to restore pattern unlock mode due to interference from our lockscreen disable commands. Auto pattern lockdown is planned for a future release.
   * I'm going to assume you can't use Lock 2.0 or Lockbot since they are cosmetic themable lockscreens.
   * Any task killer - again we don't recommend these at all, not necessary on android. It will cause slowness.
