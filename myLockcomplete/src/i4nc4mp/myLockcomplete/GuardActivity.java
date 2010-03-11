@@ -218,6 +218,13 @@ curhour = (TextView) findViewById(R.id.hourText);
 	class Task implements Runnable {
 	public void run() {
 		//in case we ever need to use a delay to securely exit consistently
+		ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
+            public void LaunchOnKeyguardExitSuccess() {
+               Log.v("doExit", "This is the exit callback");
+               finishing = true;
+               //finish();
+               moveTaskToBack(true);
+                }});
 	}}
 	
 	@Override
@@ -373,15 +380,16 @@ curhour = (TextView) findViewById(R.id.hourText);
         	Log.v("completing slider open wake","about to try secure exit");
         }
         
+        serviceHandler.postDelayed(myTask, 50);
         
-        
+        /*
         ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
             public void LaunchOnKeyguardExitSuccess() {
                Log.v("doExit", "This is the exit callback");
                finishing = true;
                //finish();
                moveTaskToBack(true);
-                }});            
+                }});*/            
     }
     
     
