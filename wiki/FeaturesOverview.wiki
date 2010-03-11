@@ -13,6 +13,10 @@ http://mylockforandroid.googlecode.com/files/myLock_alpha2c.apk
 http://mylockforandroid.googlecode.com/files/Settings_alphaoptions.jpg http://mylockforandroid.googlecode.com/files/Notif_settingsshortcut.jpg
 
 = myLock complete, alpha 3 revision =
+
+
   * Secure or custom mode, choosing whether to skip the regular unlock sliders or display them after exiting the custom lockscreen
   * Toggle the persistent mode icon
   * Toggle startup automatically after first lockscreen - the phone will show lockscreen after a reboot for security reasons. myLock will start after it is completed.
+http://mylockforandroid.googlecode.com/files/complete_r1_settings.jpg
+http://mylockforandroid.googlecode.com/files/complete_r1_lockscreen.jpg
