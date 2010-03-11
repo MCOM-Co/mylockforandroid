@@ -57,6 +57,9 @@ public class CustomLockService extends MediatorService {
 		    serviceHandler = null;
 		    
 		    unregisterReceiver(idleExit);
+		    unregisterReceiver(lockStarted);
+		    unregisterReceiver(lockStopped);
+		    
 		    
 		    ManageWakeLock.releasePartial();
 		    
@@ -233,8 +236,8 @@ public class CustomLockService extends MediatorService {
 		            e.printStackTrace();
 		    }
 		    
-		    if (newtimeout != 0) timeoutpref = newtimeout;
-		    else Log.v("lock start callback","the system timeout is already 0, our stored pref is " + timeoutpref);
+		    if (newtimeout != 1) timeoutpref = newtimeout;
+		    else Log.v("lock start callback","the system timeout is already 1, our stored pref is " + timeoutpref);
 		    //TODO - check if we have a UserTimeout pref in sharedPrefs
 		    //if so, and it is not this one, and it is not "0", (or if we don't have one) update it
 		    //this will prevent the case where we can accidentally set our own timeoutpref to 0
@@ -243,7 +246,7 @@ public class CustomLockService extends MediatorService {
 		    
 		    //Next, change the setting to 0 seconds
 		    android.provider.Settings.System.putInt(getContentResolver(), 
-		            android.provider.Settings.System.SCREEN_OFF_TIMEOUT, 0);
+		            android.provider.Settings.System.SCREEN_OFF_TIMEOUT, 1);
 		    
 		   		    
 		    if (timeoutenabled) IdleTimer.start(getApplicationContext());
@@ -404,8 +407,8 @@ public class CustomLockService extends MediatorService {
 		//this just calls a temporary KG pause. doing this allows us to be recognized when we later want to re-enable
 		//we only need this when the timeout mode is active
 
-		        Class w = Lockscreen.class;
-		        //Class w = ShowWhenLockedActivity.class; no button customize, uses secure exit to unlock
+		        //Class w = Lockscreen.class;
+		        Class w = GuardActivity.class;
 		       
 
 		/* launch UI, explicitly stating that this is not due to user action
