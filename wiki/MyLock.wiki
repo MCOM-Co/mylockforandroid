@@ -1,6 +1,6 @@
-#summary Keyguard makes no sense when there are no significant keys. What you need is a screenguard paired with a really useful homescreen!
+#summary Top-level project information
 
-= Project plans =
+= Initial project plans =
 
 I have identified 3 steps to the realization of the myLock vision in the first weeks of research and initial alpha programming.
 
@@ -14,16 +14,10 @@ in 2.0 the change to onstartcommand and startforeground are used instead of onst
 also, the welcomeactivity code doesn't seem to exist in the older versions. will have to try to grab some source and see if they had alarm clocks and what their method was.
 for now this isn't really a goal.. i'm guessing android will go forward at 2.0 and up pretty strongly considering the announcements that g1 should receive it officially.
 
-= Different release versions =
-  * myLock lite - lockscreen bypass: Best for users who just want the slider to be gone, and don't need to use the recent apps function often. The app switcher still works but just isn't initialized immediately upon unlock, like in alpha 1 the home must be launched once to complete the lockscreen dismissal and initialize the feature. Since the only way to initialize it for immediate use is to insert a delay in the unlock which fully exits the lockscreen before proceeding (alpha 2 and beyond), the lite release will be the least intrusive and fastest performing. Other versions will also include the choice to operate in lite mode.
-  * myLock complete: Full feature set release incorporating all the customizations we have planned. Users will be able to use lite mode, regular mode, or wakeup homescreen. User choice of stay awake mode, settings notification shortcut, widget feature toggles, as well as our utility widgets for clock, sound, brightness, and battery info.
-  * myLock event timeline: feature under review, a great idea and the implementation is very complex
+See Versions page for current planned feature releases.
 
 = How the features work =
-Now that we are nearing completion of the 3rd alpha feature release, we have quite a few features and options in the app. A quick breakdown of how they work:
 
   * Alpha 2c uses the pre-android-2.0 lockscreen interaction code. There is no custom lockscreen code in it, just a detection of screen wakeups to execute a few commands to dismiss it automatically.
-  * The custom lockscreen uses new android 2.0 code to put a replacement lockscreen up when the screen sleeps. Then it can handle the release of keys to react as we choose. The down press is intercepted by the core power manager, causing the OS to change to a screen awake state. The custom lockscreen stops the screen from waking unless the key being released is defined as a wakeup or unlock key.
-  * Shake wakeup is something I can do with or without the custom lockscreen mode. It simply accesses the sensor for the accelerometer to detect shake and accesses the power manager to create a wakeup. For alpha 3 feature release this option will be available to choose with or without the custom lock mode.
-  * Idle Timeout - So far this only works with the regular mode, not in custom lockscreen. A timer is set when the phone sleeps, and cancelled back when it wakes. If the timer runs out, the app turns pattern mode and lockscreen back on, then waits for a successful lockscreen exit to start back up again. The default behavior for recent versions has been that pattern mode is automatically disabled and re-enabled with start and stop of myLock.
-  * Stay awake - very simple code that suppresses the system from attempting to check for screen sleep timeout.
+  * The custom lockscreen uses new android 2.0 code to put a replacement lockscreen up when the screen sleeps. Then it can handle the release of keys to react as we choose. THe catch is that every key will create a wakeup. The custom lockscreen stops the screen from turning unless the key being released is defined as a wakeup or unlock key. This wake suppression will be called Advanced power save key lockdown in the advanced replacement lockscreen mode.
+  * Shake wakeup is something I can do with or without the custom lockscreen mode. It simply accesses the sensor for the accelerometer to detect shake and accesses the power manager to create a wakeup. This feature is not a priority yet.
