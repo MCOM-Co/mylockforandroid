@@ -15,7 +15,9 @@ import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
 
 
-//custom lockscreen mode
+//advanced mode- lockscreen wakes up with any key
+//supports advanced power save for setting locked-down buttons (screen stays off)
+//or for reducing the timeout while in lockscreen mode
 public class CustomLockService extends MediatorService {
 	
 	public boolean persistent = false;
@@ -34,9 +36,6 @@ public class CustomLockService extends MediatorService {
 	public boolean PendingLock = false;
 	//Flagged true upon sleep, remains true until StartLock sends first callback indicating Create success.
 	
-	public boolean HandlingCallEnd = false;
-	//the task will intercept if lockscreen comes back at the end of call
-	public int count = 4;//only try for 2 seconds at end of call, then assume it's not locked
 	
 	public boolean idle = false;
 	//when the idle alarm intent comes in we set this true to properly start closing down
@@ -59,6 +58,7 @@ public class CustomLockService extends MediatorService {
 		    unregisterReceiver(idleExit);
 		    unregisterReceiver(lockStarted);
 		    unregisterReceiver(lockStopped);
+		    //unregisterReceiver(homeUnlock);
 		    
 		    
 		    ManageWakeLock.releasePartial();
@@ -84,93 +84,8 @@ public class CustomLockService extends MediatorService {
 					persistent = false;
 			}
 			else doFGstart();//so FG mode is started again
-		}
-		/*else {
-/*========LockActivity restart calls that happen when it finishes starting or stopping
-
-			if (PendingLock) {
-			//start success, let's toggle pending off and set timeout setting
-				PendingLock = false;
-				Log.v("Received Callback","Lock Activity is primed");
-				
-				//brought in the timeout settings changer -- this way all types of exits will restore the correct timeout
-				try {
-		            newtimeout = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.SCREEN_OFF_TIMEOUT);
-		    } catch (SettingNotFoundException e) {
-		            // TODO Auto-generated catch block
-		            e.printStackTrace();
-		    }
-		    
-		    if (newtimeout != 0) timeoutpref = newtimeout;
-		    else Log.v("lockscreen prime reaction","the system timeout is already 0, our stored pref is " + timeoutpref);
-		    //TODO - check if we have a UserTimeout pref in sharedPrefs
-		    //if so, and it is not this one, and it is not "0", (or if we don't have one) update it
-		    //this will prevent the case where we can accidentally set our own timeoutpref to 0
-		    //for now this code will stop any action if we see the setting is already 0
-		    
-		    
-		    //Next, change the setting to 0 seconds
-		    android.provider.Settings.System.putInt(getContentResolver(), 
-		            android.provider.Settings.System.SCREEN_OFF_TIMEOUT, 0);
-		    
-		    //========right here I would release partial if only holding during the creation of lockscreen (acquired at screen off)
-		    
-		    if (timeoutenabled) IdleTimer.start(getApplicationContext());
-		    
-		    
-		    //if we don't get user unlock callback within user-set idle timeout
-		    //this alarm kills off the lock activity and this service, restores KG, & starts the user present service
-		    
-		    //TODO we're going to want to start at stop it within the activity wakeup as well
-		    //example: stop when user deliberately wakes lockscreen to use it
-		    //start again if sleeping again from that screenwake
-			}
-			else if (!shouldLock) {
-			//"i4nc4mp.myLockcomplete.lifecycle.LOCKSCREEN_EXITED"
-					//this is the actual case that we just exited lockscreen
-				shouldLock = true;
-				
-				
-				Log.v("Received Callback","Lock Activity is finished");
-				
-				
-				//ManageWakeLock.acquirePartial(getApplicationContext());
-				//ensure the task can run, we'll release it on the startup callback
-				//as of now, always holding partial just to get key events correctly.
-				//we run no load on the cpu while device is asleep, so causes no power use or battery life reduction
-								
-				
-				if (!idle) {
-				if (timeoutenabled) IdleTimer.cancel(getApplicationContext());
-					
-				android.provider.Settings.System.putInt(getContentResolver(), android.provider.Settings.System.SCREEN_OFF_TIMEOUT, timeoutpref);
-				
-				PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
-		    	pm.userActivity(SystemClock.uptimeMillis(), false);
-		    	
-		    	}
-				else {				
-					ManageKeyguard.reenableKeyguard();
-					//funny - you will see the regular lockscreen after this call because it is restoring it from time that pattern was off
-					//if you slide that, you land at the security pattern screen ;]
-					//otherwise if it sleeps like that, next wakeup places us at pattern screen
-					
-					Intent u = new Intent();
-			    	u.setClassName("i4nc4mp.myLockcomplete", "i4nc4mp.myLockcomplete.UserPresentService");
-			    	//service that reacts to the completion of the keyguard to start this mediator again
-			    	startService(u);
-					stopSelf();
-				}
-				}
-				
-				*
-				* commented out the restart logic to test handling by broadcast receivers
-				* 
-				* 
-				* 
-				*/
-				
-			else {
+		}	
+		else {
 /*========Safety start that ensures the settings activity toggle button can work, first press to start, 2nd press to stop*/
 				Log.v("toggle request","user first press of toggle after a startup at boot");
 			}		
@@ -207,7 +122,7 @@ public class CustomLockService extends MediatorService {
 		//if not always holding partial we would only acquire at Lock activity exit callback
 		//we found we always need it to ensure key events will not occasionally drop on the floor from idle state wakeup
 		
-		IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLockcomplete.intent.action.IDLE_TIMEOUT");
+		IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.IDLE_TIMEOUT");
 		registerReceiver(idleExit, idleFinish);
 		
 		IntentFilter lockStart = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.LOCKSCREEN_PRIMED");
@@ -215,6 +130,9 @@ public class CustomLockService extends MediatorService {
 		
 		IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.LOCKSCREEN_EXITED");
 		registerReceiver(lockStopped, lockStop);
+		
+		//IntentFilter home = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.HOMEKEY_UNLOCK");
+		//registerReceiver(homeUnlock, home);
 	}
 	
 	BroadcastReceiver lockStarted = new BroadcastReceiver() {
@@ -228,7 +146,12 @@ public class CustomLockService extends MediatorService {
 		else PendingLock = false;
 		
 		Log.v("lock start callback","Lock Activity is primed");
-				
+		
+	//=====Advanced power save timeout reduction----
+		//compare our stored user-pref to the currently held system entry
+		//update the stored value only if it has changed, and is at least 15
+		//FIXME need to store the value in our prefs file
+		
 			try {
 		            newtimeout = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.SCREEN_OFF_TIMEOUT);
 		    } catch (SettingNotFoundException e) {
@@ -238,13 +161,11 @@ public class CustomLockService extends MediatorService {
 		    
 		    if (newtimeout != 1) timeoutpref = newtimeout;
 		    else Log.v("lock start callback","the system timeout is already 1, our stored pref is " + timeoutpref);
-		    //TODO - check if we have a UserTimeout pref in sharedPrefs
-		    //if so, and it is not this one, and it is not "0", (or if we don't have one) update it
-		    //this will prevent the case where we can accidentally set our own timeoutpref to 0
-		    //for now this code will stop any action if we see the setting is already 0
+		    //for now this code protects us from improperly overwriting our stored timeout pref with the reduced pref
 		    
 		    
-		    //Next, change the setting to 0 seconds
+		    //====Advanced power save timeout reduction
+		    //-----always set the timeout to 1 at lockscreen start success
 		    android.provider.Settings.System.putInt(getContentResolver(), 
 		            android.provider.Settings.System.SCREEN_OFF_TIMEOUT, 1);
 		    
@@ -274,7 +195,11 @@ public class CustomLockService extends MediatorService {
 			
 		if (!idle) {
 			if (timeoutenabled) IdleTimer.cancel(getApplicationContext());
-					
+			
+			//FIXME
+			//this should restore screen off to our known user-pref that is stored in prefs
+			//that pref will be set at Lock start, when we detect a change that isn't to 0 or 1
+			//(0 used by screebl, 1 is our advanced power save setting)
 			android.provider.Settings.System.putInt(getContentResolver(), android.provider.Settings.System.SCREEN_OFF_TIMEOUT, timeoutpref);
 				
 			PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
@@ -295,15 +220,23 @@ public class CustomLockService extends MediatorService {
 			}			
 	}};
 	
+	/*BroadcastReceiver homeUnlock = new BroadcastReceiver() {
+		@Override
+	    public void onReceive(Context context, Intent intent) {
+		if (!intent.getAction().equals("i4nc4mp.myLockcomplete.lifecycle.HOMEKEY_UNLOCK")) return;
+		
+		ManageKeyguard.disableKeyguard(context);
+		StartDismiss(context);
+		return;
+		
+		}};*/
+	
 	BroadcastReceiver idleExit = new BroadcastReceiver() {
 		@Override
 	    public void onReceive(Context context, Intent intent) {
-		if (!intent.getAction().equals("i4nc4mp.myLockcomplete.intent.action.IDLE_TIMEOUT")) return;
-		//we don't respond to this if in call because that means we sent it ourselves to kill the lockactivity.
-		//also provides a safety check since the alarm might not be cancelled if a call starts
-		//we don't want to shut ourselves down if user answered a call.
-		if (!receivingcall && !placingcall) {
-			idle = true;
+		if (!intent.getAction().equals("i4nc4mp.myLockcomplete.lifecycle.IDLE_TIMEOUT")) return;
+				
+		idle = true;
 		
 		PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
 	  	myPM.userActivity(SystemClock.uptimeMillis(), true);
@@ -314,8 +247,7 @@ public class CustomLockService extends MediatorService {
 				android.provider.Settings.System.SCREEN_OFF_TIMEOUT, timeoutpref);
 	  	
 	  	//the idle flag will cause proper handling on receipt of the exit callback from lockscreen
-	  	//we basically instant unlock as if user requested, but then force KG back on.
-		}
+	  	//we basically unlock as if user requested, but then force KG back on in the callback reaction
 	}};
 	
 	class Task implements Runnable {
@@ -344,12 +276,8 @@ public class CustomLockService extends MediatorService {
 	public void onScreenWakeup() {
 		if (!PendingLock) return;
 		//we only handle this when we get a screen on that's happening while we are waiting for a lockscreen start callback
-		
-		//Context mCon = getApplicationContext();		
-		
-		
-		
-		
+			
+				
 		//This case comes in two scenarios
 		//Known bug (seems to be fixed)--- the start of LockActivity was delayed to screen on due to CPU load
 		//User aborting a timeout sleep by any key input before 5 second limit
@@ -358,14 +286,8 @@ public class CustomLockService extends MediatorService {
 			if (!shouldLock) {
 				//this is the case that the lockscreen still hasn't sent us a start callback at time of this screen on
 				shouldLock = true;
-				//the activity itself will catch this case
-				//possible we might need to implement a special intent that we could send at this occurrence
-				//to notify the existing instance of the lockscreen
 			}
 				
-			//the failure to start at off bug appears to be fully eliminated.
-			//TODO might be smart to have logic in the activity lifecycle which can handle the starting at screen on case
-			//FIXME we still don't have any good reaction to a user aborting a Power key sleep by shortly doing a 2nd power key press
 			
 		return;
 	}
@@ -450,6 +372,19 @@ public class CustomLockService extends MediatorService {
                }});    	
     }
 	
+	public void StartDismiss(Context context) {
+                
+        Class w = DismissActivity.class; 
+                      
+        Intent dismiss = new Intent(context, w);
+        dismiss.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK//For some reason it requires this even though we're already an activity
+                        | Intent.FLAG_ACTIVITY_NO_USER_ACTION//Just helps avoid conflicting with other important notifications
+                        | Intent.FLAG_ACTIVITY_NO_HISTORY//Ensures the activity WILL be finished after the one time use
+                        | Intent.FLAG_ACTIVITY_NO_ANIMATION);
+                        
+        context.startActivity(dismiss);
+    }
+	
 //============Phone call case handling
 	
 	//we have many cases where the phone reloads the lockscreen even while screen is awake at call end
@@ -457,19 +392,15 @@ public class CustomLockService extends MediatorService {
 	//then phone is doing a KM disable command at re-wake. and restoring at call end
 	
 
-	//TODO call start and end may need to attempt to release/gain wakelock while in stayawake mode.
-	//might not matter so i will add it if i find unexpected behavior for calls
 	
 	@Override
 	public void onCallStart() {
 		
 		shouldLock = false;
-		//send the idle exit intent to the lock activity
-		//this way we don't exit it till call is answered, allowing it to be restored if call was ignored or missed
 		
-		Intent intent = new Intent("i4nc4mp.myLockcomplete.intent.action.IDLE_TIMEOUT");
+		Intent intent = new Intent("i4nc4mp.myLockcomplete.lifecycle.CALL_START");
 		getApplicationContext().sendBroadcast(intent);
-		
+		//activity closes when receiving this - FIXME the advanced mode Lockscreen is expecting idle intent
 	}
 	
 	@Override
@@ -487,30 +418,12 @@ public class CustomLockService extends MediatorService {
 		
 		Context mCon = getApplicationContext();
 		
-		/*ManageKeyguard.initialize(mCon);
-		 
-		if (ManageKeyguard.inKeyguardRestrictedInputMode()) {
-			Log.v("call end","lockscreen was restored due to screen timeout during the call, trying to exit");
-			if (IsAwake()) {
-				shouldLock = true;
-				DoExit(mCon);
-			}
-			else {
-				PendingLock = true;
-				StartLock(mCon);
-			}
-		}
-		else if(IsAwake()) shouldLock = true;
-		else {
-			PendingLock = true;
-			StartLock(mCon);
-		}*/
-		
 		if (IsAwake()) {
 			Log.v("call end, screen awake","checking if we need to exit KG");
 			shouldLock = true;
 			ManageKeyguard.initialize(mCon);
 			if (ManageKeyguard.inKeyguardRestrictedInputMode()) DoExit(mCon);
+			//TODO change this to the dismiss activity now that we have timing bugs fixed
 		}
 		else {
 			Log.v("call end, screen asleep","restarting lock activity.");
@@ -521,10 +434,10 @@ public class CustomLockService extends MediatorService {
 	
 	@Override
 	public void onCallMiss() {
-		//implemented finish intent sent to lockscreen when call is actually answered.
-		//here, the lockscreen will be back on only able to be exited by home key (since it will not be in screenwake state)
-		//for now i am not going to change this
-		//shouldLock = true;
+			
+		Intent intent = new Intent("i4nc4mp.myLockcomplete.lifecycle.CALL_ABORT");
+		getApplicationContext().sendBroadcast(intent);
+		//lets the activity know it is regaining focus because call was aborted
 	}
 	
 //============================

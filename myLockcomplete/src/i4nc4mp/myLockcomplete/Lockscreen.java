@@ -40,23 +40,10 @@ import android.widget.TextView;
 
 
 
-
-//LIFE CYCLE
-//Mediator waits for screen off. If flag ShouldLock was received from last exiting lockscreen (or True by first start)---
-// ----------Flag PendingLock true & trigger 4 sec wait
-//If user had forced sleep, causing immediate guard, then wakes before 4 sec, mediator fires a Dismiss activity
-//If it was a timeout sleep, timer is aborted when user aborts by waking screen within the 5 sec
-//Else, this activity successfully starts, so we send a start intent back to mediator to tell it to flag PendingLock back false
-//This way mediator knows we got started
-
-//If mediator gets a screen on and still has PendingLock, it would know we were just starting at on
-//and can respond by doing the dismiss activity or sending a finish intent to us - this bug case seems to be avoided by the 4 sec delay
-
-//our own lifecycle is to detect focus changes and user key events
+//our own lifecycle duties are to detect focus changes and user key events
+//also to react to phone state broadcasts that are sent from the mediator service
 //this is the most complex part of smooth operation
 
-
-//When we finish, send one more start back to mediator which flags Should back to true to catch next screen off
 public class Lockscreen extends Activity {
         
 		Handler serviceHandler;
@@ -77,12 +64,6 @@ public class Lockscreen extends Activity {
         //this lets our task wait a half second, then actually wake up and finish
         
         public boolean screenwake = false;//set true when a wakeup key or external event turns screen on
-        
-        public boolean resumedwithfocus = false;
-        //can use this to run a timer that checks if any key input results come within a few seconds
-        //if nothing comes in we then know that we need to do something about the unhandled wake
-        //we will also come into this state where a wake or unlock key is being done
-        //but those states then set themselves within the first second.
         
         public boolean idle = false;
         
@@ -130,17 +111,6 @@ public class Lockscreen extends Activity {
         
         setBright((float) 0.0);
         
-                
-        //takeKeyEvents(true);
-        //getWindow().takeKeyEvents(true);
-        //Has no effect. We seem to not have main window focus such that even though we never lost view focus
-        //it drops key events with a log entry:
-//02-02 13:23:18.655: WARN/WindowManager(1019): No focus window, dropping: KeyEvent{action=1 code=26 repeat=0 meta=0 scancode=107 mFlags=8}
-//But we have no focus loss log entry. Right after this, we get resumed, then the mediator Screen on log entry appears
-
-        
-        //setPersistent(true);
-        //doesn't affect the unhandled key event bug
         
         curhour = (TextView) findViewById(R.id.hourText);
         
@@ -200,8 +170,14 @@ public class Lockscreen extends Activity {
         
         IntentFilter offfilter = new IntentFilter (Intent.ACTION_SCREEN_OFF);
 		registerReceiver(screenoff, offfilter);
+		
+		IntentFilter callbegin = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.CALL_START");
+        registerReceiver(callStarted, callbegin);  
         
-		IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLockcomplete.intent.action.IDLE_TIMEOUT");
+        IntentFilter callabort = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.CALL_ABORT");
+        registerReceiver(callAborted, callabort);
+        
+		IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.IDLE_TIMEOUT");
 		registerReceiver(idleExit, idleFinish);
 		
         serviceHandler = new Handler();
@@ -302,10 +278,31 @@ public class Lockscreen extends Activity {
              
 }};
 
+BroadcastReceiver callStarted = new BroadcastReceiver() {
+	@Override
+    public void onReceive(Context context, Intent intent) {
+	if (!intent.getAction().equals("i4nc4mp.myLockcomplete.lifecycle.CALL_START")) return;
+	
+	//we are going to be dormant (sitting in background) while this happens, so we need to force finish
+	finishing = true;
+	finish();
+	return;
+	
+	}};
+   	
+BroadcastReceiver callAborted = new BroadcastReceiver() {
+   	@Override
+       public void onReceive(Context context, Intent intent) {
+  	if (!intent.getAction().equals("i4nc4mp.myLockcomplete.lifecycle.CALL_ABORT")) return;
+   		//do anything special we need to do right after the call abort
+   		//we might not even need this broadcast in this mode
+  	return;
+  	}};
+
 BroadcastReceiver idleExit = new BroadcastReceiver() {
 	@Override
     public void onReceive(Context context, Intent intent) {
-	if (!intent.getAction().equals("i4nc4mp.myLockcomplete.intent.action.IDLE_TIMEOUT")) return;
+	if (!intent.getAction().equals("i4nc4mp.myLockcomplete.lifecycle.IDLE_TIMEOUT")) return;
 	
 	finishing = true;
 	idle = true;
@@ -317,6 +314,8 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
 	
 	finish();
 }};
+
+
 
 
     public void setBright(float value) {
@@ -376,25 +375,13 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
         			timeleft--;
         			serviceHandler.postDelayed(myTask,500L);//just decrement every half second
         		}
-        		/*else if (resumedwithfocus && !waking) {//resume with focus will call the task after 1 sec
-        			if (!finishing) {//so if no wake is known and also no finish, do finish
-        				finishing=true;
-            			
-            			PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-             	  	  	myPM.userActivity(SystemClock.uptimeMillis(), false);
-             	  	  	Log.v("missed key event catch","we got resumed, had focus, and did not exit within 1 sec");
-            			//wakeup();
-            			setBright((float) 0.1); //tried moving this to the step that sets this flag and posts the delay
-            			moveTaskToBack(true);//finish();
-        			}
-        		}*/
-        		
         		else if (!screenwake) {
         			waking = false;//no more wake flags unless the screen wake has cancelled the silent wake
         		}
         	}
         	//this workaround is only relevant to power key which we can't prevent from causing the go to sleep if any wake exists
         	//this is the case during the 5 seconds after a locked key press
+        	//FIXME we only need this if the user is keeping the default suggestion of PWR = instant unlock
     	}
     
     public void wakeup() {
@@ -421,12 +408,6 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
      		else {
      		finishing = true;
      		
-     		/*
-     		Intent i = new Intent();
-    		i.setClassName("i4nc4mp.myLockcomplete", "i4nc4mp.myLockcomplete.StayAwakeService");
-    		startService(i);
-     		*/
-     		
      		setBright((float) 0.1);
         	moveTaskToBack(true);//finish();
      		}
@@ -435,7 +416,6 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
      		Log.v("slide closed","lockscreen activity got the config change from background");
      	//This comes in if we had slide unlocked, then user closes it, we get this first thing as we re-lock
      	//so this doesn't help us disengage stay awake immediately at close
-     	//FIXME is it possible to get the slide close event without an activity up?
      	
      	//FIXME a quiet wake happens when user closes slide while asleep. we need to handle it as such
      	//we get this immediately at that time since we are active
@@ -466,7 +446,7 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
         
         
         starting = true;//this way if we get brought back we'll be aware of it
-        resumedwithfocus = false;
+
         screenwake = false;
         
         //set task which sees if starting flag is true. if so, it actually destroys the activity
@@ -475,7 +455,7 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
         //the only benefit to doing this is to avoid user accidental recovery of lockscreen window by back key (history stack)
         
         //also, this could eliminate the recovery of the screen after a received-from-sleep call is over
-        //CallbackMediator();
+        
         StopCallback();
     }
     
@@ -486,17 +466,12 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
     	
     	Log.v("lock paused","setting pause flag");
     	
-    	//takeKeyEvents(true);
-        //getWindow().takeKeyEvents(true);
-        //Since bug of the dropped key event seems to happen only when paused, trying to set this on pause
-    	//doesn't help
-    	
-    	
+    	    	
     	//since pauses also occur while it is asleep but focus is not lost, we will only send "exited" callback
     	//when paused and !hasWindowFocus()
     	//this is handled by onStop which occurs in that scenario and we detect it by this combo of lifecycle flags
     	paused = true;
-    	resumedwithfocus = false;
+
     }
     
     @Override
@@ -504,14 +479,7 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
     	super.onResume();
     	Log.v("lock resume","setting pause flag");
     	paused = false;
-    	//if we get a resume, and we have focus, and no state flags yet, this means we are getting a first key down
-    	//key event does not get this initial thing because apparently it is getting eaten by the wakeup action
-    	//TODO we need to implement a reaction that catches the unhandled resume with focus
-    	//if after 1 second we don't have any user input flags but still have focus, we have an unhandled resume
-    	if (hasWindowFocus()) {
-    		resumedwithfocus = true;
-    		//serviceHandler.postDelayed(myTask, 1000L);
-    	}
+    	
     	updateClock();
     }
     
@@ -538,23 +506,19 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
        
        
     	
-        Log.v("destroyWelcome","Destroying");
+       Log.v("destroyWelcome","Destroying");
     }
-        
-    //public void takeKeyEvents (boolean get)
-    //Request that key events come to this activity.
-    //Use this if your activity has no views with focus
-    //but still want a chance to process key events.
     
     @Override
     public void onWindowFocusChanged (boolean hasFocus) {
     	if (hasFocus) {
     		Log.v("focus change","we have gained focus");
     		//Catch first focus gain after onStart here.
-    		//this allows us to know if we actually got as far as having focus (expected but bug sometimes prevents
+    		//this way if something stops us from immediate focus gain, we still call back appropriately
     		if (starting) {
-    			starting = false;//set our own lifecycle reference now that we know we started and got focus properly
-    			//CallbackMediator();
+    			starting = false;
+    			//set our own lifecycle reference now that we know we started and got focus properly
+    			
     			//tell mediator it is no longer waiting for us to start up
     			StartCallback();
     		}
@@ -568,10 +532,7 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
     				waking=true;
     				wakeup();
     				//this passes a wakeup we don't cancel unless we see that we have focus again
-    			}
-    			// if (screenwake) finish();
-    		
-    	
+    			}    	
     	}
     }
     
@@ -586,15 +547,7 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
     		screenwake = false;
     		setBright((float) 0.0);
     	}
-    	//takeKeyEvents(true);
-        //getWindow().takeKeyEvents(true);
     }
-    
-    public void CallbackMediator() {
-        Intent i = new Intent();
-    	i.setClassName("i4nc4mp.myLockcomplete", "i4nc4mp.myLockcomplete.CustomLockService");
-    	startService(i);
-        }
     
     public void StartCallback() {
     	Intent i = new Intent("i4nc4mp.myLockcomplete.lifecycle.LOCKSCREEN_PRIMED");
@@ -612,34 +565,33 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
 
         boolean up = event.getAction() == KeyEvent.ACTION_UP;
         //flags to true if the event we are getting is the up (release)
-        //when we are coming from sleep, the down gets taken by power manager to cause wakeup
+        //when we are coming from sleep, the pwr down gets taken by power manager to cause wakeup
+        //if we are awake already the power up might also get taken.
+        
+        //however even from sleep we get a down and an up for focus & cam keys with a full press
         
         int code = event.getKeyCode();
         Log.v("dispatching a key event","Is this the up? -" + up);
         
-       //TODO replace this with a method to check the pref for the key to see how to handle it
-        int reaction = 0;//locked
+       //TODO implement pref-checking method to see if any advanced power saved keys are set
+        
+        int reaction = 1;//wakeup, the preferred behavior in advanced mode
                 
         if (code == KeyEvent.KEYCODE_BACK) reaction = 3;//check for wake, if yes, exit
         else if (code == KeyEvent.KEYCODE_POWER) reaction = 2;//unlock
-        else if (code == KeyEvent.KEYCODE_CAMERA) reaction = 1;//wake
+        else if (code == KeyEvent.KEYCODE_FOCUS) reaction = 0;//locked (advanced power save)
        
         	switch (reaction) {
         	case 3:
         		onBackPressed();
         		return true;
         	case 2:
-    	   //if (!up) Log.v("power key","we can get power key down... *~*");
     	   if (up && !finishing) {
-    		   //shouldFinish = true;
     		   Log.v("unlock key","power key UP, unlocking");
     		   finishing = true;
-    		  //PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-    	  	  //myPM.userActivity(SystemClock.uptimeMillis(), false);
     	  	  	
     		   setBright((float) 0.1);
     		       		       		  
-    		   //serviceHandler.postDelayed(myTask, 50L);
     		   moveTaskToBack(true);
     		  
     	   }
@@ -653,12 +605,10 @@ BroadcastReceiver idleExit = new BroadcastReceiver() {
     	   }
     	   return true;
        
-        case 0:
-        	//essentially the default
-    	   //if (!up) Log.v("locked key","we can get a non power key down");
-    	   
+        case 0:    	   
     	   if (!screenwake && up) {
-         	   timeleft=10;//so that countdown is refreshed
+         	   timeleft=10;
+         	//so that countdown is refreshed
             //countdown won't be running in screenwakes
          	if (!waking) {
             //start up the quiet wake timer    

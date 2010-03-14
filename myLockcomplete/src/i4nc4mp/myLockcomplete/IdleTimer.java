@@ -11,7 +11,7 @@ public class IdleTimer {
 
     //intent will be caught in both the mediator and the lockactivity
     private static PendingIntent buildIntent(Context ctx) {
-        Intent intent = new Intent("i4nc4mp.myLockcomplete.intent.action.IDLE_TIMEOUT");
+        Intent intent = new Intent("i4nc4mp.myLockcomplete.lifecycle.IDLE_TIMEOUT");
         PendingIntent sender = PendingIntent.getBroadcast(ctx, REQUEST_ID, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
         return sender;

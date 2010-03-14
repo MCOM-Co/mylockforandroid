@@ -33,6 +33,10 @@ public class BootHandler extends Service {
 			return 1;
 		}
 		
+		//FIXME next we should actually check our prefs file for the flag that pattern was suppressed
+		//then restore pattern in real system prefs, for security.
+		//SO will need to implement this setting at service start where the pattern suppression occurs.
+		
 		//boolean custom = settings.getBoolean("welcome", false);//retrieve user's mode pref
 		
 		Intent i = new Intent();
