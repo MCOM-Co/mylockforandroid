@@ -31,14 +31,20 @@ import android.widget.TextView;
 //FIXME when it instant unlocks/dismisses at wakeup it causes big bugs in incoming or ignored calls.
 //got unique odd behavior out of those two cases. FIX for the basic ver update.
 
-//When it is time to exit, we start a one shot dismiss activity.
+//When it is time to exit (by back key or slidingtab) we start a one shot dismiss activity.
 //The dismiss activity will load, wait 50 ms, then finish
 //Here, we finish in the background immediately after requesting the dismiss activity
 
 //For this lifecycle, we go dormant for any outside event
 //such as incoming call ringing, alarm, handcent popup, etc.
-//we detect going dormant by losing focus while paused.
+//we detect going dormant by losing focus while already paused.
 //if focus loss occurs while not paused, it means the user is actively navigating out of the woken lockscreen
+
+//for the exits that occur from navigation, we're forced to use the pre-2.0 exit method
+//due to bugs in the overall implementation of the new flags.. there's no way to really allow the navigation exit
+//when only show_when_locked is active. i can't seem to make it cooperate with dismissActivity
+//because the KG comes back and blocks it
+//however, for instant exit, the dismissActivity code is flawless
 
 public class GuardActivity extends Activity {
     
@@ -333,10 +339,12 @@ public class GuardActivity extends Activity {
     		Log.v("navigation exit","got paused without focus, starting dismiss sequence");
     		
     		
-    		finishing = true;
     		ManageKeyguard.disableKeyguard(getApplicationContext());
-    		//OS doesn't care about re-enable call here, but it would if it was a home key exit
-    		StartDismiss(getApplicationContext());
+    		//this method seems to fail after incidental home key usage..
+    		//apparently OS is still locking us out for not calling restore
+    		//StartDismiss(getApplicationContext());
+    		
+    		serviceHandler.postDelayed(myTask, 50);
     	}
     	else Log.v("lock paused","normal pause - we still have focus");    	
     }
