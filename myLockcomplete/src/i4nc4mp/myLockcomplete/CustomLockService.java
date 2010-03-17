@@ -396,11 +396,14 @@ public class CustomLockService extends MediatorService {
 	@Override
 	public void onCallStart() {
 		
-		shouldLock = false;
-		
+		if (!shouldLock) {
+			//should is only false while lock activity is alive
+			//we don't have to do anything for calls initiated as no lock activity is alive
 		Intent intent = new Intent("i4nc4mp.myLockcomplete.lifecycle.CALL_START");
 		getApplicationContext().sendBroadcast(intent);
-		//activity closes when receiving this - FIXME the advanced mode Lockscreen is expecting idle intent
+		}
+		else shouldLock = false;
+		//FIXME we need to have the custom mode destroy itself
 	}
 	
 	@Override
@@ -433,11 +436,11 @@ public class CustomLockService extends MediatorService {
 	}
 	
 	@Override
-	public void onCallMiss() {
-			
-		Intent intent = new Intent("i4nc4mp.myLockcomplete.lifecycle.CALL_ABORT");
+	public void onCallRing() {	
+		Intent intent = new Intent("i4nc4mp.myLockcomplete.lifecycle.CALL_PENDING");
 		getApplicationContext().sendBroadcast(intent);
-		//lets the activity know it is regaining focus because call was aborted
+		//lets the activity know it should not treat focus loss as a navigation exit
+		//this will keep activity alive, only stopping it at call accept
 	}
 	
 //============================

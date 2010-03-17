@@ -62,8 +62,13 @@ public class GuardActivity extends Activity {
     
     public boolean dormant = false;
     //special lifecycle phase- we are waiting in the background for outside event to return focus to us
-    //an example of this is while a call is ringing. if aborted, focus comes back to us.
-    //we toggle the flag off in the call abort broadcast reaction
+    //an example of this is while a call is ringing. we have to force the state
+    //because the call prompt acts like a user notification panel nav
+    
+    public boolean pendingExit = false;
+    //special lifecycle phase- when we lose focus and aren't paused, we launch a KG pause
+    //two outcomes, either we securely exit if a pause comes in meaning user is navigating out
+    //or else we are going to get focus back and re-enable keyguard
     
     public boolean slideWakeup = false;
     //we will set this when we detect slideopen, only used with instant unlock (replacement for 2c ver)
@@ -149,11 +154,11 @@ public class GuardActivity extends Activity {
         IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
 		registerReceiver(screenon, onfilter);
         
-        IntentFilter callbegin = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.CALL_START");
+        IntentFilter callbegin = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.CALL_STARTED");
         registerReceiver(callStarted, callbegin);  
         
-        IntentFilter callabort = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.CALL_ABORT");
-        registerReceiver(callAborted, callabort);
+        IntentFilter callpend = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.CALL_PENDING");
+        registerReceiver(callPending, callpend);
         
 		IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.IDLE_TIMEOUT");
 		registerReceiver(idleExit, idleFinish);
@@ -238,15 +243,18 @@ public class GuardActivity extends Activity {
     	StopCallback();
     	finish();
     	
+    	return;
     	}};
        	
-    BroadcastReceiver callAborted = new BroadcastReceiver() {
+    BroadcastReceiver callPending = new BroadcastReceiver() {
        	@Override
            public void onReceive(Context context, Intent intent) {
-      	if (!intent.getAction().equals("i4nc4mp.myLockcomplete.lifecycle.CALL_ABORT")) return;
-       		//do anything special we need to do right after the call abort
-       		//we might not even need this broadcast in this mode
-            	
+      	if (!intent.getAction().equals("i4nc4mp.myLockcomplete.lifecycle.CALL_PENDING")) return;
+       		//incoming call does not steal focus till user grabs a tab
+      		//lifecycle treats this like a home key exit
+      		//forcing dormant state here will allow us to only exit if call is answered
+      		dormant = true;
+      		return;            	
       	}};
     
 
@@ -260,6 +268,7 @@ public class GuardActivity extends Activity {
 	
 	Log.v("exit intent received","calling finish");
 	finish();//we will still have focus because this comes from the mediator as a wake event
+	return;
 	}};
 
 	class Task implements Runnable {
@@ -320,10 +329,6 @@ public class GuardActivity extends Activity {
         	finish();
         }
         
-        //starting = true;//this way if we get brought back we'll be aware of it
-        //changed this activity to always finish when exited. never hangs out in background
-        
-        //StopCallback();
     }
     
     @Override
@@ -338,13 +343,21 @@ public class GuardActivity extends Activity {
     		//so we need to exit now, as it is a user nav, not a dormancy event
     		Log.v("navigation exit","got paused without focus, starting dismiss sequence");
     		
+    		//nav exit is incidentally failing, saying verifyUnlock is being called without external disable
+    		//doesn't seem tied to any specific circumstance, just happens rarely due to timing
+    		//when we attempt to launch a notification shortcut such as gtalk event
+    		//ManageKeyguard.disableKeyguard(getApplicationContext());
+    		//serviceHandler.postDelayed(myTask, 50);
     		
-    		ManageKeyguard.disableKeyguard(getApplicationContext());
-    		//this method seems to fail after incidental home key usage..
-    		//apparently OS is still locking us out for not calling restore
-    		//StartDismiss(getApplicationContext());
+    		//anytime we lose focus before pause, we are calling disable
+    		//this will exit properly as we navigate out
+    		ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
+                public void LaunchOnKeyguardExitSuccess() {
+                   Log.v("doExit", "This is the exit callback");
+                   StopCallback();
+                   finish();
+                    }});
     		
-    		serviceHandler.postDelayed(myTask, 50);
     	}
     	else Log.v("lock paused","normal pause - we still have focus");    	
     }
@@ -367,7 +380,7 @@ public class GuardActivity extends Activity {
        
        unregisterReceiver(screenon);
        unregisterReceiver(callStarted);
-       unregisterReceiver(callAborted);
+       unregisterReceiver(callPending);
        unregisterReceiver(idleExit);
     	
        Log.v("destroy Guard","Destroying");
@@ -390,6 +403,11 @@ public class GuardActivity extends Activity {
     			Log.v("regained","we are no longer dormant");
     			dormant = false;
     		}
+    		else if (pendingExit) {
+    			Log.v("regained","we are no longer pending nav exit");
+    			pendingExit = false;
+    			ManageKeyguard.reenableKeyguard();
+    		}
     	}
     	else {    		    		   		
     		if (!finishing && paused) {
@@ -401,10 +419,20 @@ public class GuardActivity extends Activity {
    						
    					//Intent i = new Intent("i4nc4mp.myLockcomplete.lifecycle.HOMEKEY_UNLOCK");
    			        //getApplicationContext().sendBroadcast(i);
+   					
+   					//we force dormant when a call starts ringing because lifecycle treats it like a user navigation
+   					// prevents the exit when focus loss occurs if user interacts with call decision slider
+   					
+   					//so far the case works always for home button exit, I have not seen any timing failures
   				}
    				else Log.v("focus lost while paused","external event has taken focus");
     		}
-    		else if (!paused) Log.v("focus yielded while active","about to exit through notif nav");
+    		else if (!paused) {
+    			//not paused, losing focus, we are going to manually disable KG
+    			Log.v("focus yielded while active","about to exit through notif nav");
+    			pendingExit = true;
+    			ManageKeyguard.disableKeyguard(getApplicationContext());
+    		}
     	}
     }
     
