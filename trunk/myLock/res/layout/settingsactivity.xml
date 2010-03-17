@@ -12,10 +12,10 @@
 	>
 	</Button>
 	
-<CheckBox android:text="@string/wakeBox" android:id="@+id/wakeBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
 <!-- CheckBox android:text="@string/shakeBox" android:id="@+id/shakeBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox  -->
-<CheckBox android:text="@string/secureBox" android:id="@+id/secureBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
 <CheckBox android:text="@string/fgBox" android:id="@+id/fgBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
 <CheckBox android:text="@string/bootBox" android:id="@+id/bootBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
+
+<TextView android:text="@string/HowToText1" android:id="@+id/HowTo1" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView><TextView android:text="@string/HowToText2" android:id="@+id/HowTo2" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView><TextView android:text="@string/HowToText3" android:id="@+id/HowTo3" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
 
 </LinearLayout>
