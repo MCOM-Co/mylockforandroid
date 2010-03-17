@@ -38,18 +38,15 @@ import android.widget.Toast;
 public class SettingsActivity extends Activity {
 	
 	public boolean triedstart = false;
-	
-	
+		
 	public boolean persistentNotif = true;
-    public boolean awake = false;
     
     //public boolean customLock = false;
     //public boolean customLock = true;
     
     public boolean boot = false;
     //public boolean shakewake = false;
-    
-    public boolean secure = false;
+
     	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -65,29 +62,6 @@ public class SettingsActivity extends Activity {
           		TryToggle();
           	}
           });
-       
-       final CheckBox wake = (CheckBox)findViewById(R.id.wakeBox);
-
-       wake.setChecked((awake));        
-               
-       wake.setOnClickListener(new OnClickListener() {
-
-                   public void onClick(View v) {
-                	   SharedPreferences set = getSharedPreferences("myLock", 0);
-                	   SharedPreferences.Editor editor = set.edit(); 
-                	   
-                	   editor.putBoolean("StayAwake", wake.isChecked());
-
-                       // Don't forget to commit your edits!!!
-                       editor.commit();
-                       //finally, do the change
-                       //ToggleWake();
-                       //no longer use independent service, we need specific start and stops to cooperate with lock activity
-                       if (wake.isChecked()) Toast.makeText(SettingsActivity.this, "stay awake initialized", Toast.LENGTH_SHORT).show();
-                       else Toast.makeText(SettingsActivity.this, "stay awake disabled", Toast.LENGTH_SHORT).show();
-                       startService();//repeat start will detect the change
-                   }
-               });
        
        /*final CheckBox shake = (CheckBox)findViewById(R.id.shakeBox);
 
@@ -117,30 +91,6 @@ public class SettingsActivity extends Activity {
                        }
                    }
                });*/
-       
-       final CheckBox security = (CheckBox)findViewById(R.id.secureBox);
-       
-       security.setChecked((secure));        
-       
-       security.setOnClickListener(new OnClickListener() {
-
-                   public void onClick(View v) {
-                	   SharedPreferences set = getSharedPreferences("myLock", 0);
-                	   SharedPreferences.Editor editor = set.edit(); 
-                	   
-                	   editor.putBoolean("secure", security.isChecked());
-
-                       // Don't forget to commit your edits!!!
-                       editor.commit();
-                 
-                       //The current mode needs to be stopped
-                       stopService();//it will go by the existing pref
-                       triedstart = false;//ensures next toggle command will start the new mode
-                       Toast.makeText(SettingsActivity.this, "Press toggle to complete mode change", Toast.LENGTH_SHORT).show();
-                       secure = !secure;//toggle it locally for reference of next toggle press
-
-                   }
-               });
        
        final CheckBox fg = (CheckBox)findViewById(R.id.fgBox);
        
@@ -187,28 +137,23 @@ public class SettingsActivity extends Activity {
         }*/
     	
         persistentNotif = settings.getBoolean("FG", true);
-        awake = settings.getBoolean("StayAwake", false);
-        //customLock = settings.getBoolean("welcome", false);
+        
         boot = settings.getBoolean("boot", false);
         //shakewake = settings.getBoolean("ShakeWakeup", false);
-        secure = settings.getBoolean("secure", false);
     }
     
     /*start and stop methods rely on pref and are only used by toggle button*/
     private void startService(){
    			Intent i = new Intent();
    			//if (!customLock) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LockSkipService");
-   			if (secure) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.SecureLockService");
-   			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
+   			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
    			startService(i);
    			Log.d( getClass().getSimpleName(), "startService()" );
    		}
     
     private void stopService() {
 			Intent i = new Intent();
-			//if (!customLock) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LockSkipService");
-			if (secure) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.SecureLockService");
-			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
+			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
 			stopService(i);
 			Log.d( getClass().getSimpleName(), "stopService()" );
     }
@@ -227,13 +172,6 @@ public class SettingsActivity extends Activity {
     		Toast.makeText(SettingsActivity.this, "myLock has been stopped", Toast.LENGTH_SHORT).show();
     	}
     }
-
-    private void ToggleWake() {    	
-    		Intent i = new Intent();
-    		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.StayAwakeService");
-    		startService(i);
-    		//service handles itself, closing if start is called while it is active
-    	}
     
     @Override
     public void onBackPressed() {
