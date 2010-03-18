@@ -9,6 +9,8 @@ import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PowerManager;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -51,6 +53,7 @@ public class BasicGuardActivity extends Activity {
 	//import from the guard activity from Complete revision
 	Handler serviceHandler;
     Task myTask = new Task();
+    OtherTask dismissthread = new OtherTask(); 
 
 
 /* Lifecycle flags */
@@ -74,7 +77,12 @@ public boolean pendingExit = false;
 public boolean slideWakeup = false;
 //we will set this when we detect slideopen, only used with instant unlock (replacement for 2c ver)
 
-//====Items in the default custom lockscreen    
+public boolean pendingDismiss = false;
+//will be set true when we launch the dismiss window for auto and user requested exits
+//this ensures focus changes and pause/resume will be ignored to allow dismiss activity to finish
+
+//====Items in the default custom lockscreen
+/*
 private Button mrewindIcon;
 private Button mplayIcon;
 private Button mpauseIcon;
@@ -84,6 +92,7 @@ public TextView curhour;
 public TextView curmin;
 
 public TextView batt;
+*/
     
     
     //very very complicated business.
@@ -195,9 +204,9 @@ private void updateLayout() {
 @Override
 public void onBackPressed() {
     //Back will cause unlock
+    
     StartDismiss(getApplicationContext());
-    finishing = true;
-    //to close self from the background, we will call finish in onStop
+    finishing=true;
 }
 
 
@@ -209,11 +218,14 @@ BroadcastReceiver screenon = new BroadcastReceiver() {
     public void onReceive(Context context, Intent intent) {
             if (!intent.getAction().equals(Screenon)) return;
             
-    if (hasWindowFocus() && !slideWakeup) onBackPressed();
-            
-    //complication with slider open, for some reason we gain focus before the screen on
-    //theres a major lag in screen waking up when you slide open, for some reason
-            
+    if (hasWindowFocus() && !slideWakeup) {
+    	serviceHandler.postDelayed(dismissthread, 50L);
+    	//this one works but makes total delay threads .1 sec / 100MS
+    	
+    	//StartDismiss(getApplicationContext());
+    	//finish();
+    }
+                  
     return;//avoid unresponsive receiver error outcome
          
 }};
@@ -266,20 +278,22 @@ public void onReceive(Context context, Intent intent) {
             }});
     }}
     
+    class OtherTask implements Runnable {
+    public void run() {
+    		onBackPressed();
+    	}
+    }
+    
     
     @Override
 public void onConfigurationChanged(Configuration newConfig) {
     super.onConfigurationChanged(newConfig);
     if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO) {
             //this means that a config change happened and the keyboard is open.
-            if (starting) {
-                    Log.v("slide-open lock","aborting handling, slide was opened before this lock");
-            }
-            else {
-            //ManageKeyguard.disableKeyguard(getApplicationContext());
-                            
-            slideWakeup = true;
-            }
+            if (starting) Log.v("slide-open lock","aborting handling, slide was opened before this lock");
+            else slideWakeup = true;
+            //TODO send the user a toast here telling them it's time to press back to unlock
+            
     }
     else if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES)
             Log.v("slide closed","lockscreen activity got the config change from background");      
@@ -288,7 +302,9 @@ public void onConfigurationChanged(Configuration newConfig) {
     @Override
 protected void onStop() {
     super.onStop();
-            
+    
+    //if (pendingDismiss) return;
+    
     if (finishing) {
             Log.v("lock stop","we have been unlocked by a user exit request");
     }
@@ -321,17 +337,11 @@ protected void onPause() {
     
     paused = true;
     
-    if (!starting && !hasWindowFocus()) {
+    if (!starting && !hasWindowFocus() && !pendingDismiss) {
             //case: we yielded focus to something but didn't pause. Example: notif panel
             //pause in this instance means something else is launching, that is about to try to stop us
             //so we need to exit now, as it is a user nav, not a dormancy event
             Log.v("navigation exit","got paused without focus, starting dismiss sequence");
-            
-            //nav exit is incidentally failing, saying verifyUnlock is being called without external disable
-            //doesn't seem tied to any specific circumstance, just happens rarely due to timing
-            //when we attempt to launch a notification shortcut such as gtalk event
-            //ManageKeyguard.disableKeyguard(getApplicationContext());
-            //serviceHandler.postDelayed(myTask, 50);
             
             //anytime we lose focus before pause, we are calling disable
             //this will exit properly as we navigate out
@@ -350,6 +360,11 @@ protected void onPause() {
 protected void onResume() {
     super.onResume();
     Log.v("lock resume","resuming, focus is " + hasWindowFocus());
+    /*if (pendingDismiss) {
+    	StopCallback();
+    	finish();
+    }*/
+    //ultimately that works but it takes twice the latency
     paused = false;
     
     //updateClock();
@@ -360,6 +375,7 @@ public void onDestroy() {
     super.onDestroy();
             
    serviceHandler.removeCallbacks(myTask);
+   serviceHandler.removeCallbacks(dismissthread);
    serviceHandler = null;
    
    unregisterReceiver(screenon);
@@ -393,7 +409,7 @@ public void onWindowFocusChanged (boolean hasFocus) {
                     ManageKeyguard.reenableKeyguard();
             }
     }
-    else {                                                  
+    else if (!pendingDismiss) {                                                  
             if (!finishing && paused) {
                             if (!dormant) {
                                     Log.v("home key exit","launching full secure exit");
@@ -442,7 +458,6 @@ public void StopCallback() {
 
 public void StartDismiss(Context context) {
     
-    
     Class w = DismissActivity.class; 
                   
     Intent dismiss = new Intent(context, w);
@@ -451,31 +466,20 @@ public void StartDismiss(Context context) {
                     | Intent.FLAG_ACTIVITY_NO_HISTORY//Ensures the activity WILL be finished after the one time use
                     | Intent.FLAG_ACTIVITY_NO_ANIMATION);
                     
-    startActivity(dismiss);
-    //Here, we also need to initiate finish, as our focus loss is treating it as dormancy
+    pendingDismiss = true;
+    startActivity(dismiss);//ForResult(dismiss, 1);
+    
     finish();
-    //works like a charm for user initiated exit.
+    
+    //we will try doing finishFromChild instead
+    //it isn't working at all. the log event never even appears.
 }
 
-
-//Only will be used for the update to the first market beta to make it a full "Simple version" release
-//TODO it is possible the dismiss method is better all around.
-public void DoExit(Context context) {//try the alpha keyguard manager secure exit
-    
-    //ManageKeyguard.initialize(context);
-    //PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
-    //pm.userActivity(SystemClock.uptimeMillis(), false);
-    //ensure it will be awake
-    
-    if (!slideWakeup) ManageKeyguard.disableKeyguard(getApplicationContext());
-    else {
-            slideWakeup = false;
-            Log.v("completing slider open wake","about to try secure exit");
-    }
-    
-    serviceHandler.postDelayed(myTask, 50);
-    
-              
-}        
+/*
+@Override
+public void finishFromChild (Activity child) {
+	Log.v("finish from child","closing guard");
+	finish();
+}*/
 
 }

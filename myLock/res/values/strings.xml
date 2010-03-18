@@ -8,7 +8,7 @@
 <string name="bootBox">Automatically start myLock after first unlock.</string>
 <string name="HowToText1">myLock skips the lockscreen for you. This means that you still wake up the phone with the power key or any keypad button while the slider is open, but the unlock screen will no longer be required. myLock also protects the phone from unlocking if the keypad slider is bumped in your pocket. Press the back key to unlock after waking via the keypad slide.</string>
 <string name="HowToText2">To get started, press the Toggle button. Pattern security is automatically disabled when myLock starts, and it will conveniently restore if you toggle myLock off. Please note that start at boot will occur after you unlock the lockscreen or security pattern the first time, for OS security reasons. This may not work if you have wavesecure or screebl starting at boot.</string>
-<string name="HowToText3">If you experience any problems, please download Log Collector (free from the market) and use it to email us at myLockandroid@gmail.com if you experience any problems. Be sure to tell us in the subject line the time the error happened and what other services are running in the Settings->Applications->Running Services screen.</string>
+<string name="HowToText3">If you experience any problems, download Log Collector (free from the market) to email us at myLockandroid@gmail.com. Be sure to list the problem symptoms and what other services are running in the Settings->Applications->Running Services screen.</string>
 
 
 </resources>
