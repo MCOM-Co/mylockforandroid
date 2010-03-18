@@ -1,6 +1,13 @@
 #summary Quick breakdown of features in the current release builds - please go to the market to download the latest featured releases.
 #labels Featured
 
+= myLock basic, market version 2 =
+http://mylockforandroid.googlecode.com/files/myLock_guardedbasic_test.apk
+  * Persistence & start at boot after first unlock toggles
+  * Guarded mode which prevents slide-open from auto-unlocking
+
+http://mylockforandroid.googlecode.com/files/mL_basic_v2_settings.jpg
+
 = myLock alpha 2c / market beta version 1=
 http://mylockforandroid.googlecode.com/files/myLock_alpha2c.apk
 
