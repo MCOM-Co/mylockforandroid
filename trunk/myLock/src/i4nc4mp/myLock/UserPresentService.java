@@ -69,7 +69,7 @@ public class UserPresentService extends Service {
 	    	//boothandler should start the secure mode immediately at boot
 	    	
 	    	
-			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
+			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
 	    	//i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.SecureLockService");
 			startService(i);
 	    	//call stopSelf
