@@ -115,13 +115,13 @@ public class BasicGuardService extends MediatorService {
             //if not always holding partial we would only acquire at Lock activity exit callback
             //we found we always need it to ensure key events will not occasionally drop on the floor from idle state wakeup
             
-            IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.IDLE_TIMEOUT");
+            IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLock.lifecycle.IDLE_TIMEOUT");
             registerReceiver(idleExit, idleFinish);
             
-            IntentFilter lockStart = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.LOCKSCREEN_PRIMED");
+            IntentFilter lockStart = new IntentFilter ("i4nc4mp.myLock.lifecycle.LOCKSCREEN_PRIMED");
             registerReceiver(lockStarted, lockStart);
             
-            IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.LOCKSCREEN_EXITED");
+            IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED");
             registerReceiver(lockStopped, lockStop);
             
             //IntentFilter home = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.HOMEKEY_UNLOCK");
@@ -132,7 +132,7 @@ public class BasicGuardService extends MediatorService {
             @Override
         public void onReceive(Context context, Intent intent) {
                     
-            if (!intent.getAction().equals("i4nc4mp.myLockcomplete.lifecycle.LOCKSCREEN_PRIMED")) return;
+            if (!intent.getAction().equals("i4nc4mp.myLock.lifecycle.LOCKSCREEN_PRIMED")) return;
 
             if (!PendingLock) Log.v("lock start callback","did not expect this call");
             else PendingLock = false;
@@ -153,7 +153,7 @@ public class BasicGuardService extends MediatorService {
     BroadcastReceiver lockStopped = new BroadcastReceiver() {
             @Override
         public void onReceive(Context context, Intent intent) {
-            if (!intent.getAction().equals("i4nc4mp.myLockcomplete.lifecycle.LOCKSCREEN_EXITED")) return;
+            if (!intent.getAction().equals("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED")) return;
 
             if (shouldLock) Log.v("lock exit callback","did not expect this call"); 
             else shouldLock = true;
@@ -174,7 +174,7 @@ public class BasicGuardService extends MediatorService {
                     ManageKeyguard.reenableKeyguard();
                                                               
                     Intent u = new Intent();
-                    u.setClassName("i4nc4mp.myLockcomplete", "i4nc4mp.myLockcomplete.UserPresentService");
+                    u.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UserPresentService");
                     //service that reacts to the completion of the keyguard to start this mediator again
                     startService(u);
                     stopSelf();
@@ -195,7 +195,7 @@ public class BasicGuardService extends MediatorService {
     BroadcastReceiver idleExit = new BroadcastReceiver() {
             @Override
         public void onReceive(Context context, Intent intent) {
-            if (!intent.getAction().equals("i4nc4mp.myLockcomplete.lifecycle.IDLE_TIMEOUT")) return;
+            if (!intent.getAction().equals("i4nc4mp.myLock.lifecycle.IDLE_TIMEOUT")) return;
                             
             idle = true;
             
@@ -353,7 +353,7 @@ public class BasicGuardService extends MediatorService {
             if (!shouldLock) {
                     //should is only false while lock activity is alive
                     //we don't have to do anything for calls initiated as no lock activity is alive
-            Intent intent = new Intent("i4nc4mp.myLockcomplete.lifecycle.CALL_START");
+            Intent intent = new Intent("i4nc4mp.myLock.lifecycle.CALL_START");
             getApplicationContext().sendBroadcast(intent);
             }
             else shouldLock = false;
@@ -389,7 +389,7 @@ public class BasicGuardService extends MediatorService {
     
     @Override
     public void onCallRing() {      
-            Intent intent = new Intent("i4nc4mp.myLockcomplete.lifecycle.CALL_PENDING");
+            Intent intent = new Intent("i4nc4mp.myLock.lifecycle.CALL_PENDING");
             getApplicationContext().sendBroadcast(intent);
             //lets the activity know it should not treat focus loss as a navigation exit
             //this will keep activity alive, only stopping it at call accept
