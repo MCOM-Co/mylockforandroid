@@ -18,13 +18,6 @@
                 android:taskAffinity=""
                 android:screenOrientation="nosensor"
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>
-       <activity android:name="ShowWhenLockedActivity"
-                android:excludeFromRecents="true"
-                android:theme="@android:style/Theme.Wallpaper.NoTitleBar"
-                android:launchMode="singleInstance"
-                android:taskAffinity=""
-                android:screenOrientation="nosensor"
-                android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>
        <activity android:name="DismissActivity"
                 android:excludeFromRecents="true"
                 android:theme="@android:style/Theme.Wallpaper.NoTitleBar"
