@@ -53,7 +53,7 @@ public class BasicGuardActivity extends Activity {
 	//import from the guard activity from Complete revision
 	Handler serviceHandler;
     Task myTask = new Task();
-    OtherTask dismissthread = new OtherTask(); 
+    //OtherTask dismissthread = new OtherTask(); 
 
 
 /* Lifecycle flags */
@@ -148,14 +148,14 @@ protected void onCreate(Bundle icicle) {
     IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
             registerReceiver(screenon, onfilter);
     
-    IntentFilter callbegin = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.CALL_STARTED");
+    IntentFilter callbegin = new IntentFilter ("i4nc4mp.myLock.lifecycle.CALL_START");
     registerReceiver(callStarted, callbegin);  
     
-    IntentFilter callpend = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.CALL_PENDING");
+    IntentFilter callpend = new IntentFilter ("i4nc4mp.myLock.lifecycle.CALL_PENDING");
     registerReceiver(callPending, callpend);
     
-            IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.IDLE_TIMEOUT");
-            registerReceiver(idleExit, idleFinish);
+    IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLock.lifecycle.IDLE_TIMEOUT");
+    registerReceiver(idleExit, idleFinish);
             
     serviceHandler = new Handler();
 }
@@ -219,10 +219,9 @@ BroadcastReceiver screenon = new BroadcastReceiver() {
             if (!intent.getAction().equals(Screenon)) return;
             
     if (hasWindowFocus() && !slideWakeup) {
-    	serviceHandler.postDelayed(dismissthread, 50L);
+    	//serviceHandler.postDelayed(dismissthread, 50L);
     	//this one works but makes total delay threads .1 sec / 100MS
-    	
-    	//StartDismiss(getApplicationContext());
+       	StartDismiss(getApplicationContext());
     	//finish();
     }
                   
@@ -233,9 +232,11 @@ BroadcastReceiver screenon = new BroadcastReceiver() {
 BroadcastReceiver callStarted = new BroadcastReceiver() {
     @Override
     public void onReceive(Context context, Intent intent) {
-    if (!intent.getAction().equals("i4nc4mp.myLockcomplete.lifecycle.CALL_START")) return;
+    if (!intent.getAction().equals("i4nc4mp.myLock.lifecycle.CALL_START")) return;
     
     //we are going to be dormant while this happens, therefore we need to force finish
+    Log.v("guard received broadcast","completing callback and finish");
+    
     StopCallback();
     finish();
     
@@ -245,7 +246,7 @@ BroadcastReceiver callStarted = new BroadcastReceiver() {
 BroadcastReceiver callPending = new BroadcastReceiver() {
     @Override
        public void onReceive(Context context, Intent intent) {
-    if (!intent.getAction().equals("i4nc4mp.myLockcomplete.lifecycle.CALL_PENDING")) return;
+    if (!intent.getAction().equals("i4nc4mp.myLock.lifecycle.CALL_PENDING")) return;
             //incoming call does not steal focus till user grabs a tab
             //lifecycle treats this like a home key exit
             //forcing dormant state here will allow us to only exit if call is answered
@@ -257,7 +258,7 @@ BroadcastReceiver callPending = new BroadcastReceiver() {
     BroadcastReceiver idleExit = new BroadcastReceiver() {
     @Override
 public void onReceive(Context context, Intent intent) {
-    if (!intent.getAction().equals("i4nc4mp.myLockcomplete.lifecycle.IDLE_TIMEOUT")) return;
+    if (!intent.getAction().equals("i4nc4mp.myLock.lifecycle.IDLE_TIMEOUT")) return;
     
     finishing = true;
     idle = true;
@@ -278,11 +279,11 @@ public void onReceive(Context context, Intent intent) {
             }});
     }}
     
-    class OtherTask implements Runnable {
+    /*class OtherTask implements Runnable {
     public void run() {
     		onBackPressed();
     	}
-    }
+    }*/
     
     
     @Override
@@ -303,7 +304,7 @@ public void onConfigurationChanged(Configuration newConfig) {
 protected void onStop() {
     super.onStop();
     
-    //if (pendingDismiss) return;
+    if (pendingDismiss) return;
     
     if (finishing) {
             Log.v("lock stop","we have been unlocked by a user exit request");
@@ -319,7 +320,7 @@ protected void onStop() {
         else if (!hasWindowFocus()) {
             //we got paused, lost focus, then finally stopped
             //this only happens if user is navigating out via notif, popup, or home key shortcuts
-            Log.v("lock stop","onStop is telling mediator we have been unlocked by user navigation");               
+            Log.v("lock stop","onStop is telling mediator we have been unlocked by user navigation");
         }
     }
     else Log.v("unexpected onStop","lockscreen was stopped for unknown reason");
@@ -364,7 +365,7 @@ protected void onResume() {
     	StopCallback();
     	finish();
     }*/
-    //ultimately that works but it takes twice the latency
+
     paused = false;
     
     //updateClock();
@@ -375,7 +376,7 @@ public void onDestroy() {
     super.onDestroy();
             
    serviceHandler.removeCallbacks(myTask);
-   serviceHandler.removeCallbacks(dismissthread);
+   //serviceHandler.removeCallbacks(dismissthread);
    serviceHandler = null;
    
    unregisterReceiver(screenon);
@@ -417,13 +418,7 @@ public void onWindowFocusChanged (boolean hasFocus) {
                                     ManageKeyguard.disableKeyguard(getApplicationContext());
                                     serviceHandler.postDelayed(myTask, 50);
                                             
-                                    //Intent i = new Intent("i4nc4mp.myLockcomplete.lifecycle.HOMEKEY_UNLOCK");
-                            //getApplicationContext().sendBroadcast(i);
                                     
-                                    //we force dormant when a call starts ringing because lifecycle treats it like a user navigation
-                                    // prevents the exit when focus loss occurs if user interacts with call decision slider
-                                    
-                                    //so far the case works always for home button exit, I have not seen any timing failures
                             }
                             else Log.v("focus lost while paused","external event has taken focus");
             }
@@ -447,12 +442,12 @@ protected void onStart() {
 }
 
 public void StartCallback() {
-    Intent i = new Intent("i4nc4mp.myLockcomplete.lifecycle.LOCKSCREEN_PRIMED");
+    Intent i = new Intent("i4nc4mp.myLock.lifecycle.LOCKSCREEN_PRIMED");
     getApplicationContext().sendBroadcast(i);
 }
 
 public void StopCallback() {
-    Intent i = new Intent("i4nc4mp.myLockcomplete.lifecycle.LOCKSCREEN_EXITED");
+    Intent i = new Intent("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED");
     getApplicationContext().sendBroadcast(i);
 }
 
@@ -469,17 +464,8 @@ public void StartDismiss(Context context) {
     pendingDismiss = true;
     startActivity(dismiss);//ForResult(dismiss, 1);
     
-    finish();
-    
-    //we will try doing finishFromChild instead
-    //it isn't working at all. the log event never even appears.
+    //finish();
+    //instead, we will get a call started CB from the dismiss activity as soon as it has focus
+    //there might be an advantage to calling move task to back, then finish
 }
-
-/*
-@Override
-public void finishFromChild (Activity child) {
-	Log.v("finish from child","closing guard");
-	finish();
-}*/
-
 }
