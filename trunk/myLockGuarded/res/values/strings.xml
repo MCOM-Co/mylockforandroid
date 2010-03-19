@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<string name="welcome">myLock Settings</string>
+<string name="app_name">myLock beta</string>
+<string name="toggleButton">Toggle myLock</string>
+<string name="fgBox">Persistent mode- Protects myLock from being killed by system, and provides settings shortcut notification</string>
+<string name="shakeBox">Shake will unlock from sleep (may impact battery life)</string>
+<string name="welcomeBox">Use widget lockscreen</string>
+<string name="secureBox">Secure mode- The custom lockscreen comes up first, then requires regular unlock verification on exit.</string>
+<string name="bootBox">Start myLock when phone is first unlocked after boot</string>
+<string name="PwrTitle">Power Key</string>
+<string name="CamTitle">Camera Key</string>
+<string name="LockedOpt">Locked</string>
+<string name="WakeupOpt">Wake Lockscreen</string>
+<string name="UnlockOpt">Instant Unlock</string> 
+</resources>
