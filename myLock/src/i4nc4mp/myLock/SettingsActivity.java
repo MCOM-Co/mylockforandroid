@@ -2,38 +2,21 @@ package i4nc4mp.myLock;
 
 
 import android.app.Activity;
-import android.content.ComponentName;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.Toast;
-
-//settings - we need a few branches. we will have 3 modes - (radio selector)
-
-//Basic lockscreen disable - (a2c, pre 2.0 keyguard manager interaction)
-//		====DO WE NEED THIS MODE?
-
-//Utility lockscreen - dismiss_keyguard activity, allows button customization dialogue
-/*User Types
-	+any key instant unlock (IMPATIENT: never want guarding) they should just use screen mode widget
-	+customizable lockscreen (MODERATE: may want a specific key or all keys to wake lockscreen but may want instant unlock too)
-	+slide to unlock + util lockscreen, with any key wake (WORRIERS: never want instant unlock)
- */
-
-//Secure mode - show_when_locked activity, no button customization. just gives the utility lockscreen on top of pattern mode
-//=====special type of user who has secure mode and wants to access the util lock before having to do pattern
 
 //=====most reasonable moderate = want pattern to come on if phone is left idle for too long
 //If not in secure mode, idle timeout option is set. User enters a number of minutes. if 0, no timeout gets enabled
 //when set to 1 or more, idle timer will run
 
+//TODO implement a box user can put number of minutes to enable idle lockdown
+//TODO implement ToggleButton to utilize pref serviceactive and get rid of TryToggle
 
 public class SettingsActivity extends Activity {
 	
@@ -41,11 +24,10 @@ public class SettingsActivity extends Activity {
 		
 	public boolean persistentNotif = true;
     
-    //public boolean customLock = false;
-    //public boolean customLock = true;
-    
     public boolean boot = false;
     //public boolean shakewake = false;
+    
+    public boolean active = false;
 
     	
     @Override
@@ -55,11 +37,23 @@ public class SettingsActivity extends Activity {
        
       getPrefs();//grabs our user's current settings for startup commands
       
-       Button toggle = (Button)findViewById(R.id.toggleButton);
+      final CheckBox toggle = (CheckBox)findViewById(R.id.activeBox);
+      
+      toggle.setChecked(active);
         
-       toggle.setOnClickListener(new OnClickListener() {
+      toggle.setOnClickListener(new OnClickListener() {
           	public void onClick(View v){
-          		TryToggle();
+          		if (toggle.isChecked()) {
+          			startService();
+            		Toast.makeText(SettingsActivity.this, "myLock is now enabled", Toast.LENGTH_SHORT).show();
+          		}
+          		else {
+          			//the stop case will do nothing if the service had crashed or been force closed
+          			//or if the device was rebooted without a clean exit
+          			//it will still think it is running
+          			stopService();
+          			Toast.makeText(SettingsActivity.this, "myLock is now disabled", Toast.LENGTH_SHORT).show();
+          		}
           	}
           });
        
@@ -140,12 +134,14 @@ public class SettingsActivity extends Activity {
         
         boot = settings.getBoolean("boot", false);
         //shakewake = settings.getBoolean("ShakeWakeup", false);
+        
+        active = settings.getBoolean("serviceactive", false);
     }
     
     /*start and stop methods rely on pref and are only used by toggle button*/
     private void startService(){
    			Intent i = new Intent();
-   			//if (!customLock) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LockSkipService");
+   			
    			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
    			startService(i);
    			Log.d( getClass().getSimpleName(), "startService()" );
