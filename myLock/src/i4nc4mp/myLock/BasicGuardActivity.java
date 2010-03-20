@@ -296,8 +296,10 @@ public void onConfigurationChanged(Configuration newConfig) {
             //TODO send the user a toast here telling them it's time to press back to unlock
             
     }
-    else if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES)
-            Log.v("slide closed","lockscreen activity got the config change from background");      
+    else if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES) {
+    	Log.v("slide closed","lockscreen activity got the config change from background");
+    }
+                  
 }
 
     @Override
@@ -354,7 +356,13 @@ protected void onPause() {
                 }});
             
     }
-    else Log.v("lock paused","normal pause - we still have focus");         
+    else {
+    	Log.v("lock paused","normal pause - we still have focus");
+    	if (slideWakeup) {
+    		Log.v("returning to sleep","toggling slide wakeup false");
+    		slideWakeup = false;
+    	}
+    }
 }
 
 @Override
