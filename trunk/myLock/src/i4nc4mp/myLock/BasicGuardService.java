@@ -43,14 +43,23 @@ public class BasicGuardService extends MediatorService {
     
     @Override
     public void onDestroy() {
-            super.onDestroy();
+    	super.onDestroy();
+            
+        SharedPreferences settings = getSharedPreferences("myLock", 0);
+        SharedPreferences.Editor editor = settings.edit();
             
             if (patternsetting == 1) {
-                    android.provider.Settings.System.putInt(getContentResolver(), 
+            	            	
+                android.provider.Settings.System.putInt(getContentResolver(), 
                     android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
-    //re-enable pattern lock if applicable
+                    
+                
+        		editor.putBoolean("securepaused", false);
+        		
+        		// Don't forget to commit your edits!!!
+        		//editor.commit();
             }
-                    serviceHandler.removeCallbacks(myTask);
+                serviceHandler.removeCallbacks(myTask);
                 serviceHandler = null;
                 
                 unregisterReceiver(idleExit);
@@ -58,6 +67,9 @@ public class BasicGuardService extends MediatorService {
                 unregisterReceiver(lockStopped);
                 //unregisterReceiver(homeUnlock);
                 
+                
+                editor.putBoolean("serviceactive", false);
+                editor.commit();
                 
                 ManageWakeLock.releasePartial();
                 
@@ -87,15 +99,13 @@ public class BasicGuardService extends MediatorService {
     @Override
     public void onFirstStart() {
             SharedPreferences settings = getSharedPreferences("myLock", 0);
+            SharedPreferences.Editor editor = settings.edit();
+            
             persistent = settings.getBoolean("FG", true);
-            
             timeoutenabled = settings.getBoolean("timeout", false);
-            
-            
+                        
             if (persistent) doFGstart();
-            //else send a toast telling user what mode is starting and whether stay awake is active
-            //perhaps do that in the boot handler service
-            
+                        
             //we have to toggle pattern lock off to use a custom lockscreen
             try {
                     patternsetting = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.LOCK_PATTERN_ENABLED);
@@ -106,7 +116,16 @@ public class BasicGuardService extends MediatorService {
             
             if (patternsetting == 1) {      
     android.provider.Settings.System.putInt(getContentResolver(), 
-                    android.provider.Settings.System.LOCK_PATTERN_ENABLED, 0); 
+                    android.provider.Settings.System.LOCK_PATTERN_ENABLED, 0);
+    
+    			
+    			editor.putBoolean("securepaused", true);
+    			//will be flagged off on successful exit w/ restore of pattern requirement
+    			//otherwise, it is caught by the boot handler... if myLock gets force closed/uninstalled
+    			//there's no clean resolution to this pause.
+
+    			// Don't forget to commit your edits!!!
+    			//editor.commit();
             }
             
                             
@@ -126,6 +145,9 @@ public class BasicGuardService extends MediatorService {
             
             //IntentFilter home = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.HOMEKEY_UNLOCK");
             //registerReceiver(homeUnlock, home);
+            
+            editor.putBoolean("serviceactive", true);
+            editor.commit();
     }
     
     BroadcastReceiver lockStarted = new BroadcastReceiver() {
@@ -213,7 +235,7 @@ public class BasicGuardService extends MediatorService {
             Context mCon = getApplicationContext();
             Log.v("startLock task","executing, PendingLock is " + PendingLock);
             if (!PendingLock) return;//ensures break the attempt cycle if user has aborted the lock
-            //user can abort Power key lock by another power key, or timeout sleep by any key wakeup
+            //user can abort timeout sleep by any key wakeup
             
             
             //see if any keyguard exists yet
@@ -280,11 +302,9 @@ public class BasicGuardService extends MediatorService {
                     context.sendBroadcast(closeDialogs);
             
                     
-            if (timeoutenabled) ManageKeyguard.disableKeyguard(getApplicationContext());
-            //this just calls a temporary KG pause. doing this allows us to be recognized when we later want to re-enable
-            //we only need this when the timeout mode is active
+            //if (timeoutenabled) ManageKeyguard.disableKeyguard(getApplicationContext());
+            //not necessary in guarded mode since we dont cancel kg till user wakes device
 
-                    //Class w = Lockscreen.class;
                     Class w = BasicGuardActivity.class;
                    
 
@@ -296,7 +316,7 @@ public class BasicGuardService extends MediatorService {
                   //new task required for our service activity start to succeed. exception otherwise
                     lockscreen.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                             | Intent.FLAG_ACTIVITY_NO_USER_ACTION);
-                   //without this flag my alarm clock only buzzes once. but with it wakeup doesn't want to happen (also impacts handcent notifs)
+                   //without this flag my alarm clock only buzzes once.
                            
                     
                             //| Intent.FLAG_ACTIVITY_NO_HISTORY
@@ -309,7 +329,9 @@ public class BasicGuardService extends MediatorService {
                     context.startActivity(lockscreen);
             }
     
-    public void DoExit(Context context) {//try the alpha keyguard manager secure exit
+    public void DoExit(Context context) {
+    //alpha keyguard manager secure exit
+    //no longer used at all thanks to dismiss activity
     
     //ManageKeyguard.initialize(context);
     PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
@@ -317,9 +339,7 @@ public class BasicGuardService extends MediatorService {
     //ensure it will be awake
     
     ManageKeyguard.disableKeyguard(getApplicationContext());
-    //advantage here is we don't have to do a task delay
-    //because we're already showing on top of keyguard this gets the job done
-    
+    //we would typically have called a 50 ms delay thread for the secure exit request call    
     
     ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
         public void LaunchOnKeyguardExitSuccess() {
@@ -351,8 +371,8 @@ public class BasicGuardService extends MediatorService {
     public void onCallStart() {
             
             if (!shouldLock) {
-                    //should is only false while lock activity is alive
-                    //we don't have to do anything for calls initiated as no lock activity is alive
+            //if our lock activity is alive, send broadcast to close it
+                   
             Intent intent = new Intent("i4nc4mp.myLock.lifecycle.CALL_START");
             getApplicationContext().sendBroadcast(intent);
             }

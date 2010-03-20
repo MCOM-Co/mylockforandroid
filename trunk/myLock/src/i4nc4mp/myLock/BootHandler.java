@@ -23,27 +23,42 @@ public class BootHandler extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		SharedPreferences settings = getSharedPreferences("myLock", 0);
+		
+		
 		boolean boot = settings.getBoolean("boot", false);//retrieve user's start at boot pref
-		boolean secure = settings.getBoolean("secure", false);
 		
+		boolean secure = settings.getBoolean("securepaused", false);
+		//this will be true if user had pattern on when they turned on myLock
+		//we turn it back off when we turn pattern mode back on from next user disable myLock
+		//if it is true here, it means the phone rebooted and the pattern was still suppressed
 		
+		boolean active = settings.getBoolean("serviceactive", false);
+		//this should be false.
+		//if it is true, that means that at some point the service was FC, uninstalled,
+		//or this boot is a result of a battery pull or OS crash
 		
+		//we will handle it by forcing pattern back on in the real system settings
+		if (secure) {
+			android.provider.Settings.System.putInt(getContentResolver(), 
+                    android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
+			
+			//set the flag in prefs back to false
+			SharedPreferences.Editor editor = settings.edit();
+			editor.putBoolean("securepaused", false);
+			
+			// Don't forget to commit your edits!!!
+			editor.commit();
+		}
+		
+				
 		if (!boot) {
 			stopSelf();//destroy the process because user doesn't have start at boot enabled
 			return 1;
 		}
 		
-		//boolean custom = settings.getBoolean("welcome", false);//retrieve user's mode pref
-		
 		Intent i = new Intent();
-		
-		//if (!custom) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.NoLockService");
-		//else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.CustomLockService");
-		
-		if (!secure) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UserPresentService");
-		//the service will wait for user to complete the first lockscreen - this protects phone from a restart security circumvention
-		else i.setClassName("i4nc4mp.myLock","i4nc4mp.myLock.SecureLockService");
-			
+				
+		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UserPresentService");		
 		startService(i);
 		
 		stopSelf();

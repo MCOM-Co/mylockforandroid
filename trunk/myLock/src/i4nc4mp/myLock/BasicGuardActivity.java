@@ -461,7 +461,14 @@ public void StopCallback() {
 
 public void StartDismiss(Context context) {
     
-    Class w = DismissActivity.class; 
+	PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+    myPM.userActivity(SystemClock.uptimeMillis(), false);
+    //the KeyguardViewMediator poke doesn't have enough time to register before our handoff sometimes (rare)
+    //this might impact the nexus more than droid. need to test further
+    //result is the screen is off (as the code is successful)
+    //but no keyguard, have to hit any key to wake it back up
+	
+    Class w = DismissActivity.class;
                   
     Intent dismiss = new Intent(context, w);
     dismiss.setFlags(//Intent.FLAG_ACTIVITY_NEW_TASK//For some reason it requires this even though we're already an activity
