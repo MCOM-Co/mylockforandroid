@@ -67,9 +67,6 @@ public class ToggleWidget extends AppWidgetProvider {
       appWidgetManager.updateAppWidget(comp, views);
 		//sends this to update the actual widget view that has been spawned
       
-      //context.startService(new Intent(context, Toggler.class));
-      //no longer auto-start the toggler, user must click widget
-      
       enabled = true;
 		}//as far as I can tell, repeat calls to this do not cause errors
 	}

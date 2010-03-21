@@ -186,10 +186,9 @@ public class BasicGuardService extends MediatorService {
                     
             if (!idle) {
                     if (timeoutenabled) IdleTimer.cancel(getApplicationContext());
-                     
-                    
-                    //PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
-        		   	//pm.userActivity(SystemClock.uptimeMillis(), false);
+                                        
+                    PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
+        		   	pm.userActivity(SystemClock.uptimeMillis(), false);
         		   
                     }
             else {                          
