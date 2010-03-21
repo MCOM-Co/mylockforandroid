@@ -2,16 +2,14 @@ package i4nc4mp.myLock;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.util.Log;
 //functionality for clickable widget, migrated in from the settings activity toggle button
 //run as service since widget UI wants to call this independent of an activity view
+import android.widget.Toast;
 
-//TODO - interface with prefs to toggle the user's preferred mode
-//right now it still interfaces with lite mode only
 public class Toggler extends Service {
-	
-	public boolean triedstart = false;
 	
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -29,37 +27,35 @@ public class Toggler extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.v("Toggler","start command running");
 		
-		TryToggle();
+		//TryToggle();
+		SharedPreferences settings = getSharedPreferences("myLock", 0);
+		
+		boolean active = settings.getBoolean("serviceactive", false);
+		
+		if (!active) {
+			startService();
+    		Toast.makeText(Toggler.this, "myLock is now enabled", Toast.LENGTH_SHORT).show();
+		}
+		else {
+			stopService();
+  			Toast.makeText(Toggler.this, "myLock is now disabled", Toast.LENGTH_SHORT).show();
+		}
 		
 		return 1;
 	}
 	
-	
-	
-	
 private void startService(){
 		Intent i = new Intent();
-		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LiteLockMediator");
+		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
 		startService(i);
 		Log.d( getClass().getSimpleName(), "startService()" );
 }
 
 private void stopService() {
 		Intent i = new Intent();
-		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.LiteLockMediator");
+		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
 		stopService(i);
 		Log.d( getClass().getSimpleName(), "stopService()" );
-}
-
-private void TryToggle() {
-	if (!triedstart) {
-		startService();
-		triedstart = true;
-	}
-	else {
-		triedstart = false;
-		stopService();
-	}
 }
 
 }

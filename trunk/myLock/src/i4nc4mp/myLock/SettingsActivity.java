@@ -29,6 +29,7 @@ public class SettingsActivity extends Activity {
     
     public boolean active = false;
 
+    public CheckBox toggle;
     	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -37,7 +38,7 @@ public class SettingsActivity extends Activity {
        
       getPrefs();//grabs our user's current settings for startup commands
       
-      final CheckBox toggle = (CheckBox)findViewById(R.id.activeBox);
+     toggle = (CheckBox)findViewById(R.id.activeBox);
       
       toggle.setChecked(active);
         
@@ -136,6 +137,14 @@ public class SettingsActivity extends Activity {
         //shakewake = settings.getBoolean("ShakeWakeup", false);
         
         active = settings.getBoolean("serviceactive", false);
+    }
+    
+    @Override
+    public void onResume() {
+    	super.onResume();
+    	
+    	getPrefs();
+    	toggle.setChecked(active);
     }
     
     /*start and stop methods rely on pref and are only used by toggle button*/
