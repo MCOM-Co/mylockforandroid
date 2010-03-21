@@ -2,9 +2,10 @@
 #labels Featured
 
 = myLock basic, market version 2 =
-http://mylockforandroid.googlecode.com/files/myLock_guardedbasic_test.apk
+Released to market on 3/20/10
   * Persistence & start at boot after first unlock toggles
   * Guarded mode which prevents slide-open from auto-unlocking
+  * Homescreen widget toggle button
 
 http://mylockforandroid.googlecode.com/files/mL_basic_v2_settings.jpg
 
