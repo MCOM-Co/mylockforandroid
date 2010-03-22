@@ -1,4 +1,4 @@
-#summary Known solutions for problems we can't fix in the code - these are almost entirely applicable only to the first market beta and release alpha 2c and earlier.
+#summary Known solutions for problems we can't fix in the code.
 #labels Featured
 
 = MOST IMPORTANT: DOWNLOAD LOG COLLECTOR =
@@ -9,6 +9,9 @@ Task killers cause the phone to run slower and cause massive problems for many a
 
 = Why isn't there an option to get rid of the status icon =
 There is. We've tried, but there is no way to work around having the icon in place. You might experience a sudden loss of functionality and have to go back into settings & re-toggle the app if you operate without the persistent icon. In my testing this seems quite rare but every user's setup will be different depending on everything they regularly use on the device. For more about this, check out the official android development post that explains- http://android-developers.blogspot.com/2010/02/service-api-changes-starting-with.html
+
+= why can't you unlock the phone with any key =
+Screenmodewidget & keyguard disabler can do this for you. We will implement button customization in the advanced custom lockscreen version.
 
 = Why do the volume or camera buttons wake it back up sometimes? =
 This is one of the rules of the lockscreen. When a timeout sleep occurs you have a short grace period in which the lockscreen isn't yet engaged, thus allowing any action at all to awaken it again quickly. That means any button, as well as even sliding the slider closed which normally doesn't trigger a wakeup.
