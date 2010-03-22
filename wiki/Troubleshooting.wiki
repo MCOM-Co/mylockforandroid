@@ -25,6 +25,3 @@ To get it working again the device needs to be rebooted by removing the battery 
 
 = It seems to wakeup very slowly or lagged. Sometimes it goes so slow that the lockscreen never goes away but I can slide and unlock =
 This appears to be something that happens regardless of myLock. An example is if you slide it open you'll notice a responsiveness delay as the CPU tasks both rotating & redrawing the lockscreen at once. In addition, I've confirmed that task managers and task killer apps will create noticable lag as they have to frequently load the CPU anytime the screen is awakened to refresh their list of processes. We do not recommend using task management apps because android already polices memory usage very strictly to ensure stability. 
-
-= It goes to sleep too fast when I wake it up and don't immediately take further action =
-This currently only impacts lite mode (activated with the widget button). This is because the lockscreen is only being paused. It is not actually cleared unless home key is used. Therefore, it follows the rule of the lockscreen that times out in 5 seconds unless interaction triggers the regular timeout delay. Lite mode will likely become retired once the beta is released because we use a custom lockscreen to get more consistent performance.
