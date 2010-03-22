@@ -13,29 +13,15 @@ There is. We've tried, but there is no way to work around having the icon in pla
 = Why do the volume or camera buttons wake it back up sometimes? =
 This is one of the rules of the lockscreen. When a timeout sleep occurs you have a short grace period in which the lockscreen isn't yet engaged, thus allowing any action at all to awaken it again quickly. That means any button, as well as even sliding the slider closed which normally doesn't trigger a wakeup.
 
-= How do I use the app and still get handcent popups? =
+= How do I use the app and still get handcent popups? (Alpha 2c) =
 In handcent go to settings > poup setting > enable 'Screen on for Popup', disable 'Show on locked'. This will ensure myLock still works and the two don't cause havoc as they both attempt to react to wakeup. This is only applicable to the market v1 (alpha 2c download here on the project page). We have fixed handcent interaction for the a3 revision.
 
-= It stopped working and won't work again even though I've uninstalled and reinstalled =
+= It stopped working and won't work again even though I've uninstalled and reinstalled (alpha 2c) =
 
-In the most recent versions this should not happen unless an unexpected interaction with other apps that also work with the lockscreen bypass. I have noticed that in the lite version or with persistent mode disabled that the app can also be stopped by the OS during routine memory management, but is normally restarted quickly. This error can also happen if screen goes off after the stop, before the restart finishes. It is very rare. I am working on a fix which will allow us to run the app service immune to those stops without requiring the persistent notification.
-
-To get it working again you need to reboot the device by removing the battery for a few seconds. No other method of restart or re-install will get past the safety block the lockscreen imposes. The block will stop all apps from interacting with the lockscreen. I know this from testing with early versions that had different crashes which were fixed on the path from alpha 1 to alpha 2c. I have not yet had any crash scenarios for 2c reported, so things are looking good.
+To get it working again the device needs to be rebooted by removing the battery for a few seconds. No other method of restart or re-install will get past the safety block the lockscreen imposes. The block will stop all apps from interacting with the lockscreen. I know this from testing with early versions that had different crashes which were fixed on the path from alpha 1 to alpha 2c. I have not yet had any crash scenarios for 2c reported, so things are looking good.
 
 = It seems to wakeup very slowly or lagged. Sometimes it goes so slow that the lockscreen never goes away but I can slide and unlock =
 This appears to be something that happens regardless of myLock. An example is if you slide it open you'll notice a responsiveness delay as the CPU tasks both rotating & redrawing the lockscreen at once. In addition, I've confirmed that task managers and task killer apps will create noticable lag as they have to frequently load the CPU anytime the screen is awakened to refresh their list of processes. We do not recommend using task management apps because android already polices memory usage very strictly to ensure stability. 
 
-= Sometimes I see the  lockscreen flash for an instant, or even linger for a moment after the phone wakes up=
-This happens in alpha 2b and beyond, because we have to tell the main android system that the lockscreen has been dismissed. That fails unless the screen has been awakened and a temporary lockscreen bypass has been initiated. Then we have to create a short delay (50 milliseconds) that the OS expects because the scenario they designed lockscreen bypassing for is where your app ends up getting input from the user that needs to launch something else, at which point it goes back and checks if a password lock was set. For whatever reason, when it does that the flash occurs when secure mode isn't on. If the CPU is loaded it can be up longer. That happens even if you are using the regular unlock of the lockscreen at load.
-
 = It goes to sleep too fast when I wake it up and don't immediately take further action =
 This currently only impacts lite mode (activated with the widget button). This is because the lockscreen is only being paused. It is not actually cleared unless home key is used. Therefore, it follows the rule of the lockscreen that times out in 5 seconds unless interaction triggers the regular timeout delay. Lite mode will likely become retired once the beta is released because we use a custom lockscreen to get more consistent performance.
-
-= Known apps that conflict with stable myLock operation (alpha 2c/market beta 1 & earlier) =
-  * Not confirmed but it is likely sms popup has an issue because it relies on pre-2.0 lockscreen and wakeup interaction. I recommend using executive assistant and putting the widget on your homescreen. The sms tab is a great replacement for the popup feature.
-  * Screebl - seems to work by reading the screen on and off events myLock also relies on but as far as I know it doesn't use lockscreen disabling. Users have reported it doesn't work correctly in the first market version. I have been using screebl pro with the complete version beta with slim to no issue.
-  * Handcent actually causes a rare occasionally functionality glitch in the market complete ver beta because it takes over immediately at screen off occasionally, preventing myLock from starting up the replacement lockscreen. I've commented to the dev about this to see if they can find some other time to do the lengthy operation that seems to be happening right then.
-  * AutoLock - can't function to restore pattern unlock mode due to interference from our lockscreen disable commands. Auto pattern lockdown is planned for a future release.
-  * I'm going to assume you can't use Lock 2.0 or Lockbot since they are cosmetic themable lockscreens.
-  * Any task killer - again we don't recommend these at all, not necessary on android. It will cause slowness.
-  * Handcent works with pre-a3 versions if you set the settings as mentioned above in this faq. It works in a3 and beyond without any special preference.
