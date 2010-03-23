@@ -17,3 +17,5 @@ Launch *Personalize Lockscreen* to set the widgets you want. This will allow any
 Every version has the Security timer feature which allows users to set a number of minutes after which the pattern mode will engage. Ensure you have set a pattern first, myLock automatically suppresses it and engages the timer so the security screen is not in your face every time.
 
 All versions will also contain a 1x1 widget toggle button and option of whether to lock during calls.
+
+_myLock Lite - to be redone as pre 2.0 compatibility, no persistent mode. Goal is to get the phone handling perfect and utilize original alpha 2c secure exit at every wakeup_
