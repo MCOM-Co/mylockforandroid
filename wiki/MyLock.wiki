@@ -11,8 +11,10 @@ I have identified 3 steps to the realization of the myLock vision in the first w
 = On backwards compatibility =
 in 2.0 the change to onstartcommand and startforeground are used instead of onstart and setforeground
 
-also, the welcomeactivity code doesn't seem to exist in the older versions. will have to try to grab some source and see if they had alarm clocks and what their method was.
+also, the welcomeactivity code doesn't exist in the older versions. will have to try to grab some source and see if they had alarm clocks and what their method was.
 for now this isn't really a goal.. i'm guessing android will go forward at 2.0 and up pretty strongly considering the announcements that g1 should receive it officially.
+
+However, it seems that it will be beneficial for the purpose of compatibility troubleshooting that a pre-2.0 built basic version could be useful
 
 See Versions page for current planned feature releases.
 
