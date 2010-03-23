@@ -37,6 +37,7 @@ public class BootHandler extends Service {
 		//if it is true, that means that at some point the service was FC, uninstalled,
 		//or this boot is a result of a battery pull or OS crash
 		
+		
 		//we will handle it by forcing pattern back on in the real system settings
 		if (secure) {
 			android.provider.Settings.System.putInt(getContentResolver(), 
@@ -53,7 +54,7 @@ public class BootHandler extends Service {
 				
 		if (!boot) {
 			stopSelf();//destroy the process because user doesn't have start at boot enabled
-			return 1;
+			return START_NOT_STICKY;//ensure it won't be restarted
 		}
 		
 		Intent i = new Intent();
@@ -63,6 +64,6 @@ public class BootHandler extends Service {
 		
 		stopSelf();
 		
-		return 1;
+		return START_NOT_STICKY;//ensure it won't be restarted
 	}
 }

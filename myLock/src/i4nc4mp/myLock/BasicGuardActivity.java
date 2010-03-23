@@ -81,6 +81,9 @@ public boolean pendingDismiss = false;
 //will be set true when we launch the dismiss window for auto and user requested exits
 //this ensures focus changes and pause/resume will be ignored to allow dismiss activity to finish
 
+public boolean resurrected = false;
+//just to handle return from dormant, avoid treating it same as a user initiated wake
+
 //====Items in the default custom lockscreen
 /*
 private Button mrewindIcon;
@@ -102,6 +105,7 @@ protected void onCreate(Bundle icicle) {
 
     requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
+    		//| WindowManager.LayoutParams.FLAG_FULLSCREEN);
     
     updateLayout();
     
@@ -217,10 +221,14 @@ BroadcastReceiver screenon = new BroadcastReceiver() {
     @Override
     public void onReceive(Context context, Intent intent) {
             if (!intent.getAction().equals(Screenon)) return;
-            
-    if (hasWindowFocus() && !slideWakeup) {
-    	//serviceHandler.postDelayed(dismissthread, 50L);
-    	//this one works but makes total delay threads .1 sec / 100MS
+    //FIXME we can change this to an isScreenOn in the onResume in 2.1
+    if (resurrected) {
+    	//ignore this wake as we do not actually want instant exit
+    	resurrected = false;
+    	Log.v("guard resurrected","ignoring invalid screen on");
+    }
+    else if (hasWindowFocus() && !slideWakeup) {
+    	
        	StartDismiss(getApplicationContext());
     	//finish();
     }
@@ -362,6 +370,12 @@ protected void onPause() {
     		Log.v("returning to sleep","toggling slide wakeup false");
     		slideWakeup = false;
     	}
+    	if (resurrected) {
+    		Log.v("returning to sleep","toggling resurrected false");
+    		resurrected = false;
+    		//sometimes the invalid screen on doesn't happen
+    		//in that case we just turn off the flag at next pause
+    	}
     }
 }
 
@@ -411,6 +425,7 @@ public void onWindowFocusChanged (boolean hasFocus) {
             else if (dormant) {
                     Log.v("regained","we are no longer dormant");
                     dormant = false;
+                    resurrected = true;
             }
             else if (pendingExit) {
                     Log.v("regained","we are no longer pending nav exit");

@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -65,12 +66,10 @@ public class UserPresentService extends Service {
 	    	//send myLock start intent
 	    	Intent i = new Intent();
 	    	
-	    	//this only is used with the non-secure modes when security is restored
-	    	//boothandler should start the secure mode immediately at boot
-	    	
-	    	
-			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
-	    	//i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.SecureLockService");
+	    	SharedPreferences settings = getSharedPreferences("myLock", 0);
+	    	boolean guard = settings.getBoolean("slideGuard",false);
+			if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
+			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
 			startService(i);
 	    	//call stopSelf
 			stopSelf();

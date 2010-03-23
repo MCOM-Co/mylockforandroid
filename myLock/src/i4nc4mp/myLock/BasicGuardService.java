@@ -34,6 +34,8 @@ public class BasicGuardService extends MediatorService {
     public boolean PendingLock = false;
     //Flagged true upon sleep, remains true until StartLock sends first callback indicating Create success.
     
+    public boolean callWake = false;
+    //set this flag to handle restart guard activity after call that woke device ends
     
     public boolean idle = false;
     //when the idle alarm intent comes in we set this true to properly start closing down
@@ -71,7 +73,7 @@ public class BasicGuardService extends MediatorService {
                 editor.putBoolean("serviceactive", false);
                 editor.commit();
                 
-                ManageWakeLock.releasePartial();
+                //ManageWakeLock.releasePartial();
                 
 }
 
@@ -130,7 +132,7 @@ public class BasicGuardService extends MediatorService {
             
                             
             serviceHandler = new Handler();
-            ManageWakeLock.acquirePartial(getApplicationContext());
+            //ManageWakeLock.acquirePartial(getApplicationContext());
             //if not always holding partial we would only acquire at Lock activity exit callback
             //we found we always need it to ensure key events will not occasionally drop on the floor from idle state wakeup
             
@@ -371,7 +373,10 @@ public class BasicGuardService extends MediatorService {
             
             if (!shouldLock) {
             //if our lock activity is alive, send broadcast to close it
-                   
+            
+            //this case we will also flag to restart lock at call end
+            //callWake = true;
+            
             Intent intent = new Intent("i4nc4mp.myLock.lifecycle.CALL_START");
             getApplicationContext().sendBroadcast(intent);
             }
@@ -380,38 +385,64 @@ public class BasicGuardService extends MediatorService {
     
     @Override
     public void onCallEnd() {
-            //TODO 2.1 lets us check whether the screen is on
-            
             //all timeout sleep causes KG to visibly restore after the 5 sec grace period
             //the phone appears to be doing a KM disable to pause it should user wake up again, and then re-enables at call end
             
             //if call ends while asleep and not in the KG-restored mode (watching for prox wake)
             //then KG is still restored, and we can't catch it due to timing
             
-            //therefore, all calls ending while screen is off result in restart lockactivity
-            //if screen is awake we check for KG, exit if needed, and reset shouldLock to true
+            //right now we can't reliably check the screen state
+    		//instead we will restart the guard if call came in waking up device
+    		//otherwise we will just do nothing besides dismiss any restored kg
             
             Context mCon = getApplicationContext();
             
-            if (IsAwake()) {
-                    Log.v("call end, screen awake","checking if we need to exit KG");
-                    shouldLock = true;
-                    ManageKeyguard.initialize(mCon);
-                    if (ManageKeyguard.inKeyguardRestrictedInputMode()) StartDismiss(mCon);
-            }
-            else {
-                    Log.v("call end, screen asleep","restarting lock activity.");
+            Log.v("call end","checking if we need to exit KG");
+            
+            ManageKeyguard.initialize(mCon);
+            
+            boolean KG = ManageKeyguard.inKeyguardRestrictedInputMode();
+            //this will tell us if the phone ever restored the keyguard
+            //phone occasionally brings it back to life but suppresses it
+            
+            //2.1 isScreenOn will allow us the logic:
+            
+            //restart lock if it is asleep and relocked
+            //dismiss lock if it is awake and relocked
+            //do nothing if it is awake and not re-locked
+            //wake up if it is asleep and not re-locked (not an expected case)
+            
+            //right now we will always dismiss
+            /*
+            if (callWake) {
+                    Log.v("wakeup call end","restarting lock activity.");
+                    callWake = false;
                     PendingLock = true;
                     StartLock(mCon);
+                    //when we restart here, the guard activity is getting screen on event
+                    //and calling its own dismiss as if it was a user initiated wakeup
+                    //TODO but this logic will be needed for guarded custom lockscreen version
             }
+            else {
+            	//KG may or may not be about to come back and screen may or may not be awake
+            	//these factors depend on what the user did during call
+            	//all we will do is dismiss any keyguard that exists, which will cause wake if it is asleep
+            	//if (IsAwake()) {}
+                    Log.v("call end","checking if we need to exit KG");
+                    shouldLock = true;
+                    if (KG) StartDismiss(mCon);
+            }*/
+            shouldLock = true;
+            if (KG) StartDismiss(mCon);
+            
     }
     
     @Override
-    public void onCallRing() {      
-            Intent intent = new Intent("i4nc4mp.myLock.lifecycle.CALL_PENDING");
-            getApplicationContext().sendBroadcast(intent);
-            //lets the activity know it should not treat focus loss as a navigation exit
-            //this will keep activity alive, only stopping it at call accept
+    public void onCallRing() {  	
+    	Intent intent = new Intent("i4nc4mp.myLock.lifecycle.CALL_PENDING");
+        getApplicationContext().sendBroadcast(intent);
+        //lets the activity know it should not treat focus loss as a navigation exit
+        //this will keep activity alive, only stopping it at call accept
     }
     
 //============================

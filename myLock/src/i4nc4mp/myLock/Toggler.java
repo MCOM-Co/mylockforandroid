@@ -11,6 +11,9 @@ import android.widget.Toast;
 
 public class Toggler extends Service {
 	
+	public boolean active = false;
+	public boolean guard = false;
+	
 	@Override
 	public IBinder onBind(Intent intent) {
 		// we don't bind it, just call start from the widget
@@ -27,10 +30,9 @@ public class Toggler extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.v("Toggler","start command running");
 		
-		//TryToggle();
-		SharedPreferences settings = getSharedPreferences("myLock", 0);
+		getPrefs();
 		
-		boolean active = settings.getBoolean("serviceactive", false);
+		//TryToggle();
 		
 		if (!active) {
 			startService();
@@ -41,19 +43,29 @@ public class Toggler extends Service {
   			Toast.makeText(Toggler.this, "myLock is now disabled", Toast.LENGTH_SHORT).show();
 		}
 		
-		return 1;
+		//stopSelf();
+		//added to prevent android "restarting" this after it dies/is purged causing unexpected toggle
+		return START_NOT_STICKY;//ensure it won't be restarted by the OS, we only want explicit starts
 	}
+	
+public void getPrefs() {
+	SharedPreferences settings = getSharedPreferences("myLock", 0);
+	active = settings.getBoolean("serviceactive", false);
+	guard = settings.getBoolean("slideGuard", false);
+}
 	
 private void startService(){
 		Intent i = new Intent();
-		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
+		if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
+		else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
 		startService(i);
 		Log.d( getClass().getSimpleName(), "startService()" );
 }
 
 private void stopService() {
 		Intent i = new Intent();
-		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
+		if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
+		else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
 		stopService(i);
 		Log.d( getClass().getSimpleName(), "stopService()" );
 }
