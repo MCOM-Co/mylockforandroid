@@ -11,6 +11,7 @@
 
 <CheckBox android:text="@string/fgBox" android:id="@+id/fgBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
 <CheckBox android:text="@string/bootBox" android:id="@+id/bootBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
+<CheckBox android:text="@string/slideGuard" android:id="@+id/slideGuard" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
 
 <TextView android:text="@string/HowToText1" android:id="@+id/HowTo1" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
 <TextView android:text="@string/HowToText2" android:id="@+id/HowTo2" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>

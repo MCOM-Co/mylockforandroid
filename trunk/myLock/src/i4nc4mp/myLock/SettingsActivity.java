@@ -27,6 +27,8 @@ public class SettingsActivity extends Activity {
     public boolean boot = false;
     //public boolean shakewake = false;
     
+    public boolean guard = false;
+    
     public boolean active = false;
 
     public CheckBox toggle;
@@ -121,6 +123,29 @@ public class SettingsActivity extends Activity {
                        editor.commit();
                    }
                });
+       
+       final CheckBox slideguard = (CheckBox)findViewById(R.id.slideGuard);
+       
+       slideguard.setChecked((guard));        
+       
+       slideguard.setOnClickListener(new OnClickListener() {
+
+    	   public void onClick(View v) {
+               SharedPreferences set = getSharedPreferences("myLock", 0);
+               SharedPreferences.Editor editor = set.edit(); 
+               
+               editor.putBoolean("slideGuard", slideguard.isChecked());
+
+               // Don't forget to commit your edits!!!
+               editor.commit();
+     
+               //The current mode needs to be stopped
+               stopService();//it will go by the existing pref
+               toggle.setChecked(false);
+               Toast.makeText(SettingsActivity.this, "myLock must disable to apply change.", Toast.LENGTH_SHORT).show();
+               guard = !guard;//toggle it locally for reference of next toggle press
+               }
+               });
     }
     
     public void getPrefs() {
@@ -137,6 +162,8 @@ public class SettingsActivity extends Activity {
         //shakewake = settings.getBoolean("ShakeWakeup", false);
         
         active = settings.getBoolean("serviceactive", false);
+        
+        guard = settings.getBoolean("slideGuard", false);
     }
     
     @Override
@@ -151,14 +178,16 @@ public class SettingsActivity extends Activity {
     private void startService(){
    			Intent i = new Intent();
    			
-   			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
+   			if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
+   			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
    			startService(i);
    			Log.d( getClass().getSimpleName(), "startService()" );
    		}
     
     private void stopService() {
 			Intent i = new Intent();
-			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
+			if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
+			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
 			stopService(i);
 			Log.d( getClass().getSimpleName(), "stopService()" );
     }

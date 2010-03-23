@@ -69,5 +69,8 @@ public class ToggleWidget extends AppWidgetProvider {
       
       enabled = true;
 		}//as far as I can tell, repeat calls to this do not cause errors
+		else {
+			//use this case to check the serviceactive state in prefs and choose the image we want
+		}
 	}
 }
