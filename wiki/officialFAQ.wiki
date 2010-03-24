@@ -47,3 +47,6 @@ It is hard to make the app play nice with other home or screenwake mods because 
 
 = How do I send you my idea/feedback/bug complaint? =
 Email the project mylockandroid at gmail. You can also follow us on twitter and tweet at us if your comment is short. Can't guarantee I'll notice your comments elsewhere like blog, wiki, or will be aware of posts on forums.
+
+= Why should I donate =
+If my app was 99 cents, it would severely decrease its accessibility. People just wouldn't try it out. I rely on as many installs with feedback as possible to build myLock into the best & most customizable lockscreen modifying app. I want those out there who really love what we've done to have a way to elevate themselves above the average user, and feel acknowledged by me for their support. I don't exactly need money/donations to continue this project. The option is just something I've made available to let those who have most benefitted from myLock make their voices heard and make a greater influence on the project's overall direction. 
