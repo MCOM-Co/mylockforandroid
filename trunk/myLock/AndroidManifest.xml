@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="i4nc4mp.myLock"
-      android:versionCode="3"
+      android:versionCode="4"
       android:versionName="v1.1">
     <application android:icon="@drawable/icon" android:label="@string/app_name">
         <activity android:name=".SettingsActivity"
@@ -23,22 +23,22 @@
 		<!--android:theme="@android:style/Theme.Wallpaper"-->
        <activity android:name="BasicGuardActivity"
                 android:excludeFromRecents="true"
-                android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
                 android:launchMode="singleTask"
+                android:theme="@android:style/Theme.Wallpaper"
                 android:taskAffinity=""
                 android:screenOrientation="nosensor"
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>
        <activity android:name="DismissActivity"
                 android:excludeFromRecents="true"
-                android:theme="@android:style/Theme.Translucent"
                 android:launchMode="standard"
+                android:theme="@android:style/Theme.Translucent"
                 android:taskAffinity=""
                 android:screenOrientation="nosensor"
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>
        <activity android:name="AutoDismissActivity"
                 android:excludeFromRecents="true"
-                android:theme="@android:style/Theme.Translucent"
                 android:launchMode="standard"
+                android:theme="@android:style/Theme.Translucent"
                 android:taskAffinity=""
                 android:screenOrientation="nosensor"
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>

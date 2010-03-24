@@ -15,6 +15,13 @@ import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
 
 //mediator subclass which places the basic guard for instant unlock via 2.0 optimized activity process
+//this mediator only exists to mediate slider open vs regular wakes
+//a slide open wake will place the config change first, then the resume with focus, then the screen on
+//otherwise, just resume then screen on
+//we don't have any good way to know if screen is on its way to being on or not during that resume
+//we will need to implement the 2.1 is screen on PM method.. we just have to do without it right now
+//impact is that occasionally a resume is happening when no user wake request had started
+//this causes wakeup when the useractivity at the various points happens
 
 public class BasicGuardService extends MediatorService {
 	//import from the custom service from Complete revision, remove screen timeout change code
@@ -25,7 +32,6 @@ public class BasicGuardService extends MediatorService {
     public int patternsetting = 0;
     //we'll see if the user has pattern enabled when we startup
     //so we can disable it and then restore when we finish
-    //FIXME store this in the prefs file instead of local var, so boot handler can pick it up and restore when necessary
     
 /* Life-Cycle Flags */
     public boolean shouldLock = true;
@@ -67,13 +73,14 @@ public class BasicGuardService extends MediatorService {
                 unregisterReceiver(idleExit);
                 unregisterReceiver(lockStarted);
                 unregisterReceiver(lockStopped);
-                //unregisterReceiver(homeUnlock);
+                
+                unregisterReceiver(lockexitRequest);
                 
                 
                 editor.putBoolean("serviceactive", false);
                 editor.commit();
                 
-                //ManageWakeLock.releasePartial();
+                ManageWakeLock.releasePartial();
                 
 }
 
@@ -132,7 +139,9 @@ public class BasicGuardService extends MediatorService {
             
                             
             serviceHandler = new Handler();
-            //ManageWakeLock.acquirePartial(getApplicationContext());
+            
+            
+            ManageWakeLock.acquirePartial(getApplicationContext());
             //if not always holding partial we would only acquire at Lock activity exit callback
             //we found we always need it to ensure key events will not occasionally drop on the floor from idle state wakeup
             
@@ -145,8 +154,10 @@ public class BasicGuardService extends MediatorService {
             IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED");
             registerReceiver(lockStopped, lockStop);
             
-            //IntentFilter home = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.HOMEKEY_UNLOCK");
-            //registerReceiver(homeUnlock, home);
+            
+            IntentFilter exitRequ = new IntentFilter ("i4nc4mp.myLock.lifecycle.EXIT_REQUEST");
+            registerReceiver(lockexitRequest, exitRequ);
+            
             
             editor.putBoolean("serviceactive", true);
             editor.commit();
@@ -194,7 +205,7 @@ public class BasicGuardService extends MediatorService {
         		   
                     }
             else {                          
-                    ManageKeyguard.reenableKeyguard();
+                    ManageKeyguard.reenableKeyguard();//not necessary here in show when locked mode
                                                               
                     Intent u = new Intent();
                     u.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UserPresentService");
@@ -203,17 +214,18 @@ public class BasicGuardService extends MediatorService {
                     stopSelf();
                     }                       
     }};
-    
-    /*BroadcastReceiver homeUnlock = new BroadcastReceiver() {
+   
+   //Exit request will come in from the guard resume handling based on conditions for instant exit being met
+   //the guard will enter exit handoff state and close when focus is handed to dismiss window we started here
+   BroadcastReceiver lockexitRequest = new BroadcastReceiver() {
             @Override
         public void onReceive(Context context, Intent intent) {
-            if (!intent.getAction().equals("i4nc4mp.myLockcomplete.lifecycle.HOMEKEY_UNLOCK")) return;
+            if (!intent.getAction().equals("i4nc4mp.myLock.lifecycle.EXIT_REQUEST")) return;
             
-            ManageKeyguard.disableKeyguard(context);
             StartDismiss(context);
             return;
-            
-            }};*/
+           
+            }};
     
     BroadcastReceiver idleExit = new BroadcastReceiver() {
             @Override
@@ -261,7 +273,9 @@ public class BasicGuardService extends MediatorService {
                             
             //This case comes in two scenarios
             //Known bug (seems to be fixed)--- the start of LockActivity was delayed to screen on due to CPU load
-            //User aborting a timeout sleep by any key input before 5 second limit
+            //This was fixed by always holding a partial wake lock. cpu decides to sleep sometimes, causing havoc
+            
+            //other possible case is just User-Abort of timeout sleep by any key during 5 sec unguarded interim
                                                                                             
                     PendingLock = false;
                     if (!shouldLock) {
@@ -307,6 +321,10 @@ public class BasicGuardService extends MediatorService {
             //not necessary in guarded mode since we dont cancel kg till user wakes device
 
                     Class w = BasicGuardActivity.class;
+                    
+                    //for user pref whether to use wallpaper, need to have a subclass
+                    //since i can only define the wallpaper vs Theme standard in the activity def
+                    //inside the manifest.
                    
 
             /* launch UI, explicitly stating that this is not due to user action
@@ -330,26 +348,11 @@ public class BasicGuardService extends MediatorService {
                     context.startActivity(lockscreen);
             }
     
-    public void DoExit(Context context) {
-    //alpha keyguard manager secure exit
-    //no longer used at all thanks to dismiss activity
-    
-    //ManageKeyguard.initialize(context);
-    PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
-    pm.userActivity(SystemClock.uptimeMillis(), false);
-    //ensure it will be awake
-    
-    ManageKeyguard.disableKeyguard(getApplicationContext());
-    //we would typically have called a 50 ms delay thread for the secure exit request call    
-    
-    ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
-        public void LaunchOnKeyguardExitSuccess() {
-           Log.v("start", "This is the exit callback");
-           }});     
-}
-    
     public void StartDismiss(Context context) {
             
+    	PowerManager myPM = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        myPM.userActivity(SystemClock.uptimeMillis(), false);
+    	
     Class w = DismissActivity.class; 
                   
     Intent dismiss = new Intent(context, w);
@@ -412,7 +415,13 @@ public class BasicGuardService extends MediatorService {
             //do nothing if it is awake and not re-locked
             //wake up if it is asleep and not re-locked (not an expected case)
             
-            //right now we will always dismiss
+            //right now we will always dismiss as user expects that ONLY the slide open will be guarded
+            //when awake and not slider opened it will need to be dismissed.
+            //this basically means those times when phone wants to be asleep and locked
+            //we are actually causing a wakeup/unlock,
+            //but we can't respect that case till we have 2.1
+            
+            
             /*
             if (callWake) {
                     Log.v("wakeup call end","restarting lock activity.");
@@ -442,7 +451,7 @@ public class BasicGuardService extends MediatorService {
     	Intent intent = new Intent("i4nc4mp.myLock.lifecycle.CALL_PENDING");
         getApplicationContext().sendBroadcast(intent);
         //lets the activity know it should not treat focus loss as a navigation exit
-        //this will keep activity alive, only stopping it at call accept
+        //this will keep activity alive, only stopping it at call start
     }
     
 //============================
