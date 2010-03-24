@@ -102,8 +102,9 @@ public class SettingsActivity extends Activity {
 
                // Don't forget to commit your edits!!!
                editor.commit();
-               
-               startService();//call start service, so it can react to the change
+               getPrefs();
+               if (active) startService();//call start service, so it can react to the change
+               //make sure not to start it up if we aren't already
            }
        });
                      

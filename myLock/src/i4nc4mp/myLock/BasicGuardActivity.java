@@ -84,6 +84,10 @@ public boolean pendingDismiss = false;
 public boolean resurrected = false;
 //just to handle return from dormant, avoid treating it same as a user initiated wake
 
+public boolean isScreenOn = false;
+//temporary solution for pre 2.1 screen checking
+//we will simply set it in the screen on event
+
 //====Items in the default custom lockscreen
 /*
 private Button mrewindIcon;
@@ -222,17 +226,9 @@ BroadcastReceiver screenon = new BroadcastReceiver() {
     public void onReceive(Context context, Intent intent) {
             if (!intent.getAction().equals(Screenon)) return;
     //FIXME we can change this to an isScreenOn in the onResume in 2.1
-    if (resurrected) {
-    	//ignore this wake as we do not actually want instant exit
-    	resurrected = false;
-    	Log.v("guard resurrected","ignoring invalid screen on");
-    }
-    else if (hasWindowFocus() && !slideWakeup) {
-    	
-       	StartDismiss(getApplicationContext());
-    	//finish();
-    }
-                  
+    //TODO testing moving auto dismiss logic into resume on condition already have focus
+    //TODO restore if it doesn't work
+            
     return;//avoid unresponsive receiver error outcome
          
 }};
@@ -245,7 +241,7 @@ BroadcastReceiver callStarted = new BroadcastReceiver() {
     //we are going to be dormant while this happens, therefore we need to force finish
     Log.v("guard received broadcast","completing callback and finish");
     
-    StopCallback();
+    //StopCallback();
     finish();
     
     return;
@@ -300,9 +296,10 @@ public void onConfigurationChanged(Configuration newConfig) {
     if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO) {
             //this means that a config change happened and the keyboard is open.
             if (starting) Log.v("slide-open lock","aborting handling, slide was opened before this lock");
-            else slideWakeup = true;
-            //TODO send the user a toast here telling them it's time to press back to unlock
-            
+            else {
+            	Log.v("slide-open wake","setting state flag");
+            	slideWakeup = true;
+            }           
     }
     else if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES) {
     	Log.v("slide closed","lockscreen activity got the config change from background");
@@ -390,6 +387,31 @@ protected void onResume() {
 
     paused = false;
     
+    //TODO ===============
+    //Resume might be the best place to start launching dismiss... screen on events can be delayed
+    //Resume with focus would reliably mean a wakeup
+    //as the resume never happens when outside events are taking control.
+    //we lose focus direct from the paused state in that scenario
+    //FIXME testing it here:
+    
+    /*if (resurrected) {
+    	//ignore this wake as we do not actually want instant exit
+    	resurrected = false;
+    	Log.v("guard resurrected","ignoring invalid screen on");
+    }*/
+    if (hasWindowFocus() && !slideWakeup && !resurrected) {
+    	
+       	//StartDismiss(getApplicationContext());
+       	//now tell mediator we need to exit & set pending exit flag
+    	pendingDismiss = true;
+    	
+  	  Intent intent = new Intent("i4nc4mp.myLock.lifecycle.EXIT_REQUEST");
+      getApplicationContext().sendBroadcast(intent);
+      
+      
+    }
+    
+    
     //updateClock();
 }
 
@@ -398,13 +420,15 @@ public void onDestroy() {
     super.onDestroy();
             
    serviceHandler.removeCallbacks(myTask);
-   //serviceHandler.removeCallbacks(dismissthread);
+
    serviceHandler = null;
    
    unregisterReceiver(screenon);
    unregisterReceiver(callStarted);
    unregisterReceiver(callPending);
    unregisterReceiver(idleExit);
+   
+   StopCallback();
     
    Log.v("destroy Guard","Destroying");
 }
@@ -443,7 +467,7 @@ public void onWindowFocusChanged (boolean hasFocus) {
                                             
                                     
                             }
-                            else Log.v("focus lost while paused","external event has taken focus");
+                            else Log.v("dormant handoff complete","the external event now has focus");
             }
             else if (!paused) {
                     //not paused, losing focus, we are going to manually disable KG
@@ -452,6 +476,7 @@ public void onWindowFocusChanged (boolean hasFocus) {
                     ManageKeyguard.disableKeyguard(getApplicationContext());
             }
     }
+    
 }
 
 protected void onStart() {
@@ -460,6 +485,7 @@ protected void onStart() {
     
     if (finishing) {
             finishing = false;
+            Log.v("re-start","we got restarted while in Finishing phase, wtf");
             //since we are sometimes being brought back, safe to ensure flags are like at creation
     }
 }
@@ -476,7 +502,7 @@ public void StopCallback() {
 
 public void StartDismiss(Context context) {
     
-	PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+	PowerManager myPM = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
     myPM.userActivity(SystemClock.uptimeMillis(), false);
     //the KeyguardViewMediator poke doesn't have enough time to register before our handoff sometimes (rare)
     //this might impact the nexus more than droid. need to test further
