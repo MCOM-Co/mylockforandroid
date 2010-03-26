@@ -68,8 +68,8 @@ public class UserPresentService extends Service {
 	    	
 	    	SharedPreferences settings = getSharedPreferences("myLock", 0);
 	    	boolean guard = settings.getBoolean("slideGuard",false);
-			if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
-			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
+			//if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService"); else
+	    	i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
 			startService(i);
 	    	//call stopSelf
 			stopSelf();
