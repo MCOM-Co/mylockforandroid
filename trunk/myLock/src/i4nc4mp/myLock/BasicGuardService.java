@@ -23,6 +23,15 @@ import android.util.Log;
 //impact is that occasionally a resume is happening when no user wake request had started
 //this causes wakeup when the useractivity at the various points happens
 
+
+//this class is now deprecated as the only thing it accomplishes is showing the wallpaper background
+//we can't seem to do that without the show when locked function window
+//sometimes it doesnt show but most times we see it while waiting for unlock
+//some users seem to want this cosmetic function.... 
+//thge slider guard is now implemented in auto dismiss mediator
+//so reintegrating this is a todo that isn't in priority since i will need to revert the code 
+//to the screen on event handling and starting dismiss from here instead of in the mediator
+
 public class BasicGuardService extends MediatorService {
 	//import from the custom service from Complete revision, remove screen timeout change code
 	

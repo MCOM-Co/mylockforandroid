@@ -38,7 +38,7 @@
        <activity android:name="AutoDismissActivity"
                 android:excludeFromRecents="true"
                 android:launchMode="standard"
-                android:theme="@android:style/Theme.Translucent"
+                android:theme="@android:style/Theme.Wallpaper"
                 android:taskAffinity=""
                 android:screenOrientation="nosensor"
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>

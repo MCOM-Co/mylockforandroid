@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -22,13 +23,18 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
 	public boolean persistent = false;
     //public boolean timeoutenabled = false;
 	public boolean shakemode = false;
+	public boolean slideGuarded = false;
+
     
     public int patternsetting = 0;
     //we'll see if the user has pattern enabled when we startup
     //so we can disable it and then restore when we finish
     //FIXME store this in the prefs file instead of local var, so boot handler can pick it up and restore when necessary
     
-   
+    public boolean slideWakeup = false;
+  //we will set this when we detect slideopen, only used with instant unlock (replacement for 2c ver)
+    
+    
     //public boolean idle = false;
     //when the idle alarm intent comes in we set this true to properly start closing down
     
@@ -136,6 +142,7 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             SharedPreferences settings = getSharedPreferences("myLock", 0);
             boolean fgpref = settings.getBoolean("FG", true);
             boolean shakepref = settings.getBoolean("shake", false);
+            boolean guardpref = settings.getBoolean("slideGuard", false);
                                  
 /*========Settings change re-start commands that come from settings activity*/
     
@@ -149,6 +156,8 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             else if (shakemode != shakepref) {
             		shakemode = shakepref;
             	}
+            else if (guardpref != slideGuarded)
+            	slideGuarded = guardpref;
             else {
 /*========Safety start that ensures the settings activity toggle button can work, first press to start, 2nd press to stop*/
                   Log.v("toggle request","user first press of toggle after a startup at boot");
@@ -240,13 +249,32 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
         if (shakemode) mSensorEventManager.unregisterListener(AutoDismiss.this);
         return;
         }};
-    
+        
+        @Override
+        public void onConfigurationChanged(Configuration newConfig) {
+            super.onConfigurationChanged(newConfig);
+            if (!slideGuarded) return;
+            //from prefs, state is kept because when user changes setting we receive a start call
+            if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO) {
+                    //this means that a config change happened and the keyboard is open.
+                    
+                    	Log.v("slide-open","setting state flag");
+                    	slideWakeup = true;
+                               
+            }
+            else if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES) {
+            	Log.v("slide closed","mediator got the config change from background");
+            }
+                          
+        }
+        
+        
     @Override
     public void onScreenWakeup() {
     	ManageKeyguard.initialize(getApplicationContext());
         
         boolean KG = ManageKeyguard.inKeyguardRestrictedInputMode();    
-    	if (KG) StartDismiss(getApplicationContext());                
+    	if (KG && !slideWakeup) StartDismiss(getApplicationContext());                
         
     	return;
     }
@@ -258,6 +286,8 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             SensorManager.SENSOR_DELAY_NORMAL);
         //standard workaround runs the listener at all times.
         //i will only register at off and release it once we are awake
+        if (slideWakeup) Log.v("back to sleep","turning off slideWakeup");
+        slideWakeup = false;
     }
     
     public void StartDismiss(Context context) {
