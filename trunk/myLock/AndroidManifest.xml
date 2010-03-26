@@ -31,7 +31,7 @@
        <activity android:name="DismissActivity"
                 android:excludeFromRecents="true"
                 android:launchMode="standard"
-                android:theme="@android:style/Theme.Translucent"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar"
                 android:taskAffinity=""
                 android:screenOrientation="nosensor"
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>
@@ -53,6 +53,7 @@
         <service android:name=".Toggler"></service>
         <service android:name=".BasicGuardService"></service>
         <service android:name=".AutoDismiss"></service>
+        <service android:name=".ShakeWakeupService"></service>
         <service android:name=".BootHandler"></service>
         <service android:name=".UserPresentService"></service>
     </application>
