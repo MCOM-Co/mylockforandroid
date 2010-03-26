@@ -116,6 +116,7 @@ public class SettingsActivity extends Activity {
                			                       
                    }
                });
+       shake.setVisibility(View.GONE);//hide it for now
        
        final CheckBox slideguard = (CheckBox)findViewById(R.id.slideGuard);
        
@@ -133,10 +134,14 @@ public class SettingsActivity extends Activity {
                editor.commit();
      
                //The current mode needs to be stopped
-               stopService();//it will go by the existing pref
-               toggle.setChecked(false);
-               Toast.makeText(SettingsActivity.this, "myLock must disable to apply change.", Toast.LENGTH_SHORT).show();
-               guard = !guard;//toggle it locally for reference of next toggle press
+               //stopService();//it will go by the existing pref
+               //toggle.setChecked(false);
+               //Toast.makeText(SettingsActivity.this, "myLock must disable to apply change.", Toast.LENGTH_SHORT).show();
+               //guard = !guard;//toggle it locally for reference of next toggle press
+               
+             //finally, do the change
+               getPrefs();
+               if (active) startService();
                }
                });
     }
@@ -171,33 +176,18 @@ public class SettingsActivity extends Activity {
     private void startService(){
    			Intent i = new Intent();
    			
-   			if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
-   			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
+   			//if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService"); else
+   			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
    			startService(i);
    			Log.d( getClass().getSimpleName(), "startService()" );
    		}
     
     private void stopService() {
 			Intent i = new Intent();
-			if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
-			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
+			//if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService"); else
+			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
 			stopService(i);
 			Log.d( getClass().getSimpleName(), "stopService()" );
-    }
-    
-    
-   //TODO get binding working or a way to look for whether the service is running so I can use a toggleButton instead
-    private void TryToggle() {
-    	if (!triedstart) {
-    		startService();
-    		Toast.makeText(SettingsActivity.this, "Intialized... press toggle again to stop myLock", Toast.LENGTH_SHORT).show();
-    		triedstart = true;
-    	}
-    	else {
-    		triedstart = false;
-    		stopService();
-    		Toast.makeText(SettingsActivity.this, "myLock has been stopped", Toast.LENGTH_SHORT).show();
-    	}
     }
     
     @Override
