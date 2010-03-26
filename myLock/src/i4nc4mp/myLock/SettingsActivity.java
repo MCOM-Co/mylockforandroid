@@ -16,7 +16,6 @@ import android.widget.Toast;
 //when set to 1 or more, idle timer will run
 
 //TODO implement a box user can put number of minutes to enable idle lockdown
-//TODO implement ToggleButton to utilize pref serviceactive and get rid of TryToggle
 
 public class SettingsActivity extends Activity {
 	
@@ -25,7 +24,7 @@ public class SettingsActivity extends Activity {
 	public boolean persistentNotif = true;
     
     public boolean boot = false;
-    //public boolean shakewake = false;
+    public boolean shakewake = false;
     
     public boolean guard = false;
     
@@ -59,36 +58,7 @@ public class SettingsActivity extends Activity {
           		}
           	}
           });
-       
-       /*final CheckBox shake = (CheckBox)findViewById(R.id.shakeBox);
-
-       shake.setChecked((shakewake));        
-               
-       shake.setOnClickListener(new OnClickListener() {
-
-                   public void onClick(View v) {
-                	   SharedPreferences set = getSharedPreferences("myLock", 0);
-                	   SharedPreferences.Editor editor = set.edit(); 
-                	   
-                	   editor.putBoolean("ShakeWakeup", shake.isChecked());
-
-                       // Don't forget to commit your edits!!!
-                       editor.commit();
-                       //finally, do the change
-                       Intent i = new Intent();
-               			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.ShakeWakeupService");
-               			
-                       if (shake.isChecked()) {
-                    	   startService(i);
-                    	   Toast.makeText(SettingsActivity.this, "shake wakeup initialized", Toast.LENGTH_SHORT).show();
-                       }
-                       else {
-                    	   stopService(i);
-                    	   Toast.makeText(SettingsActivity.this, "shake wakeup disabled", Toast.LENGTH_SHORT).show();
-                       }
-                   }
-               });*/
-       
+              
        final CheckBox fg = (CheckBox)findViewById(R.id.fgBox);
        
        fg.setChecked((persistentNotif)); 
@@ -125,6 +95,28 @@ public class SettingsActivity extends Activity {
                    }
                });
        
+       final CheckBox shake = (CheckBox)findViewById(R.id.shakeBox);
+
+       shake.setChecked((shakewake));        
+               
+       shake.setOnClickListener(new OnClickListener() {
+
+                   public void onClick(View v) {
+                	   SharedPreferences set = getSharedPreferences("myLock", 0);
+                	   SharedPreferences.Editor editor = set.edit(); 
+                	   
+                	   editor.putBoolean("shake", shake.isChecked());
+
+                       // Don't forget to commit your edits!!!
+                       editor.commit();
+                       //finally, do the change
+                       getPrefs();
+                       if (active) startService();
+                       //this start just has the mediator check prefs and notice the change
+               			                       
+                   }
+               });
+       
        final CheckBox slideguard = (CheckBox)findViewById(R.id.slideGuard);
        
        slideguard.setChecked((guard));        
@@ -157,10 +149,10 @@ public class SettingsActivity extends Activity {
         	return;        
         }*/
     	
-        persistentNotif = settings.getBoolean("FG", true);
+        persistentNotif = settings.getBoolean("FG", false);
         
         boot = settings.getBoolean("boot", false);
-        //shakewake = settings.getBoolean("ShakeWakeup", false);
+        shakewake = settings.getBoolean("shake", false);
         
         active = settings.getBoolean("serviceactive", false);
         

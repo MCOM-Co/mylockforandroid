@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<color name="translucent_droid">#46A4C639</color>
+<!-- 46 is hex for 70, percentage opacity. looks passable but I want it to show what's behind the window-->
+</resources>

@@ -33,10 +33,9 @@ public class ShakeWakeupService extends Service implements SensorEventListener{
          
          
          
-         private static PowerManager.WakeLock myWakeLock = null;
+        
          
-         Handler serviceHandler;
-     	Task myTask = new Task();
+        
 
 //----------------------------------------bruno's tutorial stuff
          SensorManager mSensorEventManager;
@@ -44,11 +43,12 @@ public class ShakeWakeupService extends Service implements SensorEventListener{
          Sensor mSensor;
 
          // BroadcastReceiver for handling ACTION_SCREEN_OFF.
-         private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+         BroadcastReceiver mReceiver = new BroadcastReceiver() {
              @Override
       public void onReceive(Context context, Intent intent) {
                  // Check action just to be on the safe side.
                  if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
+                	 Log.v("shake mediator screen off","trying re-registration");
                      // Unregisters the listener and registers it again.
                      mSensorEventManager.unregisterListener(ShakeWakeupService.this);
                      mSensorEventManager.registerListener(ShakeWakeupService.this, mSensor,
@@ -79,7 +79,7 @@ public class ShakeWakeupService extends Service implements SensorEventListener{
       registerReceiver(mReceiver, filter);
       
       
-      serviceHandler = new Handler();
+      
          }
          
          
@@ -88,8 +88,7 @@ public class ShakeWakeupService extends Service implements SensorEventListener{
         	// Unregister our receiver.
              unregisterReceiver(mReceiver);
              
-             serviceHandler.removeCallbacks(myTask);
- 		    serviceHandler = null;
+             
              
              // Unregister from SensorManager.
              mSensorEventManager.unregisterListener(this);
@@ -106,68 +105,13 @@ public class ShakeWakeupService extends Service implements SensorEventListener{
          public void onShake() {
         	 //Poke a user activity to cause wake?
         	Log.v("onShake","doing wakeup");
-        	PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-       	  	//myPM.userActivity(SystemClock.uptimeMillis(), false);
-        	
-        	int flags;
-
-            flags = PowerManager.SCREEN_DIM_WAKE_LOCK;
-            flags |= PowerManager.ON_AFTER_RELEASE;
-            flags |= PowerManager.ACQUIRE_CAUSES_WAKEUP;
-            
-            myWakeLock = myPM.newWakeLock(flags, "acquire");
-
-            myWakeLock.setReferenceCounted(false);
-            myWakeLock.acquire();
-            
-            serviceHandler.postDelayed(myTask, 4000L);
+        	//send in a broadcast for exit request to the main mediator
             
          }
          
-         class Task implements Runnable {
-         	public void run() {                 
-        	 myWakeLock.release();
-             myWakeLock = null;
-         }}
+        
          
-///begin code from putnaar --- we don't need any of the interface or the registration
-         //before it was all activity based, now the service can take all the actions. Just adapted the listener to the onShake method
-         
-         /*public interface OnShakeListener
-         {
-           public void onShake();
-         }
-         public ShakeWakeupService(Context context)
-         {
-           mContext = context;
-           resume();
-         }
-         public void setOnShakeListener(OnShakeListener listener)
-         {
-           mShakeListener = listener;
-         }
 
-         public void resume() {
-           mSensorMgr = (SensorManager)mContext.getSystemService(Context.SENSOR_SERVICE);
-           if (mSensorMgr == null) {
-             throw new UnsupportedOperationException("Sensors not supported");
-           }
-           boolean supported = mSensorMgr.registerListener((SensorEventListener) this, mSensorMgr.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
-
-      
-
-           if (!supported) {
-             mSensorMgr.unregisterListener(this);
-             throw new UnsupportedOperationException("Accelerometer not supported");
-           }
-         }
-
-         public void pause() {
-           if (mSensorMgr != null) {
-             mSensorMgr.unregisterListener(this);
-             mSensorMgr = null;
-           }
-         }*/
 
 
         
@@ -179,6 +123,8 @@ public class ShakeWakeupService extends Service implements SensorEventListener{
                 //Used to decide if it is a shake
                 public void onSensorChanged(SensorEvent event) {
                         if(event.sensor.getType() != Sensor.TYPE_ACCELEROMETER) return;
+                        
+                    Log.v("sensor","sensor change is verifying");
                     long now = System.currentTimeMillis();
                  
                     if ((now - mLastForce) > SHAKE_TIMEOUT) {
@@ -192,9 +138,7 @@ public class ShakeWakeupService extends Service implements SensorEventListener{
                         if ((++mShakeCount >= SHAKE_COUNT) && (now - mLastShake > SHAKE_DURATION)) {
                           mLastShake = now;
                           mShakeCount = 0;
-                          /*if (mShakeListener != null) {
-                            mShakeListener.onShake();
-                            }*/
+                          
                         //call the reaction you want to have happen
                           onShake();
                         }
