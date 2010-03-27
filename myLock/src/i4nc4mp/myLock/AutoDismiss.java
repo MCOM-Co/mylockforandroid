@@ -17,7 +17,11 @@ import android.os.SystemClock;
 import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
 //This one is the dismiss activity method but runs no guard activity
-//it just dismisses at wakeup and call end if the lockscreen is detected
+//guard activity is actually just cosmetic, some users like seeing their wallpaper during unlock
+//makes sense because we don't like slide to unlock
+
+
+//we mediate wakeup & call end, to fire dismiss activity if the lockscreen is detected
 
 public class AutoDismiss extends MediatorService implements SensorEventListener {
 	public boolean persistent = false;
@@ -29,10 +33,9 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
     public int patternsetting = 0;
     //we'll see if the user has pattern enabled when we startup
     //so we can disable it and then restore when we finish
-    //FIXME store this in the prefs file instead of local var, so boot handler can pick it up and restore when necessary
     
     public boolean slideWakeup = false;
-  //we will set this when we detect slideopen, only used with instant unlock (replacement for 2c ver)
+  //we will set this when we detect slideopen, only used with instant unlock
     
     
     //public boolean idle = false;
@@ -46,11 +49,9 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
     private static final int SHAKE_DURATION = 1000;
     private static final int SHAKE_COUNT = 3;
    
-    //private SensorManager mSensorMgr;
     private float mLastX=-1.0f, mLastY=-1.0f, mLastZ=-1.0f;
     private long mLastTime;
-    //private OnShakeListener mShakeListener;
-    private Context mContext;
+
     private int mShakeCount = 0;
     private long mLastShake;
     private long mLastForce;
@@ -66,26 +67,13 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
     	super.onCreate();
     	
     	//================register for shake listening, first time
-    	 SharedPreferences settings = getSharedPreferences("myLock", 0);
-         shakemode = settings.getBoolean("shake", false);
-    	
-        Log.v("init shake","registering for shake");
+    	Log.v("init shake","connecting to sensor service and accel sensor");
         
-        mContext = getApplicationContext();
         // Obtain a reference to system-wide sensor event manager.
-        mSensorEventManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
+        mSensorEventManager = (SensorManager) getApplicationContext().getSystemService(Context.SENSOR_SERVICE);
 
         // Get the default sensor for accel
         mSensor = mSensorEventManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-
-        // Register for events.
-        if (shakemode) mSensorEventManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_NORMAL);
-        //I don't have a use for shake while not in sleep (yet)
-        //workaround appears contingent on keeping it registered while awake also
-        //i will just unregister on first start
-        
-        //IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
-        //registerReceiver(mReceiver, filter);
     }
     
     @Override
@@ -119,23 +107,8 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
                 
              // Unregister from SensorManager.
                 if (shakemode) mSensorEventManager.unregisterListener(this);
-                //unregisterReceiver(mReceiver);
                 
 }
-    /*
-    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
-        @Override
- public void onReceive(Context context, Intent intent) {
-            // Check action just to be on the safe side.
-            if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
-                // Unregisters the listener and registers it again.
-                mSensorEventManager.unregisterListener(AutoDismiss.this);
-                mSensorEventManager.registerListener(AutoDismiss.this, mSensor,
-                    SensorManager.SENSOR_DELAY_NORMAL);
-            }
- }
-    };*/
-
     @Override
     public void onRestartCommand() {
             
@@ -145,6 +118,8 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             boolean guardpref = settings.getBoolean("slideGuard", false);
                                  
 /*========Settings change re-start commands that come from settings activity*/
+//FIXME i believe there is a settings listener we can use instead of having to re-start to check prefs
+            
     
             if (persistent != fgpref) {//user changed pref
                     if (persistent) {
@@ -153,11 +128,8 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
                     }
                     else doFGstart();//so FG mode is started again
             }
-            else if (shakemode != shakepref) {
-            		shakemode = shakepref;
-            	}
-            else if (guardpref != slideGuarded)
-            	slideGuarded = guardpref;
+            else if (shakemode != shakepref) shakemode = shakepref;
+            else if (guardpref != slideGuarded) slideGuarded = guardpref;
             else {
 /*========Safety start that ensures the settings activity toggle button can work, first press to start, 2nd press to stop*/
                   Log.v("toggle request","user first press of toggle after a startup at boot");
@@ -166,14 +138,20 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
     
     @Override
     public void onFirstStart() {
+    	
+    	//first acquire the prefs that need to be initialized
             SharedPreferences settings = getSharedPreferences("myLock", 0);
             SharedPreferences.Editor editor = settings.edit();
             
-            persistent = settings.getBoolean("FG", true);
+            persistent = settings.getBoolean("FG", false);
             //timeoutenabled = settings.getBoolean("timeout", false);
+            shakemode = settings.getBoolean("shake", false);
+            slideGuarded = settings.getBoolean("slideGuard", false);
                         
             if (persistent) doFGstart();
             if (shakemode) mSensorEventManager.unregisterListener(this);
+            //turn off shake listener that we got in onCreate as we only start at sleep
+ 
                         
             //we have to toggle pattern lock off to use a custom lockscreen
             try {
