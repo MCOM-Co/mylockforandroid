@@ -249,8 +249,17 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
         
     @Override
     public void onScreenWakeup() {
+    	if (receivingcall || placingcall) {
+    		Log.v("auto dismiss service","aborting screen wake handling due to call in progress");
+    		return;
+    	}
+    	//no handling during a call just to avoid conflicts because we use wakelock
+    	//this means lockscreen will exist if user has tabbed out of the phone
+    	//user may also see it if a call is missed or ignored.
+    	//this is best so no chance of pocket redial
+    	
     	ManageKeyguard.initialize(getApplicationContext());
-        
+    	
         boolean KG = ManageKeyguard.inKeyguardRestrictedInputMode();    
     	if (KG && !slideWakeup) StartDismiss(getApplicationContext());                
         
@@ -365,7 +374,9 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
     public void onSensorChanged(SensorEvent event) {
             if(event.sensor.getType() != Sensor.TYPE_ACCELEROMETER) return;
             
-            Log.v("sensor","sensor change is verifying");
+            //Log.v("sensor","sensor change is verifying");
+            //uncomment this to be certain the sensor is registered
+            //it will spam it continuously while properly registered
         long now = System.currentTimeMillis();
      
         if ((now - mLastForce) > SHAKE_TIMEOUT) {
