@@ -11,10 +11,90 @@ The implementation involves a life-cycle mediated by a remote service handling p
 
 The real trickiness comes from the fact that key event mediation is not as we would expect with these lockscreen interaction flags. With show when locked, it seems we don't get any events unless awake. With dismiss, we get everything, and also have to deal with a wakeup from everything. The expected behavior for either would be the ability to handle key events first, then return false if we wanted to pass them on to the lockscreen for handling. It seems the case hasn't been considered, so the odd Always vs Never wake behavior is the end result.
 
-Despite challenges, we've been able to create a custom lockscreen that comes on top of pattern security, one that is button customizable, and one that simply replaces the stock lockscreen without trying to reinvent the power control functionality. These are 3 basic modes- Secure, Guarded, and Advanced.
+Despite challenges, we've been able to create 3 types of custom lockscreens
 
-Secure happens on top of the lockscreen, regardless of whether there is a pattern. You have to slide the pattern or regular slider to get to anything else.
+Secure - happens on top of the lockscreen, regardless of whether there is a pattern. You have to slide the pattern or regular slider to get to anything else.
 
-Guarded just replaces the lockscreen, automatically exiting it. These first two modes use show_when_locked.
+Guarded - simply replaces the stock lockscreen without trying to reinvent the power control functionality. Does exit the lockscreen when user exits, that's the only change from secure mode. Both use show_when_locked.
 
-Advanced is the trickiest, as it totally disables the lockscreen (utilizing dismiss_keyguard), allowing any button to wake it up. Various settings are available with it to determine which keys instant unlock and which are guarded so only lockscreen wakes. Additionally, advanced power saving can be enabled, allowing toggle of Locked mode for any key to keep the screen asleep in the case of a pocket-press, and optional shortened screen sleep time when a guarded key wakes the custom lockscreen. 
+Advanced - the trickiest, as it totally disables the lockscreen (utilizing dismiss_keyguard), allowing any button to wake it up. Various settings are available with it to determine which keys instant unlock and which are guarded so only lockscreen wakes. Additionally, advanced power saving can be enabled, allowing toggle of Locked mode for any key to keep the screen asleep in the case of a pocket-press, and optional shortened screen sleep time when a guarded key wakes the custom lockscreen. 
+
+= Example code =
+
+When you want to replace the lockscreen only by using the show when locked flag (best practice since you want to keep side keys locked down), you also need a way to handle the user unlocking. The pre 2.0 method works (call disable keyguard, then call securely exit) but it is prone to problems. If your lockscreen gives the user access to the notification panel, or the user exits through home key, you have to use the pre 2.0 method. You can handle a home key exit since user pressing home causes onStop to get called while the activity was still resumed and had focus. Because the show when locked activity is going to force the keyguard back into play as soon as it is no longer the top most window, the workaround is to call disablekeyguard as soon as you detect that the user has pressed home or clicked on something in the notification panel, then follow it up in the next life cycle call with securely exit. See the basic guard mediator source for the examples of these lifecycle setups. I will be implementing them soon into guarded mode custom lockscreen.
+
+I've developed a problem free method for unlocking utilizing the dismiss keyguard flag, which is used for user requested unlock. The Auto Unlock version just launches this at screen on while calls aren't in progress
+
+Here is the method from the mediator service:
+
+{{{
+public void StartDismiss(Context context) {
+            
+    	//PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        //myPM.userActivity(SystemClock.uptimeMillis(), true);
+    	ManageWakeLock.acquireFull(getApplicationContext());
+    	
+    Class w = AutoDismissActivity.class; 
+                  
+    Intent dismiss = new Intent(context, w);
+    dismiss.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK//required for a service to launch activity
+                    | Intent.FLAG_ACTIVITY_NO_HISTORY);
+//No history tells the OS to finish the activity after it goes into the background
+                    
+    context.startActivity(dismiss);
+}
+}}}
+
+Here is the auto dismiss activity
+
+{{{
+public class AutoDismissActivity extends Activity {
+ 
+      protected void onCreate(Bundle icicle) {
+      super.onCreate(icicle);
+
+      
+      requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+      getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+    		  | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+    		  | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+      
+      Log.v("dismiss","creating dismiss window");
+      
+      updateLayout();
+}
+      
+      protected View inflateView(LayoutInflater inflater) {
+      return inflater.inflate(R.layout.dismisslayout, null);
+  }
+
+  private void updateLayout() {
+      LayoutInflater inflater = LayoutInflater.from(this);
+
+      setContentView(inflateView(inflater));
+  }
+  
+ 
+  @Override
+  public void onWindowFocusChanged (boolean hasFocus) {
+      if (hasFocus) {
+    	  //this should be the first safe point to kill the guard and start finishing
+    	  //should eliminate the need for the finish delay thread.
+    	  Log.v("dismiss complete","gained focus, doing finish broadcasts");
+          
+          //PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+          //myPM.userActivity(SystemClock.uptimeMillis(), true);
+    	  
+    	//callback mediator for final handling of the stupid wake lock
+          Intent intent = new Intent("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED");
+          getApplicationContext().sendBroadcast(intent);
+    	  
+          
+          moveTaskToBack(true);
+          //this actually ensures a clean finish because we have no history flag
+          
+          
+          
+          }
+  }
+}}}
