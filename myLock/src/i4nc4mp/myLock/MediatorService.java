@@ -106,7 +106,9 @@ PhoneStateListener Detector = new PhoneStateListener() {
         {
     		if (state == 2) {//change to call active
     			if (lastphonestate==1) {
-    				receivingcall = true;
+    				//receivingcall = true;
+    				//now set at the ring start so ringing is treated as received call
+    				Log.v("mediator","user accepted call");
     			}    			
     			if (lastphonestate==0) {
     				placingcall = true;
@@ -118,6 +120,7 @@ PhoneStateListener Detector = new PhoneStateListener() {
             //pause();
     		}
     		else if (state==1){//change to ringing call
+    			receivingcall = true;
     			onCallRing();
         	}
     		else {//return to idle
@@ -127,6 +130,8 @@ PhoneStateListener Detector = new PhoneStateListener() {
     		
     			if (lastphonestate==1) {
     				//state 1 to 0 is user pressed ignore or missed the call
+    				receivingcall = false;
+    				Log.v("mediator","user ignored or missed call");
     				onCallMiss();
     			}
     			else {

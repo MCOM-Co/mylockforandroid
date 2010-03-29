@@ -42,9 +42,8 @@ public class Toggler extends Service {
 			stopService();
   			Toast.makeText(Toggler.this, "myLock is now disabled", Toast.LENGTH_SHORT).show();
 		}
-		
-		//stopSelf();
 		//added to prevent android "restarting" this after it dies/is purged causing unexpected toggle
+		stopSelf();//close so it won't be sitting idle in the running services window
 		return START_NOT_STICKY;//ensure it won't be restarted by the OS, we only want explicit starts
 	}
 	
