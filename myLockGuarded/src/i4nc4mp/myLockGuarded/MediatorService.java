@@ -101,50 +101,55 @@ PhoneStateListener Detector = new PhoneStateListener() {
 		 */
 		
 		
-    	@Override
-    	public void onCallStateChanged(int state, String incomingNumber) 
-        {
-    		if (state == 2) {//change to call active
-    			if (lastphonestate==1) {
-    				receivingcall = true;
-    			}    			
-    			if (lastphonestate==0) {
-    				placingcall = true;
-                }
-    			//set the flags so subclasses can know what kind of call
-    			//call reaction method
-    			onCallStart();
-            
-            //pause();
-    		}
-    		else if (state==1){//change to ringing call
-    			onCallRing();
-        	}
-    		else {//return to idle
-    			
-    			if (lastphonestate == 42) Log.v("ListenInit","first phone listener init");
-    			else {    			
-    		
-    			if (lastphonestate==1) {
-    				//state 1 to 0 is user pressed ignore or missed the call
-    				onCallMiss();
-    			}
-    			else {
-    				//activate();
-    			
-    				onCallEnd();
-    				//call reaction method first, then reset flags
-    				
-    				receivingcall = false;
-    				placingcall = false;
-    				}    				
-    			}
-    		}
-    		
-    		//all state changes store themselves so changes can be interpreted
-            lastphonestate = state;
-        }
-    };
+	@Override
+	public void onCallStateChanged(int state, String incomingNumber) 
+    {
+		if (state == 2) {//change to call active
+			if (lastphonestate==1) {
+				//receivingcall = true;
+				//now set at the ring start so ringing is treated as received call
+				Log.v("mediator","user accepted call");
+			}    			
+			if (lastphonestate==0) {
+				placingcall = true;
+            }
+			//set the flags so subclasses can know what kind of call
+			//call reaction method
+			onCallStart();
+        
+        //pause();
+		}
+		else if (state==1){//change to ringing call
+			receivingcall = true;
+			onCallRing();
+    	}
+		else {//return to idle
+			
+			if (lastphonestate == 42) Log.v("ListenInit","first phone listener init");
+			else {    			
+		
+			if (lastphonestate==1) {
+				//state 1 to 0 is user pressed ignore or missed the call
+				receivingcall = false;
+				Log.v("mediator","user ignored or missed call");
+				onCallMiss();
+			}
+			else {
+				//activate();
+			
+				onCallEnd();
+				//call reaction method first, then reset flags
+				
+				receivingcall = false;
+				placingcall = false;
+				}    				
+			}
+		}
+		
+		//all state changes store themselves so changes can be interpreted
+        lastphonestate = state;
+    }
+};
 
     
 	

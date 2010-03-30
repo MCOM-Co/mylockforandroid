@@ -1,6 +1,5 @@
 package i4nc4mp.myLockGuarded;
 
-import i4nc4mp.myLockGuarded.ManageKeyguard.LaunchOnKeyguardExit;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -43,21 +42,32 @@ public class GuardService extends MediatorService {
     public void onDestroy() {
             super.onDestroy();
             
-            if (patternsetting == 1) {
+            SharedPreferences settings = getSharedPreferences("myLock", 0);
+            SharedPreferences.Editor editor = settings.edit();
+                
+                if (patternsetting == 1) {
+                	            	
                     android.provider.Settings.System.putInt(getContentResolver(), 
-                    android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
-    //re-enable pattern lock if applicable
-            }
+                        android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
+                        
+                    
+            		editor.putBoolean("securepaused", false);
+            		
+            		// Don't forget to commit your edits!!!
+            		//editor.commit();
+                }
                     serviceHandler.removeCallbacks(myTask);
-                serviceHandler = null;
-                
-                unregisterReceiver(idleExit);
-                unregisterReceiver(lockStarted);
-                unregisterReceiver(lockStopped);
-                //unregisterReceiver(homeUnlock);
-                
-                
-                ManageWakeLock.releasePartial();
+                    serviceHandler = null;
+                    
+                    unregisterReceiver(idleExit);
+                    unregisterReceiver(lockStarted);
+                    unregisterReceiver(lockStopped);
+                    
+                    
+                    editor.putBoolean("serviceactive", false);
+                    editor.commit();
+                    
+                    ManageWakeLock.releasePartial();
                 
 }
 
@@ -65,7 +75,7 @@ public class GuardService extends MediatorService {
     public void onRestartCommand() {
             
             SharedPreferences settings = getSharedPreferences("myLock", 0);
-            boolean fgpref = settings.getBoolean("FG", true);
+            boolean fgpref = settings.getBoolean("FG", false);
                                  
 /*========Settings change re-start commands that come from settings activity*/
     
@@ -84,46 +94,55 @@ public class GuardService extends MediatorService {
     
     @Override
     public void onFirstStart() {
-            SharedPreferences settings = getSharedPreferences("myLock", 0);
-            persistent = settings.getBoolean("FG", true);
-            
-            timeoutenabled = settings.getBoolean("timeout", false);
-            
-            
-            if (persistent) doFGstart();
-            //else send a toast telling user what mode is starting and whether stay awake is active
-            //perhaps do that in the boot handler service
-            
-            //we have to toggle pattern lock off to use a custom lockscreen
-            try {
-                    patternsetting = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.LOCK_PATTERN_ENABLED);
-            } catch (SettingNotFoundException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-            }
-            
-            if (patternsetting == 1) {      
-    android.provider.Settings.System.putInt(getContentResolver(), 
-                    android.provider.Settings.System.LOCK_PATTERN_ENABLED, 0); 
-            }
-            
-                            
-            serviceHandler = new Handler();
-            ManageWakeLock.acquirePartial(getApplicationContext());
-            //if not always holding partial we would only acquire at Lock activity exit callback
-            //we found we always need it to ensure key events will not occasionally drop on the floor from idle state wakeup
-            
-            IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLockGuarded.lifecycle.IDLE_TIMEOUT");
-            registerReceiver(idleExit, idleFinish);
-            
-            IntentFilter lockStart = new IntentFilter ("i4nc4mp.myLockGuarded.lifecycle.LOCKSCREEN_PRIMED");
-            registerReceiver(lockStarted, lockStart);
-            
-            IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLockGuarded.lifecycle.LOCKSCREEN_EXITED");
-            registerReceiver(lockStopped, lockStop);
-            
-            //IntentFilter home = new IntentFilter ("i4nc4mp.myLockcomplete.lifecycle.HOMEKEY_UNLOCK");
-            //registerReceiver(homeUnlock, home);
+    	SharedPreferences settings = getSharedPreferences("myLock", 0);
+        SharedPreferences.Editor editor = settings.edit();
+        
+        persistent = settings.getBoolean("FG", false);
+        timeoutenabled = settings.getBoolean("timeout", false);
+                    
+        if (persistent) doFGstart();
+                    
+        //we have to toggle pattern lock off to use a custom lockscreen
+        try {
+                patternsetting = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.LOCK_PATTERN_ENABLED);
+        } catch (SettingNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+        }
+        
+        if (patternsetting == 1) {      
+android.provider.Settings.System.putInt(getContentResolver(), 
+                android.provider.Settings.System.LOCK_PATTERN_ENABLED, 0);
+
+			
+			editor.putBoolean("securepaused", true);
+			//will be flagged off on successful exit w/ restore of pattern requirement
+			//otherwise, it is caught by the boot handler... if myLock gets force closed/uninstalled
+			//there's no clean resolution to this pause.
+
+			// Don't forget to commit your edits!!!
+			//editor.commit();
+        }
+        
+                        
+        serviceHandler = new Handler();
+        
+        
+        ManageWakeLock.acquirePartial(getApplicationContext());
+        //if not always holding partial we would only acquire at Lock activity exit callback
+        //we found we always need it to ensure key events will not occasionally drop on the floor from idle state wakeup
+        
+        IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLockGuarded.lifecycle.IDLE_TIMEOUT");
+        registerReceiver(idleExit, idleFinish);
+        
+        IntentFilter lockStart = new IntentFilter ("i4nc4mp.myLockGuarded.lifecycle.LOCKSCREEN_PRIMED");
+        registerReceiver(lockStarted, lockStart);
+        
+        IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLockGuarded.lifecycle.LOCKSCREEN_EXITED");
+        registerReceiver(lockStopped, lockStop);
+       
+        editor.putBoolean("serviceactive", true);
+        editor.commit();
     }
     
     BroadcastReceiver lockStarted = new BroadcastReceiver() {
@@ -163,9 +182,6 @@ public class GuardService extends MediatorService {
             if (!idle) {
                     if (timeoutenabled) IdleTimer.cancel(getApplicationContext());
                      
-                    
-                    //PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
-        		   	//pm.userActivity(SystemClock.uptimeMillis(), false);
         		   
                     }
             else {                          
@@ -178,17 +194,6 @@ public class GuardService extends MediatorService {
                     stopSelf();
                     }                       
     }};
-    
-    /*BroadcastReceiver homeUnlock = new BroadcastReceiver() {
-            @Override
-        public void onReceive(Context context, Intent intent) {
-            if (!intent.getAction().equals("i4nc4mp.myLockcomplete.lifecycle.HOMEKEY_UNLOCK")) return;
-            
-            ManageKeyguard.disableKeyguard(context);
-            StartDismiss(context);
-            return;
-            
-            }};*/
     
     BroadcastReceiver idleExit = new BroadcastReceiver() {
             @Override
@@ -307,24 +312,6 @@ public class GuardService extends MediatorService {
                     context.startActivity(lockscreen);
             }
     
-    public void DoExit(Context context) {//try the alpha keyguard manager secure exit
-    
-    //ManageKeyguard.initialize(context);
-    PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
-    pm.userActivity(SystemClock.uptimeMillis(), false);
-    //ensure it will be awake
-    
-    ManageKeyguard.disableKeyguard(getApplicationContext());
-    //advantage here is we don't have to do a task delay
-    //because we're already showing on top of keyguard this gets the job done
-    
-    
-    ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
-        public void LaunchOnKeyguardExitSuccess() {
-           Log.v("start", "This is the exit callback");
-           }});     
-}
-    
     public void StartDismiss(Context context) {
             
     Class w = DismissActivity.class; 
@@ -359,30 +346,62 @@ public class GuardService extends MediatorService {
     
     @Override
     public void onCallEnd() {
-            //TODO 2.1 lets us check whether the screen is on
-            
             //all timeout sleep causes KG to visibly restore after the 5 sec grace period
             //the phone appears to be doing a KM disable to pause it should user wake up again, and then re-enables at call end
             
             //if call ends while asleep and not in the KG-restored mode (watching for prox wake)
             //then KG is still restored, and we can't catch it due to timing
             
-            //therefore, all calls ending while screen is off result in restart lockactivity
-            //if screen is awake we check for KG, exit if needed, and reset shouldLock to true
+            //right now we can't reliably check the screen state
+    		//instead we will restart the guard if call came in waking up device
+    		//otherwise we will just do nothing besides dismiss any restored kg
             
             Context mCon = getApplicationContext();
             
-            if (IsAwake()) {
-                    Log.v("call end, screen awake","checking if we need to exit KG");
-                    shouldLock = true;
-                    ManageKeyguard.initialize(mCon);
-                    if (ManageKeyguard.inKeyguardRestrictedInputMode()) StartDismiss(mCon);
-            }
-            else {
-                    Log.v("call end, screen asleep","restarting lock activity.");
+            Log.v("call end","checking if we need to exit KG");
+            
+            ManageKeyguard.initialize(mCon);
+            
+            boolean KG = ManageKeyguard.inKeyguardRestrictedInputMode();
+            //this will tell us if the phone ever restored the keyguard
+            //phone occasionally brings it back to life but suppresses it
+            
+            //2.1 isScreenOn will allow us the logic:
+            
+            //restart lock if it is asleep and relocked
+            //dismiss lock if it is awake and relocked
+            //do nothing if it is awake and not re-locked
+            //wake up if it is asleep and not re-locked (not an expected case)
+            
+            //right now we will always dismiss as user expects that ONLY the slide open will be guarded
+            //when awake and not slider opened it will need to be dismissed.
+            //this basically means those times when phone wants to be asleep and locked
+            //we are actually causing a wakeup/unlock,
+            //but we can't respect that case till we have 2.1
+            
+            
+            /*
+            if (callWake) {
+                    Log.v("wakeup call end","restarting lock activity.");
+                    callWake = false;
                     PendingLock = true;
                     StartLock(mCon);
+                    //when we restart here, the guard activity is getting screen on event
+                    //and calling its own dismiss as if it was a user initiated wakeup
+                    //TODO but this logic will be needed for guarded custom lockscreen version
             }
+            else {
+            	//KG may or may not be about to come back and screen may or may not be awake
+            	//these factors depend on what the user did during call
+            	//all we will do is dismiss any keyguard that exists, which will cause wake if it is asleep
+            	//if (IsAwake()) {}
+                    Log.v("call end","checking if we need to exit KG");
+                    shouldLock = true;
+                    if (KG) StartDismiss(mCon);
+            }*/
+            shouldLock = true;
+            if (KG) StartDismiss(mCon);
+            
     }
     
     @Override
@@ -411,7 +430,7 @@ public class GuardService extends MediatorService {
             
             Context context = getApplicationContext();
             CharSequence contentTitle = "myLock - click to open settings";
-            CharSequence contentText = "lockscreen is disabled";
+            CharSequence contentText = "guarded custom lockscreen is active";
 
             Intent notificationIntent = new Intent(this, SettingsActivity.class);
             PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);

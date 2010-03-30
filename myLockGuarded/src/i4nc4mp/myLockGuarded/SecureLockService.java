@@ -222,7 +222,7 @@ public class SecureLockService extends MediatorService {
 		
 		Context context = getApplicationContext();
 		CharSequence contentTitle = "myLock - click to open settings";
-		CharSequence contentText = "secure mode lockscreen active";
+		CharSequence contentText = "secure lockscreen active";
 
 		Intent notificationIntent = new Intent(this, SettingsActivity.class);
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);

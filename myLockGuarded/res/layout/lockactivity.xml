@@ -14,7 +14,7 @@ android:layout_centerHorizontal="true"
 >
 <Button android:text="Prev" android:id="@+id/PrevButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentTop="true"
 android:layout_toLeftOf="@+id/PlayToggle"></Button>
-<Button android:text="Play" android:id="@+id/PlayToggle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentTop="true"
+<Button android:text="Pause" android:id="@+id/PlayToggle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentTop="true"
 android:layout_centerHorizontal="true"
 ></Button>
 <Button android:text="Next" android:id="@+id/NextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentTop="true"
