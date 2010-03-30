@@ -7,6 +7,9 @@ If you can email me a log immediately after a problem happens, I can know exactl
 = UNINSTALL YOUR TASK KILLER =
 Task killers cause the phone to run slower and cause massive problems for many apps. There is no benefit or upside.
 
+= MAKE SURE YOU HAVE THE CORRECT KERNELS FOR SETCPU OVERCLOCK =
+I've had tons of reports of problems from setCPU users. It appears the fix is to install the latest version of the recommended custom kernel into your rom to support the setCPU app. Most often the problems come during underclocking in sleep mode. Your results may vary drastically when reunning setCPU. I haven't tried it, but I may soon. 
+
 = Why isn't there an option to get rid of the status icon =
 There is. We've tried, but there is no way to work around having the icon in place. You might experience a sudden loss of functionality and have to go back into settings & re-toggle the app if you operate without the persistent icon. In my testing this seems quite rare but every user's setup will be different depending on everything they regularly use on the device. For more about this, check out the official android development post that explains- http://android-developers.blogspot.com/2010/02/service-api-changes-starting-with.html
 
@@ -16,8 +19,8 @@ Screenmodewidget & keyguard disabler can do this for you. We will implement butt
 = Why do the volume or camera buttons wake it back up sometimes? =
 This is one of the rules of the lockscreen. When a timeout sleep occurs you have a short grace period in which the lockscreen isn't yet engaged, thus allowing any action at all to awaken it again quickly. That means any button, as well as even sliding the slider closed which normally doesn't trigger a wakeup.
 
-= How do I use the app and still get handcent popups? (Alpha 2c) =
-In handcent go to settings > poup setting > enable 'Screen on for Popup', disable 'Show on locked'. This will ensure myLock still works and the two don't cause havoc as they both attempt to react to wakeup. This is only applicable to the market v1 (alpha 2c download here on the project page). We have fixed handcent interaction for the a3 revision.
+= How do I use the app and still get handcent popups correctly? =
+In handcent go to settings > poup setting > enable 'Screen on for Popup', disable 'Show on locked'. This will ensure myLock still works and the two don't cause havoc as they both attempt to react to wakeup. This is only applicable to the market auto unlock version. Your results may vary, however we do recommend disabling the show on locked so that handcent won't try to use the older lockscreen cancel code when it's already being cancelled by the auto unlock.
 
 = It stopped working and won't work again even though I've uninstalled and reinstalled (alpha 2c) =
 
