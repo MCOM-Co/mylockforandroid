@@ -33,7 +33,6 @@ import android.util.Log;
 //to the screen on event handling and starting dismiss from here instead of in the mediator
 
 public class BasicGuardService extends MediatorService {
-	//import from the custom service from Complete revision, remove screen timeout change code
 	
 	public boolean persistent = false;
     public boolean timeoutenabled = false;
@@ -82,8 +81,6 @@ public class BasicGuardService extends MediatorService {
                 unregisterReceiver(idleExit);
                 unregisterReceiver(lockStarted);
                 unregisterReceiver(lockStopped);
-                
-                unregisterReceiver(lockexitRequest);
                 
                 
                 editor.putBoolean("serviceactive", false);
@@ -161,12 +158,7 @@ public class BasicGuardService extends MediatorService {
             registerReceiver(lockStarted, lockStart);
             
             IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED");
-            registerReceiver(lockStopped, lockStop);
-            
-            
-            IntentFilter exitRequ = new IntentFilter ("i4nc4mp.myLock.lifecycle.EXIT_REQUEST");
-            registerReceiver(lockexitRequest, exitRequ);
-            
+            registerReceiver(lockStopped, lockStop);            
             
             editor.putBoolean("serviceactive", true);
             editor.commit();
@@ -209,8 +201,6 @@ public class BasicGuardService extends MediatorService {
             if (!idle) {
                     if (timeoutenabled) IdleTimer.cancel(getApplicationContext());
                                         
-                    PowerManager pm = (PowerManager) getSystemService (Context.POWER_SERVICE); 
-        		   	pm.userActivity(SystemClock.uptimeMillis(), false);
         		   
                     }
             else {                          
@@ -224,19 +214,7 @@ public class BasicGuardService extends MediatorService {
                     }                       
     }};
    
-   //Exit request will come in from the guard resume handling based on conditions for instant exit being met
-   //the guard will enter exit handoff state and close when focus is handed to dismiss window we started here
-   BroadcastReceiver lockexitRequest = new BroadcastReceiver() {
-            @Override
-        public void onReceive(Context context, Intent intent) {
-            if (!intent.getAction().equals("i4nc4mp.myLock.lifecycle.EXIT_REQUEST")) return;
-            
-            StartDismiss(context);
-            return;
-           
-            }};
-    
-    BroadcastReceiver idleExit = new BroadcastReceiver() {
+   BroadcastReceiver idleExit = new BroadcastReceiver() {
             @Override
         public void onReceive(Context context, Intent intent) {
             if (!intent.getAction().equals("i4nc4mp.myLock.lifecycle.IDLE_TIMEOUT")) return;

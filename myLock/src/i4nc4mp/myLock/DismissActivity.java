@@ -64,9 +64,7 @@ public class DismissActivity extends Activity {
           
           moveTaskToBack(true);
           //this actually ensures a clean finish because we have no history flag
-          //FIXME let's get a callback from mediator as soon as it receives the stop callback
-          //that way we know guard has been moved to back while we are still up front
-          //then we can move to back safely revealing activity, and not the keyguard window
+
           }
   }
   
