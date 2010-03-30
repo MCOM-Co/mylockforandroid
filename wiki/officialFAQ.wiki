@@ -10,19 +10,22 @@ The guiding principle is one simple fact: we don't like having to slide to unloc
 We want to use the device on the first interaction, and not require a redundant slide action. It's a little surprising that the option not to have the lockscreen isn't already built into the OS. Off, keyguard, or pattern lock seem like suitable choices for end users, so myLock wants to step in to provide the Off category. Although the OS has provided tools for making the lockscreen go away, they are only designed for use cases like pushing a popup to the screen automatically (such as the default alarm clock). As a result we might go as far as doing a firmware mod for install on root devices to accomplish parts of the goal that are off-limits to regular apps.
 
 = But I want a quick way to disable pattern lock also, can myLock do this? =
-Yes we can. The complete version implements this currently when not in secure mode, automatically pausing pattern mode when myLock starts. It will automatically retain your pattern in the system settings and restart lockdown mode when you stop myLock. We are also going to provide an idle timeout option where myLock will disable itself and restore the pattern lock after a number of minutes left idle.
+Yes we can. Every version except the secure custom lockscreen automatically suppresses pattern mode when myLock starts. It will automatically retain your pattern in the system settings and restart lockdown mode when you stop myLock. We are also going to provide an idle timeout option where myLock will disable itself and restore the pattern lock after a number of minutes left idle.
+
+= Make a locale plugin =
+Ok. But I don't have locale. My app is free, but locale is 10 bucks. So I need to get it first so I can test the plugin.
 
 = Will myLock also offer customization for backlight timers? =
 Probably. At the moment we have very little priority on this. The only implementation will be under the Custom mode lockscreen. This will offer advanced power save options which can stop the screen from waking up with specific buttons or reduce the timeout to a minimal 5 or 6 seconds while lockscreen is showing. Don't confuse the lockscreen functionality with auto-sleep or auto-dim functionalities, which are governed separately. 
 
 = Can you program customization for different buttons or touching the screen or touch buttons to wake it or unlock it? =
-We can, but it is a little bit complicated due to the functions that allow us access are new to android 2.0 and so offer very little flexibility. Two modes will be available in the complete version - Custom, which has any key/event waking up the screen, and Guarded, which only wakes up with power, slider, and keypad buttons.
+We can, but it is a little bit complicated due to the functions that allow us access are new to android 2.0 and so offer very little flexibility. Two versions will be available - Advanced, which has any key/event waking up the screen with options for customizing power saving features, and Guarded, which only wakes up with power, slider, and keypad buttons.
 
 = So, does this mean you can also program shake unlocking? =
-Yes. We have learned how to get shake implemented but it is also pretty complicated and won't be a big priority for support till later in development.
+Yes. We have learned how to get shake implemented but it is also pretty complicated and won't be a big priority for support till later in development. I have a test build which can get the shake from sleep but it needs work to properly interact with shake at a good sensetivity level.
 
 = Can you create a custom lockdown mode requiring a password? =
-We're researching this. It is definitely possible. There is an app called wave secure which has a lockdown like this. We just aren't sure how useful a standalone lockdown would be in the long run. It wouldn't be able to stop incoming call usage.
+We're researching this. It is definitely possible. There is an app called wave secure which has a lockdown like this. We just aren't sure how useful a standalone lockdown would be in the long run. It wouldn't be able to stop incoming call usage. We'd also recommend App Protector.
 
 = Can you give preferences to answer incoming call without using the touchscreen too? =
 Not sure yet. This is a really good idea, as the "call lockscreen" does stand in your way just like the regular one.
@@ -37,7 +40,7 @@ The inspiration to create this was the existing silencer slider/clock display on
 Yes. One catch with this is that Android blocks apps from taking full control of the home key, so the home key will always unlock as well. But if you would like, the option for slide to unlock will be included once the custom lockscreen hits a full-featured release.
 
 = Can you make a custom lockscreen we can bring up in front of the pattern lock screen, for controlling music, etc? =
-Yes. This is a priority for the updates we have been working on. 
+Yes. This is a priority for the updates we have been working on. It is currently available in the custom lockscreen version beta 1.0.
 
 = What's notification preview? =
 This is a plan for the full final version of the app, way down the road. We think it would be excellent to have a timeline of missed events displayed on the wakeup screen, customized by user to what types of events have the priority of being shown there. A converged view for the timeline of any unread IMs, twitter, sms, email, missed call, voicemail. We might limit this to gmail, sms, gtalk, & gvoice and see how it goes.
