@@ -15,6 +15,9 @@ Yes we can. Every version except the secure custom lockscreen automatically supp
 = Make a locale plugin =
 Ok. But I don't have locale. My app is free, but locale is 10 bucks. So I need to get it first so I can test the plugin.
 
+= Make better icons / visuals =
+Not my forte, feel free to send me your submissions. Open source means the community can and should contribute. The greatness of the project is directly relative to the level of community participation.
+
 = Will myLock also offer customization for backlight timers? =
 Probably. At the moment we have very little priority on this. The only implementation will be under the Custom mode lockscreen. This will offer advanced power save options which can stop the screen from waking up with specific buttons or reduce the timeout to a minimal 5 or 6 seconds while lockscreen is showing. Don't confuse the lockscreen functionality with auto-sleep or auto-dim functionalities, which are governed separately. 
 
