@@ -39,6 +39,20 @@ public class AutoDismissActivity extends Activity {
       setContentView(inflateView(inflater));
   }
   
+  @Override
+  public void onResume() {
+	  super.onResume();
+	  
+	  Log.v("dismiss","resume occurred");
+  }
+  
+  @Override
+  public void onPause() {
+	  super.onPause();
+	  
+	  Log.v("dismiss","pause occurred");
+  }
+  
  
   @Override
   public void onWindowFocusChanged (boolean hasFocus) {

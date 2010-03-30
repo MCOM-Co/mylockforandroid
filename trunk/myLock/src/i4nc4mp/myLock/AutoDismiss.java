@@ -113,7 +113,7 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
     public void onRestartCommand() {
             
             SharedPreferences settings = getSharedPreferences("myLock", 0);
-            boolean fgpref = settings.getBoolean("FG", true);
+            boolean fgpref = settings.getBoolean("FG", false);
             boolean shakepref = settings.getBoolean("shake", false);
             boolean guardpref = settings.getBoolean("slideGuard", false);
                                  
@@ -288,8 +288,8 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
     Intent dismiss = new Intent(context, w);
     dismiss.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK//required for a service to launch activity
                     | Intent.FLAG_ACTIVITY_NO_USER_ACTION//Just helps avoid conflicting with other important notifications
-                    | Intent.FLAG_ACTIVITY_NO_HISTORY//Ensures the activity WILL be finished after the one time use
-                    | Intent.FLAG_ACTIVITY_NO_ANIMATION);
+                    | Intent.FLAG_ACTIVITY_NO_HISTORY);//Ensures the activity WILL be finished after the one time use
+                    //| Intent.FLAG_ACTIVITY_NO_ANIMATION);
                     
     context.startActivity(dismiss);
 }

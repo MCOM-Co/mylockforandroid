@@ -23,14 +23,10 @@ import android.widget.TextView;
 //the mediator for this mode does the pattern suppress with option for idle timeout
 //it simply replaces the lockscreen, does not touch any wakeup rules
 
-//the instant unlocking functionality will be released as standalone myLock basic
-//automatically doing the secure lockscreen exit that was used by the original alpha 2c
-//FIXME when it instant unlocks/dismisses at wakeup it causes big bugs in incoming or ignored calls.
-//got unique odd behavior out of those two cases. FIX for the basic ver update.
 
 //When it is time to exit (by back key or slidingtab) we start a one shot dismiss activity.
-//The dismiss activity will load, wait 50 ms, then finish
-//Here, we finish in the background immediately after requesting the dismiss activity
+//The dismiss activity will load, wait to gain focus, then finish
+//Here, we finish in the background via a callback from the dismiss focus gain
 
 //For this lifecycle, we go dormant for any outside event
 //such as incoming call ringing, alarm, handcent popup, etc.
@@ -42,12 +38,6 @@ import android.widget.TextView;
 //when only show_when_locked is active. i can't seem to make it cooperate with dismissActivity
 //because the KG comes back and blocks it
 //however, for instant exit, the dismissActivity code is flawless
-
-//==========================
-//SHOW WHEN LOCKED activity which takes over mediation of actual lockscreen dismissal
-//It will present a blank guard screen on slider open because there is a large lag when intentionally opening slider for lockscreen skip
-//user can press back or home to exit from there
-//TODO - slide to unlock or a lifecycle to dismiss this screen and show stock lock slider when slide is opened
 
 public class BasicGuardActivity extends Activity {
 	//import from the guard activity from Complete revision
@@ -225,9 +215,25 @@ BroadcastReceiver screenon = new BroadcastReceiver() {
     @Override
     public void onReceive(Context context, Intent intent) {
             if (!intent.getAction().equals(Screenon)) return;
-    //FIXME we can change this to an isScreenOn in the onResume in 2.1
-    //TODO testing moving auto dismiss logic into resume on condition already have focus
-    //TODO restore if it doesn't work
+    
+            if (resurrected) {
+            	//ignore this wake as we do not actually want instant exit
+            	resurrected = false;
+            	Log.v("guard resurrected","ignoring invalid screen on");
+            }
+            if (hasWindowFocus() && !slideWakeup && !resurrected) {
+            	
+               	//StartDismiss(getApplicationContext());
+               	//now tell mediator we need to exit & set pending exit flag
+            	pendingDismiss = true;
+            	
+          	  //Intent i = new Intent("i4nc4mp.myLock.lifecycle.EXIT_REQUEST");
+              //getApplicationContext().sendBroadcast(i);
+            	
+            	StartDismiss(context);
+              
+              
+            }
             
     return;//avoid unresponsive receiver error outcome
          
@@ -290,6 +296,9 @@ public void onReceive(Context context, Intent intent) {
     }*/
     
     
+    //FIXME slide open should just close the activity, causing keyguard to come back
+    //user slides it to confirm unlock
+    /*
     @Override
 public void onConfigurationChanged(Configuration newConfig) {
     super.onConfigurationChanged(newConfig);
@@ -305,7 +314,7 @@ public void onConfigurationChanged(Configuration newConfig) {
     	Log.v("slide closed","lockscreen activity got the config change from background");
     }
                   
-}
+}*/
 
     @Override
 protected void onStop() {
@@ -380,36 +389,9 @@ protected void onPause() {
 protected void onResume() {
     super.onResume();
     Log.v("lock resume","resuming, focus is " + hasWindowFocus());
-    /*if (pendingDismiss) {
-    	StopCallback();
-    	finish();
-    }*/
+   
 
     paused = false;
-    
-    //TODO ===============
-    //Resume might be the best place to start launching dismiss... screen on events can be delayed
-    //Resume with focus would reliably mean a wakeup
-    //as the resume never happens when outside events are taking control.
-    //we lose focus direct from the paused state in that scenario
-    //FIXME testing it here:
-    
-    /*if (resurrected) {
-    	//ignore this wake as we do not actually want instant exit
-    	resurrected = false;
-    	Log.v("guard resurrected","ignoring invalid screen on");
-    }*/
-    if (hasWindowFocus() && !slideWakeup && !resurrected) {
-    	
-       	//StartDismiss(getApplicationContext());
-       	//now tell mediator we need to exit & set pending exit flag
-    	pendingDismiss = true;
-    	
-  	  Intent intent = new Intent("i4nc4mp.myLock.lifecycle.EXIT_REQUEST");
-      getApplicationContext().sendBroadcast(intent);
-      
-      
-    }
     
     
     //updateClock();
@@ -507,7 +489,10 @@ public void StartDismiss(Context context) {
     //the KeyguardViewMediator poke doesn't have enough time to register before our handoff sometimes (rare)
     //this might impact the nexus more than droid. need to test further
     //result is the screen is off (as the code is successful)
+    
+    
     //but no keyguard, have to hit any key to wake it back up
+    //TODO We solved this through a full wake lock acquired just before the start activity call.
 	
     Class w = DismissActivity.class;
                   
@@ -518,10 +503,6 @@ public void StartDismiss(Context context) {
                     | Intent.FLAG_ACTIVITY_NO_ANIMATION);
                     
     pendingDismiss = true;
-    startActivity(dismiss);//ForResult(dismiss, 1);
-    
-    //finish();
-    //instead, we will get a call started CB from the dismiss activity as soon as it has focus
-    //there might be an advantage to calling move task to back, then finish
+    startActivity(dismiss);
 }
 }
