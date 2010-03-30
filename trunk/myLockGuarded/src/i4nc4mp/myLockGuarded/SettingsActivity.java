@@ -161,7 +161,7 @@ public class SettingsActivity extends Activity {
         	return;        
         }*/
     	
-        persistentNotif = settings.getBoolean("FG", true);
+        persistentNotif = settings.getBoolean("FG", false);
         //customLock = settings.getBoolean("welcome", false);
         boot = settings.getBoolean("boot", false);
         //shakewake = settings.getBoolean("ShakeWakeup", false);
@@ -192,7 +192,7 @@ public class SettingsActivity extends Activity {
     private void TryToggle() {
     	if (!triedstart) {
     		startService();
-    		Toast.makeText(SettingsActivity.this, "Intialized... press toggle again to stop myLock", Toast.LENGTH_SHORT).show();
+    		Toast.makeText(SettingsActivity.this, "Started up... press toggle again to stop myLock", Toast.LENGTH_SHORT).show();
     		triedstart = true;
     	}
     	else {

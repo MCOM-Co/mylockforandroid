@@ -1,20 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_height="fill_parent" android:layout_width="fill_parent">
+<LinearLayout 
+	android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:gravity="center_horizontal"
     >
-    
-<Button android:id="@+id/toggleButton"
+    <Button android:id="@+id/toggleButton"
 	android:text="@string/toggleButton"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
 	>
 	</Button>
 	
-<!-- CheckBox android:text="@string/shakeBox" android:id="@+id/shakeBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox  -->
+
+<!-- CheckBox android:text="@string/activeBox" android:id="@+id/activeBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox-->
 <CheckBox android:text="@string/secureBox" android:id="@+id/secureBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
 <CheckBox android:text="@string/fgBox" android:id="@+id/fgBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
 <CheckBox android:text="@string/bootBox" android:id="@+id/bootBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
 
-</LinearLayout>
+<TextView android:text="@string/HowToText1" android:id="@+id/HowTo1" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:text="@string/HowToText2" android:id="@+id/HowTo2" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:text="@string/HowToText3" android:id="@+id/HowTo3" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+
+</LinearLayout></ScrollView>
