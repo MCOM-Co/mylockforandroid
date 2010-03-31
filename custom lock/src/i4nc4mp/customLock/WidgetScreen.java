@@ -1,5 +1,8 @@
 package i4nc4mp.customLock;
 
+import i4nc4mp.customLock.WidgInfo.WidgTable;
+
+import java.io.IOException;
 import java.util.ArrayList;
 
 import android.app.Activity;
@@ -8,10 +11,12 @@ import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.SQLException;
+import android.net.Uri;
 import android.os.Bundle;
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.provider.Contacts.People;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -24,7 +29,7 @@ import android.widget.RelativeLayout;
 public class WidgetScreen extends Activity {
 //for testing we have set this up as a Launcher/Main icon
 //for implementation we will make it subclass LockActivity
-	
+	//IN FACT the standalone activity fits what we will need so users can open it and set up their widgets
 	
 private AppWidgetManager mAppWidgetManager;
 private AppWidgetHost mAppWidgetHost;
@@ -42,19 +47,41 @@ private static final int REQUEST_PICK_APPWIDGET = 9;
 
 private AppWidgetHostView widgets[] = new AppWidgetHostView[16];
 //the views will be repopulated at oncreate
+//we are usually created at sleep, so user doesn't perceive lag
+
 private int[] widgetId = new int[16];
-//the id is how we get back to the persistent state of what widget was assigned by the user
-//the id points to the object on the appwidgetmanager which remembers the user picked widget
+//this is used per instance of the activity
+//we build it during onCreate based on the widget entries we get from the database
+
 private int widgCount = 0;
-//we also need to know how many the actual user has added so we can reference them in the array
+//our reference is increased each widget that is re-populated or added by user
+//every activity that pulls the widgets in from database will use this as the local ref of added widgets
+//this way when we clear them we can quickly do it without having to read the DB again
 
-//the id array and the value of widgCount will be persisted in the state bundle.
-//when re-created, another method which does the completeAdd for each widgetId we have makes all the views again.
 
+private int currentRow = 0;//used to determine where we are adding till space runs out
 
-//the mediator service needs to actually maintain the created widget references since the activity
-//is destroyed and recreated. this way they don't need to be spawned every time
+//we really need to store widgets in 4 to keep row organization straight
+private int[] row0 = new int[4];
+private int[] row1 = new int[4];
+private int[] row2 = new int[4];
+private int[] row3 = new int[4];
 
+private int[] quant = new int[4];
+//this gives the amount of widgets in each row
+// quant[0] == 2 would ensure row0[0 & 1] were repopulated before changing to row1
+
+//what the code does is check the size and adds to the row we are in till we hit the limit
+//then, we can reference item 0 in the row and use the relative Below to position 0 of the next row
+//these will center in parent in terms of the horizontal.
+
+//first test will fill a single row then inform user the row is out of space.
+//this row will be the slot below the clock, then we will set up the launch ver with the 2nd row below it
+//also might be possible to let user specify a row later on (via the options choices)
+
+//its possible almost all of this data setup can be put in the SQL.
+// all we need to do is make sure we can check how many exist on each row, when we run into a 0 item,
+//then move to the next row as 0 would mean none was added there
 
 
 @Override
@@ -63,36 +90,31 @@ protected void onCreate(Bundle savedInstanceState) {
 
     
     requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
-
   
     updateLayout();
-    
-    //mInflater = getLayoutInflater();
-    
-    mAppWidgetManager = AppWidgetManager.getInstance(this);
+ 
+//====get or create the database for storing the widget IDs and quantities on each row
+//TODO
+    //FIXME
+//========= Database should now be open for us to check 
 
+	//Here we initialize widget manager.
+    mAppWidgetManager = AppWidgetManager.getInstance(this);
     mAppWidgetHost = new AppWidgetHost(this, APPWIDGET_HOST_ID);
     mAppWidgetHost.startListening();
     
-    if (savedInstanceState == null || savedInstanceState.isEmpty()) {
-    	Log.v("no state","first start, no views to repopulate");
-    	return;
-    }
+  
+    //Next, we need to repopulate the widgets user had chosen already
     
-    //obtain how many widgetIds existed in the saved state
-    int idCount = savedInstanceState.getInt("idcount");
+    //first, ask the DB how many items exist
+    int rCount = 0;
+    
+    //now, fill our widgetId array with the IDs from the database
             
-    Log.v("repopulate","Need to restore this many widget views: " + idCount);
+    //now all we have to do is iterate repopulate once for each Id we have
+    //it does the positioning work on its own just like the first attach would
+    //RepopulateWidgetView(widgetId[i]);
     
-  //Set our own widgetId array so we have the Ids
-    widgetId = savedInstanceState.getIntArray("idlist");
-    
-    //do a RepopulateWidgetView for each one we have
-    for (int i = 0; i != idCount; i++) {
-    	RepopulateWidgetView(widgetId[i]);
-    }
-    //once that is done, our own widgCount will equal the IdCount we saved
-    //so it is ready for user to add a new one, also
 
 }
 
@@ -109,27 +131,6 @@ protected View inflateView(LayoutInflater inflater) {
 	
   
 	return inflater.inflate(R.layout.mylockscreen, null);
-}
-
-@Override
-protected void onSaveInstanceState (Bundle outState) {
-//this should work. the problem is i need to test it
-	//when i answer a call i choose to kill the activity
-	//how i cause this state data to be persisted?
-	
-	
-	//I believe I will just have to store all of this to prefs file instead
-	
-	
-	super.onSaveInstanceState(outState);
-
-	//put count int
-	outState.putInt("idcount", widgCount);
-	//put Ids array
-	outState.putIntArray("idlist", widgetId);
-	
-	//these are used to literally make new views for all the widgets.
-	//the system widget manager actually keeps these IDs persistent unless we tell it to delete one. 
 }
 
 @Override
@@ -260,33 +261,39 @@ the model seems to retain the references to everything that's been placed on the
 
     //AppWidgetHostView newWidget = mAppWidgetHost.createView(this, appWidgetId, appWidgetInfo);
 
-    //we need to store this widget in an array. the views can be recreated but we need to have a persistent ref
-    //FIXME currently we aren't persistent, need to learn how to make activity save persistent state
 
     widgets[widgCount] = attachWidget(mAppWidgetHost.createView(this, appWidgetId, appWidgetInfo), width, height);
+    parent.addView(widgets[widgCount]);
+    //created the VIEW and positioned it on our view
+    //the manager now has given us a widget ID we can use to make this same widget view again
     
     
-    parent.addView(widgets[widgCount]); 
+    Log.v("widget was added","the manager ID = " + appWidgetId + "size = " + width + "x" + height);
     
+    ContentValues values = new ContentValues();
+
+    values.put(WidgTable.ID, appWidgetId);
+    values.put(WidgTable.ROW, currentRow);
+    values.put(WidgTable.WIDTH, width);
+    values.put(WidgTable.HEIGHT, height);
+   
+
+    Uri uri = getContentResolver().insert(WidgTable.CONTENT_URI, values);
+    Log.v("user picked a widget","added and written to DB: " + uri);
     
-    Log.v("widget was added","the manager ID of the widget is " + appWidgetId);
-    
-    
+    //now set our reference locally and up the count so it is ready for next add
     widgetId[widgCount] = appWidgetId;
     widgCount++;
     
     
     
-    
-    
-        //launcher is doing something to pass this view to their the workspace or the celllayout
-        
+       
         //so every single widget that gets created is one instance of the AppWidgetHostView.
-        //the viewgroup we would have to maintain holds all the appwidgethostviews/
 }
 
 
 //the created new widget is passed raw with the data about its size, then we figure out how to position it
+//if we had to go to next row, increment currentRow so the DB will be set correctly
 private AppWidgetHostView attachWidget(AppWidgetHostView widget, int w, int h){ 
          
     RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams 
@@ -294,6 +301,9 @@ private AppWidgetHostView attachWidget(AppWidgetHostView widget, int w, int h){
     if (widgCount == 0) params.addRule(RelativeLayout.ALIGN_PARENT_TOP);
     //first widget goes at the top of the relative view widget area
     else params.addRule(RelativeLayout.RIGHT_OF, widgets[widgCount-1].getId());
+    //after that we put them on the right
+    
+    //FIXME need to logic to know we ran out of space...
      
     widget.setLayoutParams(params); 
     
@@ -302,20 +312,26 @@ private AppWidgetHostView attachWidget(AppWidgetHostView widget, int w, int h){
     }
 
 private void RepopulateWidgetView(int Id) {
+	//places one widget based on the manager ID we are passing
+	//we use this to put in a previously chosen widget. it will be done in onCreate
+	//this allows us to just iterate this passing each ID in order
+	
 	
 	AppWidgetProviderInfo appWidgetInfo = mAppWidgetManager.getAppWidgetInfo(Id);
+	//the info is the widget itself
     
 
     
     int width = appWidgetInfo.minWidth;
     int height = appWidgetInfo.minHeight;
     
+    //here's our actual view
     RelativeLayout parent= (RelativeLayout) findViewById(R.id.mylockscreen); 
 
     widgets[widgCount] = attachWidget(mAppWidgetHost.createView(this, Id, appWidgetInfo), width, height);
-    
-    
-    parent.addView(widgets[widgCount]);
+    //attach the existing widget and keep the reference
+        
+    parent.addView(widgets[widgCount]);//populate the view itself
     widgCount++;
 }
 
