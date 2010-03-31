@@ -29,8 +29,8 @@ public class WidgIdProvider extends ContentProvider {
 
     private static HashMap<String, String> sNotesProjectionMap;
 
-    private static final int NOTES = 1;
-    private static final int NOTE_ID = 2;
+    private static final int WIDS = 1;
+    private static final int ENTRY_ID = 2;
 
     private static final UriMatcher sUriMatcher;
 
@@ -77,12 +77,12 @@ public class WidgIdProvider extends ContentProvider {
         SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
 
         switch (sUriMatcher.match(uri)) {
-        case NOTES:
+        case WIDS:
             qb.setTables(WIDG_TABLE_NAME);
             qb.setProjectionMap(sNotesProjectionMap);
             break;
 
-        case NOTE_ID:
+        case ENTRY_ID:
             qb.setTables(WIDG_TABLE_NAME);
             qb.setProjectionMap(sNotesProjectionMap);
             qb.appendWhere(WidgTable._ID + "=" + uri.getPathSegments().get(1));
@@ -112,10 +112,10 @@ public class WidgIdProvider extends ContentProvider {
     @Override
     public String getType(Uri uri) {
         switch (sUriMatcher.match(uri)) {
-        case NOTES:
+        case WIDS:
             return WidgTable.CONTENT_TYPE;
 
-        case NOTE_ID:
+        case ENTRY_ID:
             return WidgTable.CONTENT_ITEM_TYPE;
 
         default:
@@ -126,7 +126,7 @@ public class WidgIdProvider extends ContentProvider {
     @Override
     public Uri insert(Uri uri, ContentValues initialValues) {
         // Validate the requested uri
-        if (sUriMatcher.match(uri) != NOTES) {
+        if (sUriMatcher.match(uri) != WIDS) {
             throw new IllegalArgumentException("Unknown URI " + uri);
         }
 
@@ -176,11 +176,11 @@ public class WidgIdProvider extends ContentProvider {
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         int count;
         switch (sUriMatcher.match(uri)) {
-        case NOTES:
+        case WIDS:
             count = db.delete(WIDG_TABLE_NAME, where, whereArgs);
             break;
 
-        case NOTE_ID:
+        case ENTRY_ID:
             String noteId = uri.getPathSegments().get(1);
             count = db.delete(WIDG_TABLE_NAME, WidgTable._ID + "=" + noteId
                     + (!TextUtils.isEmpty(where) ? " AND (" + where + ')' : ""), whereArgs);
@@ -199,11 +199,11 @@ public class WidgIdProvider extends ContentProvider {
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         int count;
         switch (sUriMatcher.match(uri)) {
-        case NOTES:
+        case WIDS:
             count = db.update(WIDG_TABLE_NAME, values, where, whereArgs);
             break;
 
-        case NOTE_ID:
+        case ENTRY_ID:
             String noteId = uri.getPathSegments().get(1);
             count = db.update(WIDG_TABLE_NAME, values, WidgTable._ID + "=" + noteId
                     + (!TextUtils.isEmpty(where) ? " AND (" + where + ')' : ""), whereArgs);
@@ -219,8 +219,8 @@ public class WidgIdProvider extends ContentProvider {
 
     static {
         sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-        sUriMatcher.addURI(WidgInfo.AUTHORITY, "wID", NOTES);
-        sUriMatcher.addURI(WidgInfo.AUTHORITY, "wID/#", NOTE_ID);
+        sUriMatcher.addURI(WidgInfo.AUTHORITY, "wID", WIDS);
+        sUriMatcher.addURI(WidgInfo.AUTHORITY, "wID/#", ENTRY_ID);
 
         sNotesProjectionMap = new HashMap<String, String>();
         sNotesProjectionMap.put(WidgTable._ID, WidgTable._ID);
