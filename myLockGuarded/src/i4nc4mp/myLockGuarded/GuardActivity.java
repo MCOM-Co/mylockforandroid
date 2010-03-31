@@ -1,21 +1,23 @@
 package i4nc4mp.myLockGuarded;
 
+import i4nc4mp.myLockGuarded.ManageKeyguard.LaunchOnKeyguardExit;
+
 import java.util.GregorianCalendar;
 
-import i4nc4mp.myLockGuarded.ManageKeyguard.LaunchOnKeyguardExit;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -205,6 +207,7 @@ BroadcastReceiver callStarted = new BroadcastReceiver() {
   //we are going to be dormant while this happens, therefore we need to force finish
   Log.v("guard received broadcast","completing callback and finish");
   
+  StopCallback();
   finish();
   
   return;
@@ -241,7 +244,7 @@ public void onReceive(Context context, Intent intent) {
           ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
       public void LaunchOnKeyguardExitSuccess() {
          Log.v("doExit", "This is the exit callback");
-         //StopCallback();
+         StopCallback();
          finish();
           }});
   }}
@@ -267,12 +270,18 @@ protected void onStop() {
           //we got paused, lost focus, then finally stopped
           //this only happens if user is navigating out via notif, popup, or home key shortcuts
           Log.v("lock stop","onStop is telling mediator we have been unlocked by user navigation");
+          
+          if (dormant) finishing = true;//dialog popup other than notif panel allowed a nav exit
       }
   }
   else Log.v("unexpected onStop","lockscreen was stopped for unknown reason");
   
   if (finishing) {
-          //StopCallback();
+	  //most finish commands will already call these tw
+	  //user exit unlock only calls finish and has set this finishing flag
+	  //FIXME finishing and pendingDismiss might be redundant
+	  //since pendingdismiss was added for instant unlock mode
+          StopCallback();
           finish();
   }
   
@@ -295,13 +304,14 @@ protected void onPause() {
           ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
           public void LaunchOnKeyguardExitSuccess() {
              Log.v("doExit", "This is the exit callback");
-             //StopCallback();
+             StopCallback();
              finish();
               }});
           
   }
   else {
-  	Log.v("lock paused","normal pause - we still have focus");
+  	if (hasWindowFocus()) Log.v("lock paused","normal pause - we still have focus");
+  	else Log.v("lock paused","exit pause - don't have focus");
   	if (slideWakeup) {
   		Log.v("returning to sleep","toggling slide wakeup false");
   		slideWakeup = false;
@@ -337,14 +347,14 @@ public void onDestroy() {
  unregisterReceiver(callPending);
  unregisterReceiver(idleExit);
  
- StopCallback();
- //This should always get sent by the time screen off is going to happen again.
+ //StopCallback();
+ //doesnt always get sent by the time screen off is going to happen again.
   
  Log.v("destroy Guard","Destroying");
 }
 
 @Override
-public void onWindowFocusChanged (boolean hasFocus) {
+public void onWindowFocusChanged (boolean hasFocus) {	
   if (hasFocus) {
           Log.v("focus change","we have gained focus");
           //Catch first focus gain after onStart here.
@@ -369,15 +379,30 @@ public void onWindowFocusChanged (boolean hasFocus) {
   }
   else if (!pendingDismiss) {                                                  
           if (!finishing && paused) {
-                          if (!dormant) {
+//Handcent popup issue-- we haven't gotten resume & screen on yet
+//Handcent is taking focus first thing
+//So it is now behaving like an open of notif panel where we aren't stopped and aren't even getting paused
+        	  
+       //we really need to know we were just resumed and had screen come on to do this exit
+       //Need to implement the method check tool so we can rely on mediator bind in pre 2.1
+                          
+                          if (dormant) Log.v("dormant handoff complete","the external event now has focus");
+                          else {
+                        	  if (isScreenOn()) {
                                   Log.v("home key exit","launching full secure exit");
                                                                                   
                                   ManageKeyguard.disableKeyguard(getApplicationContext());
                                   serviceHandler.postDelayed(myTask, 50);
-                                          
-                                  
+                        	  }
+                        	  else {
+                        		  //Here's the handcent case
+                        		  //if you then exit via a link on pop,
+                        		  //we do get the user nav handling on onStop
+                        		  Log.v("popup event","focus handoff before screen on, nav exit possible");
+                        		  dormant = true;                            
+                        		  //we need to be dormant so we realize once the popup goes away
+                        	  }
                           }
-                          else Log.v("dormant handoff complete","the external event now has focus");
           }
           else if (!paused) {
                   //not paused, losing focus, we are going to manually disable KG
@@ -431,5 +456,27 @@ public void StartDismiss(Context context) {
                   
   pendingDismiss = true;
   startActivity(dismiss);
+}
+
+public boolean isScreenOn() {
+	//Allows us to tap into the 2.1 screen check if available
+	
+	boolean on = false;
+	
+	if(Integer.parseInt(Build.VERSION.SDK) < 7) { 
+		//we will bind to mediator and ask for the isAwake, if on pre 2.1
+		//for now we will just use a pref since we only need it during life cycle
+		//so we don't have to also get a possibly unreliable screen on broadcast within activity
+		Log.v("pre 2.1 screen check","grabbing screen state from prefs");
+		SharedPreferences settings = getSharedPreferences("myLock", 0);
+	   	on = settings.getBoolean("screen", false);
+		
+	}
+	else {
+		PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+		on = myPM.isScreenOn();
+	}
+	
+	return on;
 }
 }

@@ -20,38 +20,61 @@ public class BootHandler extends Service {
 		Log.d(getClass().getSimpleName(),"BootHandler onCreate");
 	}
 	
+
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		SharedPreferences settings = getSharedPreferences("myLock", 0);
-		boolean boot = settings.getBoolean("boot", false);//retrieve user's start at boot pref
-		boolean secure = settings.getBoolean("secure", false);
+		SharedPreferences.Editor editor = settings.edit();
 		
+		boolean boot = settings.getBoolean("boot", false);
+		boolean securemode = settings.getBoolean("secure", false);
 		
+		boolean secure = settings.getBoolean("securepaused", false);
+		//this will be true if user had pattern on when they turned on myLock
+		//we turn it back off when we turn pattern mode back on from next user disable myLock
+		//if it is true here, it means the phone rebooted or service died while pattern was suppressed
 		
-		if (!boot) {
-			stopSelf();//destroy the process because user doesn't have start at boot enabled
-			return 1;
+		boolean active = settings.getBoolean("serviceactive", false);
+
+					
+		
+		//we will handle it by forcing pattern back on in the real system settings
+		if (secure) {
+			android.provider.Settings.System.putInt(getContentResolver(), 
+                    android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
+			
+			//set the flag in prefs back to false
+			
+			editor.putBoolean("securepaused", false);	
+		}
+		if (active) {
+			editor.putBoolean("serviceactive", false);
+		}
+		//fixes this so the widget won't be stuck and settings won't think we're active
+		
+		if (secure || active) {
+			Log.v("restart recovery","corrected pref flags");
+			editor.commit();
 		}
 		
-		//FIXME next we should actually check our prefs file for the flag that pattern was suppressed
-		//then restore pattern in real system prefs, for security.
-		//SO will need to implement this setting at service start where the pattern suppression occurs.
-		
-		//boolean custom = settings.getBoolean("welcome", false);//retrieve user's mode pref
+				
+		if (!boot) {
+			stopSelf();//destroy the process because user doesn't have start at boot enabled
+			return START_NOT_STICKY;//ensure it won't be restarted
+		}
 		
 		Intent i = new Intent();
-		
-		//if (!custom) i.setClassName("i4nc4mp.myLockGuarded", "i4nc4mp.myLockGuarded.NoLockService");
-		//else i.setClassName("i4nc4mp.myLockGuarded", "i4nc4mp.myLockGuarded.GuardService");
-		
-		if (!secure) i.setClassName("i4nc4mp.myLockGuarded", "i4nc4mp.myLockGuarded.UserPresentService");
+				
+		if (!securemode) i.setClassName("i4nc4mp.myLockGuarded", "i4nc4mp.myLockGuarded.UserPresentService");
 		//the service will wait for user to complete the first lockscreen - this protects phone from a restart security circumvention
 		else i.setClassName("i4nc4mp.myLockGuarded","i4nc4mp.myLockGuarded.SecureLockService");
-			
+		//FIXME need to make the secure lock service put the service active pref.
+		
+		
 		startService(i);
 		
 		stopSelf();
 		
-		return 1;
+		return START_NOT_STICKY;//ensure it won't be restarted
 	}
 }
