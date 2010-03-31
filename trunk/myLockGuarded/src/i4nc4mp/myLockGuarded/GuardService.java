@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -235,6 +236,14 @@ android.provider.Settings.System.putInt(getContentResolver(),
     
     @Override
     public void onScreenWakeup() {
+            if (!shouldLock) {
+            	//lock activity is active so let's populate the screen wake awareness
+            	SharedPreferences settings = getSharedPreferences("myLock", 0);
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putBoolean("screen", true);
+                editor.commit();
+            }
+            
             if (!PendingLock) return;
             //we only handle this when we get a screen on that's happening while we are waiting for a lockscreen start callback
                     
@@ -258,6 +267,13 @@ android.provider.Settings.System.putInt(getContentResolver(),
     public void onScreenSleep() {
             //when sleep after an unlock, start the lockscreen again
             
+    	SharedPreferences settings = getSharedPreferences("myLock", 0);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putBoolean("screen", false);
+        editor.commit();
+        //always populate our screen state ref for lock activity to check
+        //we only switch the flag on during the lock activity life cycle
+    	
             if (receivingcall || placingcall) {
                     Log.v("mediator screen off","call flag in progress, aborting handling");
                     return;//don't handle during calls at all
@@ -272,6 +288,8 @@ android.provider.Settings.System.putInt(getContentResolver(),
 
             serviceHandler.postDelayed(myTask, 500L);
             }
+            
+            
     
             
             return;//prevents unresponsive broadcast error
@@ -351,11 +369,7 @@ android.provider.Settings.System.putInt(getContentResolver(),
             
             //if call ends while asleep and not in the KG-restored mode (watching for prox wake)
             //then KG is still restored, and we can't catch it due to timing
-            
-            //right now we can't reliably check the screen state
-    		//instead we will restart the guard if call came in waking up device
-    		//otherwise we will just do nothing besides dismiss any restored kg
-            
+                        
             Context mCon = getApplicationContext();
             
             Log.v("call end","checking if we need to exit KG");
@@ -366,42 +380,20 @@ android.provider.Settings.System.putInt(getContentResolver(),
             //this will tell us if the phone ever restored the keyguard
             //phone occasionally brings it back to life but suppresses it
             
-            //2.1 isScreenOn will allow us the logic:
+            boolean screen = isScreenOn();
             
-            //restart lock if it is asleep and relocked
-            //dismiss lock if it is awake and relocked
-            //do nothing if it is awake and not re-locked
-            //wake up if it is asleep and not re-locked (not an expected case)
-            
-            //right now we will always dismiss as user expects that ONLY the slide open will be guarded
-            //when awake and not slider opened it will need to be dismissed.
-            //this basically means those times when phone wants to be asleep and locked
-            //we are actually causing a wakeup/unlock,
-            //but we can't respect that case till we have 2.1
-            
-            
-            /*
-            if (callWake) {
-                    Log.v("wakeup call end","restarting lock activity.");
-                    callWake = false;
-                    PendingLock = true;
-                    StartLock(mCon);
-                    //when we restart here, the guard activity is getting screen on event
-                    //and calling its own dismiss as if it was a user initiated wakeup
-                    //TODO but this logic will be needed for guarded custom lockscreen version
+            if (!screen) {
+            	//asleep case, only detected on 2.1+
+            	
+            	Log.v("asleep call end","restarting lock activity.");
+                PendingLock = true;
+                StartLock(mCon);
             }
-            else {
-            	//KG may or may not be about to come back and screen may or may not be awake
-            	//these factors depend on what the user did during call
-            	//all we will do is dismiss any keyguard that exists, which will cause wake if it is asleep
-            	//if (IsAwake()) {}
-                    Log.v("call end","checking if we need to exit KG");
-                    shouldLock = true;
-                    if (KG) StartDismiss(mCon);
-            }*/
-            shouldLock = true;
-            if (KG) StartDismiss(mCon);
-            
+            else if (KG) {
+            	//awake or pre-2.1 (causing wakeup if asleep)
+            	shouldLock = true;
+            	StartDismiss(mCon);
+            }
     }
     
     @Override
@@ -410,6 +402,22 @@ android.provider.Settings.System.putInt(getContentResolver(),
             getApplicationContext().sendBroadcast(intent);
             //lets the activity know it should not treat focus loss as a navigation exit
             //this will keep activity alive, only stopping it at call accept
+    }
+    
+    public boolean isScreenOn() {
+    	//Allows us to tap into the 2.1 screen check if available
+    	
+    	if(Integer.parseInt(Build.VERSION.SDK) < 7) { 
+    		
+    		return true;
+    		//our own isAwake doesn't work sometimes when prox sensor shut screen off
+    		//better to treat as awake then to think we are awake when actually asleep
+    		
+    	}
+    	else {
+    		PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+    		return myPM.isScreenOn();
+    	}
     }
     
 //============================
@@ -430,7 +438,7 @@ android.provider.Settings.System.putInt(getContentResolver(),
             
             Context context = getApplicationContext();
             CharSequence contentTitle = "myLock - click to open settings";
-            CharSequence contentText = "guarded custom lockscreen is active";
+            CharSequence contentText = "custom lockscreen is active";
 
             Intent notificationIntent = new Intent(this, SettingsActivity.class);
             PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);

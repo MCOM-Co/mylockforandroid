@@ -45,6 +45,8 @@ public class MediatorService extends Service {
 	public IBinder onBind(Intent arg0) {
 		Log.d(getClass().getSimpleName(), "onBind()");
 		return null;//we don't bind
+		//we need to bind to return whether the screen is on
+		//however for now I'm going to use shared prefs to pass screen state
 	}
 	
 	@Override
