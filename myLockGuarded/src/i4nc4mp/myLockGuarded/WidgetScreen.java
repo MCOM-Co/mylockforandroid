@@ -55,6 +55,7 @@ private int widgCount = 0;
 //our reference is increased each widget that is re-populated or added by user
 //every activity that pulls the widgets in from database will use this as the local ref of added widgets
 //this way when we clear them we can quickly do it without having to read the DB again
+private int[] widths = new int[16];
 
 
 private int currentRow = 0;//used to determine where we are adding till space runs out
@@ -449,7 +450,7 @@ private AppWidgetHostView attachWidget(AppWidgetHostView widget, int w, int h){
     //if (!shouldFill) widget.setPadding(0, 0, 0, 0); else
     widget.setPadding(0, 0, 0, 0);
      
-    
+    widths[widgCount] = w;
     
     widget.setId(100+widgCount);
     return widget; 
@@ -529,8 +530,24 @@ private void undoLastWidget() {
 	
 	RelativeLayout parent= (RelativeLayout) findViewById(R.id.widgets);
 	
+	if (mAppWidgetManager == null)
+	{
+		Log.v("big problem","the manager is null somehow");
+		mAppWidgetManager = AppWidgetManager.getInstance(this);
+	}
+	
 	//deduct its width from the count
-	int w = mAppWidgetManager.getAppWidgetInfo(widgetId[widgCount]).minWidth;
+	/*
+	AppWidgetProviderInfo mInfo = mAppWidgetManager.getAppWidgetInfo(widgetId[widgCount]);
+	if (mInfo == null) {
+		Log.v("big problem","couldn't get the widg info");
+	} //don't know why we can't reliably get access to the info, anyway easy workaround
+	//just will store a local array of the widths of all added widgets
+	else {*/
+		int w = widths[widgCount];//mInfo.minWidth;
+	
+	
+	
 	
 	if (mRowWidth == w && currentRow != 0) {
 		//when not in first row and our width equals row width
@@ -546,6 +563,12 @@ private void undoLastWidget() {
 	 parent.removeView(widgets[widgCount]);
 	
 	 //tell the manager it is being trashed
+	 if (mAppWidgetHost == null) {
+		Log.v("big problem","the host is null somehow");
+		 mAppWidgetHost = new AppWidgetHost(this, APPWIDGET_HOST_ID);
+	 
+	    mAppWidgetHost.startListening();
+	 }
 	 mAppWidgetHost.deleteAppWidgetId(widgetId[widgCount]);
 	 
 	 
