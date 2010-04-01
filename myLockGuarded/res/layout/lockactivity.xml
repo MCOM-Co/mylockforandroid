@@ -5,7 +5,7 @@ android:layout_width="fill_parent"
 android:layout_height="fill_parent"
 xmlns:android="http://schemas.android.com/apk/res/android"
 >
-<RelativeLayout
+<!-- RelativeLayout
 android:id="@+id/musicButtons"
 android:layout_width="fill_parent"
 android:layout_height="wrap_content"
@@ -20,7 +20,16 @@ android:layout_centerHorizontal="true"
 <Button android:text="Next" android:id="@+id/NextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentTop="true"
 android:layout_toRightOf="@+id/PlayToggle"
 ></Button>
-</RelativeLayout>
+</RelativeLayout-->
+<RelativeLayout
+	android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:id="@+id/widgets"
+    android:layout_below="@+id/divider"
+    
+    android:gravity="center_horizontal"></RelativeLayout>
+    <!-- android:layout_centerHorizontal="true"-->
+<!--  widgets get added right here, the view fills the space of parent and is centered below : in clock -->
 <TextView
 android:id="@+id/batt"
 android:layout_width="wrap_content"

@@ -9,7 +9,7 @@
 <string name="bootBox">Automatically start myLock after reboot</string>
 
 
-<string name="HowToText1">Welcome to the myLock custom lockscreen, guarded version. The replacement lockscreen enables you to pause or change tracks when the standard Music player is running. It also shows battery level and gives access to the notification panel. The next update will allow you to put widgets into the lockscreen so you can use any clock / music widgets of choice, etc.</string>
+<string name="HowToText1">Welcome to the myLock widget lockscreen. This is the basic version. To choose widgets, go to the app drawer and open Widget Setup. </string>
 <string name="HowToText2">If you choose secure mode, you will be required to unlock the pattern or standard slider when exiting the custom lockscreen. When not in secure mode, you can unlock by clicking a notification, or pressing back or home. Please note that start at boot will occur after you unlock the lockscreen or security pattern the first time, for OS security reasons. This may not work if you have wavesecure or screebl starting at boot.</string>
 <string name="HowToText3">If you experience any problems, download Log Collector (free from the market) to email us at myLockandroid@gmail.com. Be sure to list the problem symptoms and what other services are running in the Settings->Applications->Running Services screen. I CANNOT FIX THE ISSUE UNLESS YOU CONTACT ME. </string>
 </resources>
