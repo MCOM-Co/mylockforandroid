@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent"
+  android:id="@+id/widgetparent">
+	
+	<RelativeLayout
+	android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:id="@+id/widgetA1"
+    android:layout_alignParentTop="true"
+    android:layout_alignParentLeft="true">
+    <!-- The first unit in top left of the parent panel -->
+    </RelativeLayout>
+	<RelativeLayout
+	android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:id="@+id/widgetA2"
+    android:layout_alignParentTop="true"
+    android:layout_toLeftOf="@id/widgetA1">
+    <!-- 2nd widget in row A -->
+    </RelativeLayout>
+    <RelativeLayout
+	android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:id="@+id/widgetA3"
+    android:layout_alignParentTop="true"
+    android:layout_toLeftOf="@id/widgetA2">
+    <!-- 3rd widget in row A -->
+    </RelativeLayout>
+    <RelativeLayout
+	android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:id="@+id/widgetA4"
+    android:layout_alignParentTop="true"
+    android:layout_toLeftOf="@id/widgetA3">
+    <!-- 4th widget in row A -->
+    </RelativeLayout>
+    
+    <RelativeLayout
+	android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:id="@+id/widgetB1"
+    android:layout_below="@id/widgetA1"
+    android:layout_alignParentLeft="true">
+    <!-- The first unit in Row B is first available space on it, regardless of A1's height -->
+    </RelativeLayout>
+	<RelativeLayout
+	android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:id="@+id/widgetB2"
+    android:layout_below="@id/widgetA2"
+    android:layout_toLeftOf="@id/widgetB1">
+    <!-- 2nd widget in row B needs to be left of B1 unless A1 is greater than 1 cell H -->
+    </RelativeLayout>
+    <RelativeLayout
+	android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:id="@+id/widgetB3"
+    android:layout_below="@id/widgetA3"
+    android:layout_toLeftOf="@id/widgetB2">
+    <!-- 3rd widget in row A -->
+    </RelativeLayout>
+    <RelativeLayout
+	android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:id="@+id/widgetB4"
+    android:layout_below="@id/widgetA4"
+    android:layout_toLeftOf="@id/widgetB3">
+    <!-- 4th widget in row A -->
+    </RelativeLayout>          
+    
+</RelativeLayout>
+
