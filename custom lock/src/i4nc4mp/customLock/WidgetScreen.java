@@ -10,12 +10,12 @@ import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -26,9 +26,6 @@ import android.widget.Toast;
 
 
 public class WidgetScreen extends Activity {
-//for testing we have set this up as a Launcher/Main icon
-//for implementation we will make it subclass LockActivity
-	//IN FACT the standalone activity fits what we will need so users can open it and set up their widgets
 	
 private AppWidgetManager mAppWidgetManager;
 private AppWidgetHost mAppWidgetHost;
@@ -59,33 +56,25 @@ private int widgCount = 0;
 
 
 private int currentRow = 0;//used to determine where we are adding till space runs out
+
+private int RowWidth[] = new int[16];
+//when we do a new row, we store the ending width so we can properly undo
+
 private int mRowWidth = 0;
 private int mRowHeight = 0;
 //we'll just total up the widgets that get added
 //441 x 108 is the size that comes in from a 4x1 built in widget (music)
 
 
-//we really need to store widgets in 4 to keep row organization straight
-private int[] row0 = new int[4];
-private int[] row1 = new int[4];
-private int[] row2 = new int[4];
-private int[] row3 = new int[4];
 
-private int[] quant = new int[4];
-//this gives the amount of widgets in each row
-// quant[0] == 2 would ensure row0[0 & 1] were repopulated before changing to row1
 
-//what the code does is check the size and adds to the row we are in till we hit the limit
-//then, we can reference item 0 in the row and use the relative Below to position 0 of the next row
-//these will center in parent in terms of the horizontal.
 
-//first test will fill a single row then inform user the row is out of space.
-//this row will be the slot below the clock, then we will set up the launch ver with the 2nd row below it
-//also might be possible to let user specify a row later on (via the options choices)
+private RelativeLayout[] rows = new RelativeLayout[4];
+//here we can actually just create relative layouts to live inside of the parent (id is @widgets)
+//what this enables is a workaround so we can still fill the remaining space even if a 2x or taller is placed
+//TODO not yet implemented.
 
-//its possible almost all of this data setup can be put in the SQL.
-// all we need to do is make sure we can check how many exist on each row, when we run into a 0 item,
-//then move to the next row as 0 would mean none was added there
+
 
 
 @Override
@@ -97,25 +86,17 @@ protected void onCreate(Bundle savedInstanceState) {
   
     updateLayout();
  
-//====get or create the database for storing the widget IDs and quantities on each row
-//TODO
-    //FIXME
-//========= Database should now be open for us to check 
-
 	//Here we initialize widget manager.
     mAppWidgetManager = AppWidgetManager.getInstance(this);
     mAppWidgetHost = new AppWidgetHost(this, APPWIDGET_HOST_ID);
     mAppWidgetHost.startListening();
     
-  
-    //Next, we need to repopulate the widgets user had chosen already
-    
     MakeWidgets();
-    
+    //MAKE WIDGETS!
+    //This part is all that we need to add to the lockscreen activity
 
 }
 
-//from LockActivity
 private void updateLayout() {
     LayoutInflater inflater = LayoutInflater.from(this);
 
@@ -132,8 +113,7 @@ protected View inflateView(LayoutInflater inflater) {
 
 @Override
 public void onBackPressed() {
-	moveTaskToBack(true);
-	//this makes sure we don't get killed unless system forces it
+	finish();
 }
 
 private void MakeWidgets() {
@@ -187,7 +167,7 @@ public boolean onCreateOptionsMenu(Menu menu) {
     menu.add(0, 1, 0, "Add Widget");
     menu.add(0, 2, 0, "Undo Last");
     menu.add(0, 3, 0, "Start Over");
-    menu.add(0, 4, 0, "Done");
+   // menu.add(0, 4, 0, "Done");
     return true;
 }
 
@@ -202,14 +182,19 @@ public boolean onOptionsItemSelected(MenuItem item) {
         return true;
     case 2: 
     	if (widgCount > 0) {
-    		widgCount--;
-    	   	deleteWidget(widgCount);
-    	}
+    		undoLastWidget();
+    	   	//not equipped for selective delete
+    	   	//due to our current positioning logic we need to peel them back one at a time
+    	}//can't undo if we are already at 0 waiting for a first add
     	else Toast.makeText(WidgetScreen.this, "YOU'RE AFTER MY ROBOT BEE!", Toast.LENGTH_SHORT).show();
+    	return true;
     case 3:
-    	Toast.makeText(WidgetScreen.this, "Just use Undo for now", Toast.LENGTH_SHORT).show();
-    case 4:
-    	finish();
+    	//auto undo
+    	do {
+    		undoLastWidget();
+    	}
+    	while (widgCount > 0);
+    	return true;
     }
     return false;
 }
@@ -326,6 +311,13 @@ the model seems to retain the references to everything that's been placed on the
     //created the VIEW and positioned it on our view
     //the manager now has given us a widget ID we can use to make this same widget view again
     
+    /*
+    int finalH, finalW;
+    
+    finalH = widgets[widgCount].getHeight();
+    finalW = widgets[widgCount].getWidth();
+    Log.v("widget view generated","final size is " + finalW + "x" + finalH);
+    */
     
     Log.v("widget was added","the manager ID = " + appWidgetId + "size = " + width + "x" + height);
     
@@ -354,30 +346,76 @@ the model seems to retain the references to everything that's been placed on the
 //the created new widget is passed raw with the data about its size, then we figure out how to position it
 //if we had to go to next row, increment currentRow so the DB will be set correctly
 private AppWidgetHostView attachWidget(AppWidgetHostView widget, int w, int h){ 
-     
-	//FIRST - need to normalize the actual size we need to make this widget...
-	//TODO later... they will just be a bit smaller for now
 	
-    RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams (w, h);
-    //We are designed for straight filling the rows with even sized
-    //so don't try to add different height widgets in one row.
+	/*
+	 * DisplayMetrics metrics = new DisplayMetrics();
+	 
+	 getWindowManager().getDefaultDisplay().getMetrics(metrics);
+	 
+	 Log.v("Logical density"," " + metrics.density);
+	 Log.v("Density DPI"," " + metrics.densityDpi);
+	 Log.v("absolute height px"," " + metrics.heightPixels);
+	 Log.v("absolute width px"," " + metrics.widthPixels);
+	 
+	 Log.v("Font scaling"," " + metrics.scaledDensity);
+	 
+	 Log.v("pixels per inch x"," " + metrics.xdpi);
+	 Log.v("pixels per inch y"," " + metrics.ydpi);
+	*/
+	int realW = w;
+	int realH = h;
+    
+    //the size i am seeing on the home screen for a 4x1
+    //in a screen cap it is 454 x 124 on either nexus or droid.
+	boolean shouldFill = false;
+    if (w > 350) {
+    	realW = -1;
+    shouldFill = true;
+    	//reasonable limit for a 3x wide should be around 335 or 340
+    	//the home launcher seems to set 4x to fill parent, so we will too
+    	//when they do that they also increase the h to around 124 from the 108 min value
+    if (h < 110) realH = 150;
+    }
+    else {
+    if (w < 110) realW = 124;
+    if (h < 110) realH = 124;
+    }
+    //we will set the fill always for 4 wide, but let the sent height handle itself if greater than 1 tall
+    
+    //these values we start with come from the density independent pixel reading that comes with widgets
+    //72dip comes out to be 108 here, which is the value im getting from 1x1s
+    //that's x1.5, the pixels per inch on our device in both x and y
+
+    //On the droid, a 4x1 comes out 454x124, that would mean 13 padding on either side
+    //in other words they are doing fill parent and the default padding is impacting them
+    
+    //4x1 comes out 390 x 80 (via screencap) when i leave this default value
+    //441 x 108 is the literal pixel amount that comes out in the log from these w and h values
+    //this is the thing I can't explain
+    
+	//108 pixels = 72 dip * (density / 160) -- our pixel density is 240
+	//441 pix = x dip * (240/160 ==== 294 dip
+    
+    RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams (realW, realH);
+    //(-1,-1);//(realW, realH);
+
 
     boolean newRow = false;
     
     if (mRowWidth + w > 441) {
     	//the widget will not fit on this row
-    	Log.v("new row", mRowWidth + " was ending width of last row");
-    	mRowWidth = w;
+    	Log.v("new row", mRowWidth + " was ending width of last row, storing in case of undo");
+    	RowWidth[currentRow] = mRowWidth;
     	currentRow++;
+    	
+    	mRowWidth = w;
+    	
     	newRow = true;
     }
     else mRowWidth += w;
     
-    //On the droid, a 4x1 comes out 452x122, that would mean 13 padding on either side
-    //however, four 1x1s in a row each have 13 padding. it doesn't quite work out
-    //and i need to know how it would come out on a nexus
-    //for now we will have to deal with them being slightly smaller than in the real Launcher windows
-    //or selectively normalize 4x1s to the 452 size
+    
+    
     
     //if (mRowHeight + h > 109)
     	//special case... its a multi row widget
@@ -406,7 +444,11 @@ private AppWidgetHostView attachWidget(AppWidgetHostView widget, int w, int h){
     
     
     widget.setLayoutParams(params); 
-    widget.setPadding(13, 0, 13, 0);
+    //if (!shouldFill) widget.setPadding(0, 0, 0, 0); else
+    widget.setPadding(0, 0, 0, 0);
+     
+    
+    
     widget.setId(100+widgCount);
     return widget; 
     }
@@ -477,21 +519,35 @@ private void onAppWidgetReset() {
     mAppWidgetHost.startListening();
 }
 
-private void deleteWidget(int mCount) {
-	//delete the widget specified in our local count order - we have an undo and a clear all
-	//both just peel back based widgCount
-	Log.v("delete request", "trying to remove " + mCount);
+private void undoLastWidget() {
+	widgCount--;//the incremented value was waiting for next add, peel it back to remove last
+	
+	Log.v("delete request", "trying to remove " + widgCount);
+		
 	
 	RelativeLayout parent= (RelativeLayout) findViewById(R.id.widgets);
 	
+	//deduct its width from the count
+	int w = mAppWidgetManager.getAppWidgetInfo(widgetId[widgCount]).minWidth;
+	
+	if (mRowWidth == w && currentRow != 0) {
+		//when not in first row and our width equals row width
+		//go back to previous row and set the old width active
+		currentRow--;
+		mRowWidth = RowWidth[currentRow];
+		}
+	else mRowWidth -= w;
+	//otherwise just deduct width from it since this widget is now gone but row still has others
+		
+	
 	//remove the view itself
-	 parent.removeView(widgets[mCount]);
+	 parent.removeView(widgets[widgCount]);
 	
 	 //tell the manager it is being trashed
-	 mAppWidgetHost.deleteAppWidgetId(widgetId[mCount]);
+	 mAppWidgetHost.deleteAppWidgetId(widgetId[widgCount]);
 	 
 	 
-	 int tableID = mCount + 1;
+	 int tableID = widgCount + 1;
 	 //content://i4nc4mp.customLock.widgidprovider/wID/1 is first whereas widgCount starts at 0
 	 
 	 //Uri mUri = Uri.withAppendedPath(WidgTable.CONTENT_URI, "/" + tableID);
@@ -500,7 +556,7 @@ private void deleteWidget(int mCount) {
 	 getContentResolver().delete(Uri.withAppendedPath(WidgTable.CONTENT_URI, "/" + tableID), null, null);
 	 
 	 
-	 
+	 //WOOHOO!	 
 }
 
 @Override
