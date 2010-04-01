@@ -45,7 +45,7 @@ public class ShowWhenLockedActivity extends Activity {
 
 
 
-	static final int APPWIDGET_HOST_ID = 2038;
+	static final int APPWIDGET_HOST_ID = 2037;
 	//this int identifies you. The Launcher's ID is 1024.
 	//If you were to implement different hosts that need to be distinguished
 	//then the ID is a shortcut for passing what you're doing to the correct one 
