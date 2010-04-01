@@ -38,6 +38,7 @@ public class GuardService extends MediatorService {
     
     Handler serviceHandler;
     Task myTask = new Task();
+    public int waited = 0;
     
     @Override
     public void onDestroy() {
@@ -212,12 +213,29 @@ android.provider.Settings.System.putInt(getContentResolver(),
             //we basically unlock as if user requested, but then force KG back on in the callback reaction
     }};
     
+    //in 2.1 the dock app apparently uses dismiss keyguard. 
+    //so after 10 seconds I am going to abort this task to handle that case
     class Task implements Runnable {
     public void run() {
             Context mCon = getApplicationContext();
-            Log.v("startLock task","executing, PendingLock is " + PendingLock);
-            if (!PendingLock) return;//ensures break the attempt cycle if user has aborted the lock
+            if (waited == 0) Log.v("startLock task","beginning KG check cycle");
+            
+            if (!PendingLock) {
+            	Log.v("startLock user abort","detected wakeup before lock started");
+            	waited = 0;
+            	return;
+            	//ensures break the attempt cycle if user has aborted the lock
+            }
             //user can abort Power key lock by another power key, or timeout sleep by any key wakeup
+            
+            //if SYSTEM has aborted the lock, we have no way of knowing
+            //we wait 2x the normal grace period to ensure timeout sleep is respected
+            if (waited == 20) {
+            	Log.v("startLock abort","system or app seems to be suppressing lockdown");
+            	waited = 0;
+            	PendingLock = false;
+            	return;
+            }
             
             
             //see if any keyguard exists yet
@@ -226,11 +244,13 @@ android.provider.Settings.System.putInt(getContentResolver(),
                             
                             //the keyguard exists here on first try if this isn't a timeout lock
                             shouldLock = false;
+                            waited = 0;
                             StartLock(mCon);//take over the lock
                     }
-                    else serviceHandler.postDelayed(myTask, 500L);
-                    
-                            
+                    else {
+                    	waited++;
+                    	serviceHandler.postDelayed(myTask, 500L);
+                    }           
             }               
     }
     
