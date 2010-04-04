@@ -1,0 +1,11 @@
+#summary the standard myLock version built around minimizing the lockscreen in various ways.
+
+= Modes & Features =
+
+Guard hardware slider
+Show wallpaper during unlock
+Guard during calls
+
+= Locale Integration =
+
+Locale security plug in features the abiltiy to have myLock start up or securely shut down with locale conditions. In addition you can set a timeout mode where if myLock is running it will then close securely if the phone is left idle (asleep) long enough while the conditions are still met.
