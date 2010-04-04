@@ -585,6 +585,25 @@ private void undoLastWidget() {
 }
 
 @Override
+public void onPause() {
+	super.onPause();
+	
+	try {
+	     mAppWidgetHost.stopListening();
+	 } catch (NullPointerException ex) {
+	     Log.w("widgetscreen pause", "problem while stopping AppWidgetHost during Lockscreen destruction", ex);
+	 }
+}
+
+@Override
+public void onResume() {
+	super.onResume();
+	
+	if (mAppWidgetHost != null) mAppWidgetHost.startListening();
+	
+}
+
+@Override
 public void onDestroy() {
     //mDestroyed = true;
 
