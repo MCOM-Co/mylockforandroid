@@ -347,8 +347,22 @@ public class ShowWhenLockedActivity extends Activity {
     }
     
     @Override
+    public void onPause() {
+    	super.onPause();
+    	
+    	try {
+    	     mAppWidgetHost.stopListening();
+    	 } catch (NullPointerException ex) {
+    	     Log.w("lockscreen pause", "problem while stopping AppWidgetHost during Lockscreen destruction", ex);
+    	 }
+    }
+    
+    @Override
     public void onResume() {
     	super.onResume();
+    	
+    	if (mAppWidgetHost != null) mAppWidgetHost.startListening();
+    	
     	updateClock();
     }
     

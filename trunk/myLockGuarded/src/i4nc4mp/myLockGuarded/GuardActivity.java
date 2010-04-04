@@ -528,6 +528,12 @@ protected void onPause() {
   
   paused = true;
   
+  try {
+	     mAppWidgetHost.stopListening();
+	 } catch (NullPointerException ex) {
+	     Log.w("lockscreen destroy", "problem while stopping AppWidgetHost during Lockscreen destruction", ex);
+	 }
+  
   if (!starting && !hasWindowFocus() && !pendingDismiss) {
           //case: we yielded focus to something but didn't pause. Example: notif panel
           //pause in this instance means something else is launching, that is about to try to stop us
@@ -566,6 +572,8 @@ protected void onResume() {
   Log.v("lock resume","resuming, focus is " + hasWindowFocus());
 
   paused = false;  
+  
+  if (mAppWidgetHost != null) mAppWidgetHost.startListening();
   
   updateClock();
 }
