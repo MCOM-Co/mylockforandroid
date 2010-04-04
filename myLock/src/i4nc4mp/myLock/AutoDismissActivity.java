@@ -21,8 +21,9 @@ public class AutoDismissActivity extends Activity {
       
       requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
       getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-    		  | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-    		  | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    		 | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+    		 | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+      
       
       Log.v("dismiss","creating dismiss window");
       
@@ -64,17 +65,27 @@ public class AutoDismissActivity extends Activity {
           //PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
           //myPM.userActivity(SystemClock.uptimeMillis(), true);
     	  
+    	
     	//callback mediator for final handling of the stupid wake lock
           Intent intent = new Intent("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED");
           getApplicationContext().sendBroadcast(intent);
-    	  
           
           moveTaskToBack(true);
           //this actually ensures a clean finish because we have no history flag
+          //seems like sometimes stop/destroy isn't called immediately and waits for some action from user
+          finish();//just for good measure
           
           
           
           }
+  }
+  
+  @Override
+  public void onStop() {
+	  super.onStop();
+	  
+	  Log.v("dismiss stop","waiting for destroy");
+	  
   }
   
   @Override

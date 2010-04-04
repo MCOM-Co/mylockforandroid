@@ -12,6 +12,8 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Build;
+import android.os.Handler;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.Settings.SettingNotFoundException;
@@ -38,8 +40,17 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
   //we will set this when we detect slideopen, only used with instant unlock
     
     
+    public boolean dismissed = false;
+    //will just toggle true after dismiss callback - used to help ensure airtight lifecycle
+    
+    //public boolean pendingwake = false;
+    //set while slide open wakeup is in progress
+    
     //public boolean idle = false;
     //when the idle alarm intent comes in we set this true to properly start closing down
+    
+    Handler serviceHandler;
+    Task myTask = new Task();
     
 //============Shake detection variables
     
@@ -102,6 +113,9 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
                 
                 editor.putBoolean("serviceactive", false);
                 editor.commit();
+                
+                serviceHandler.removeCallbacks(myTask);
+                serviceHandler = null;
                 
                 //ManageWakeLock.releasePartial();
                 
@@ -187,6 +201,8 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
              * 
              */
             
+            serviceHandler = new Handler();
+            
             IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED");
             registerReceiver(lockStopped, lockStop);
             
@@ -223,7 +239,15 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
         //when dismiss activity sent itself to back
         //it would ignore all user activity pokes and log "ignoring user activity while turning off screen"
         
-        ManageWakeLock.releaseFull();
+       
+        
+        if (!slideWakeup) {
+        	dismissed = true;
+        	ManageWakeLock.releaseFull();
+        }
+        else Log.v("dismiss callback","waiting for 5 sec to finalize due to slide wake");
+        
+        
         if (shakemode) mSensorEventManager.unregisterListener(AutoDismiss.this);
         return;
         }};
@@ -231,21 +255,56 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
         @Override
         public void onConfigurationChanged(Configuration newConfig) {
             super.onConfigurationChanged(newConfig);
-            if (!slideGuarded) return;
-            //from prefs, state is kept because when user changes setting we receive a start call
+            //if (!slideGuarded) return;
+            
+            
             if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO) {
-                    //this means that a config change happened and the keyboard is open.
-                    
-                    	Log.v("slide-open","setting state flag");
-                    	slideWakeup = true;
-                               
+                    //this means that a config change happened and the keyboard is open.     
+            	if(!dismissed) {
+            		Log.v("slider wake event","setting state flag, screen state is " + isScreenOn());
+            		slideWakeup = true;
+            		
+            		//if (!slideGuarded)
+            		
+                    //the first thing we get is the slider event when user slides it open from sleep
+                    //screen on broadcast is always delayed as cpu wakes
+            		//launching the dismiss earlier seemed to cause the resleep bug
+                    //seems users experiencing this have their phones running faster, causing same end result    
+            	}
+            	else Log.v("slider event","Ignoring since already dismissed");
             }
             else if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES) {
             	Log.v("slide closed","mediator got the config change from background");
-            }
-                          
+            }          
         }
         
+        
+        class Task implements Runnable {
+            public void run() {
+            	//when the slide wake is set to dismiss, we will keep the wakelock for 5 sec
+            	//to avoid the bug of screen falling out when the CPU gets through the process too fast
+            	if (!dismissed) {
+            		ManageWakeLock.releaseFull();
+            		dismissed = true;
+            	}
+            }               
+        }
+    
+        public boolean isScreenOn() {
+        	//Allows us to tap into the 2.1 screen check if available
+        	
+        	if(Integer.parseInt(Build.VERSION.SDK) < 7) { 
+        		
+        		return IsAwake();
+        		//this comes from mediator superclass, checking the bool set by screen on/off broadcasts
+        		//it is unreliable in phone calls when prox sensor is changing screen state
+        		
+        	}
+        	else {
+        		PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        		return myPM.isScreenOn();
+        	}
+        }
         
     @Override
     public void onScreenWakeup() {
@@ -255,13 +314,13 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
     	}
     	//no handling during a call just to avoid conflicts because we use wakelock
     	//this means lockscreen will exist if user has tabbed out of the phone
-    	//user may also see it if a call is missed or ignored.
-    	//this is best so no chance of pocket redial
+    	//user may also see it if a call is missed or ignored, this prevents pocket redial
+    	if (slideGuarded && slideWakeup) return;//no dismiss when slide guard active
     	
     	ManageKeyguard.initialize(getApplicationContext());
+    	boolean KG = ManageKeyguard.inKeyguardRestrictedInputMode();
     	
-        boolean KG = ManageKeyguard.inKeyguardRestrictedInputMode();    
-    	if (KG && !slideWakeup) StartDismiss(getApplicationContext());                
+    	if (KG) StartDismiss(getApplicationContext());                
         
     	return;
     }
@@ -273,8 +332,13 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             SensorManager.SENSOR_DELAY_NORMAL);
         //standard workaround runs the listener at all times.
         //i will only register at off and release it once we are awake
-        if (slideWakeup) Log.v("back to sleep","turning off slideWakeup");
-        slideWakeup = false;
+        if (slideWakeup) {
+        	Log.v("back to sleep","turning off slideWakeup");
+            slideWakeup = false;
+        }
+        
+        dismissed = false;
+        //flag will allow us to know we are coming into a slide wakeup
     }
     
     public void StartDismiss(Context context) {
@@ -282,6 +346,12 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
     	//PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
         //myPM.userActivity(SystemClock.uptimeMillis(), true);
     	ManageWakeLock.acquireFull(getApplicationContext());
+    	if (slideWakeup) serviceHandler.postDelayed(myTask, 5000L);
+    	//when dismissing from slide wake we set a 5 sec wait for release of the wake lock
+    	
+    	//what we should do here is launch a 5 sec wait that releases it also
+    	//sometimes dismiss doesn't stop/destroy right away if no user action (ie pocket wake)
+    	//so release it after 5 seconds
     	
     Class w = AutoDismissActivity.class; 
                   

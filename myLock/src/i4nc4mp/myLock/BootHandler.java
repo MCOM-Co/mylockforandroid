@@ -23,7 +23,7 @@ public class BootHandler extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		SharedPreferences settings = getSharedPreferences("myLock", 0);
-		
+		SharedPreferences.Editor editor = settings.edit();
 		
 		boolean boot = settings.getBoolean("boot", false);//retrieve user's start at boot pref
 		
@@ -44,10 +44,18 @@ public class BootHandler extends Service {
                     android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
 			
 			//set the flag in prefs back to false
-			SharedPreferences.Editor editor = settings.edit();
-			editor.putBoolean("securepaused", false);
 			
-			// Don't forget to commit your edits!!!
+			editor.putBoolean("securepaused", false);	
+		}
+		
+		if (active) {
+			editor.putBoolean("serviceactive", false);
+		}
+		//fixes this so the widget won't be stuck and settings won't think we're active
+		
+		// Don't forget to commit your edits!!!
+		if (secure || active) {
+			Log.v("restart recovery","corrected pref flags");
 			editor.commit();
 		}
 		
