@@ -14,23 +14,15 @@ import android.os.SystemClock;
 import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
 
-//mediator subclass which places the basic guard for instant unlock via 2.0 optimized activity process
-//this mediator only exists to mediate slider open vs regular wakes
-//a slide open wake will place the config change first, then the resume with focus, then the screen on
-//otherwise, just resume then screen on
-//we don't have any good way to know if screen is on its way to being on or not during that resume
-//we will need to implement the 2.1 is screen on PM method.. we just have to do without it right now
-//impact is that occasionally a resume is happening when no user wake request had started
-//this causes wakeup when the useractivity at the various points happens
-
-
-//this class is now deprecated as the only thing it accomplishes is showing the wallpaper background
-//we can't seem to do that without the show when locked function window
-//sometimes it doesnt show but most times we see it while waiting for unlock
 //some users seem to want this cosmetic function.... 
 //thge slider guard is now implemented in auto dismiss mediator
-//so reintegrating this is a todo that isn't in priority since i will need to revert the code 
-//to the screen on event handling and starting dismiss from here instead of in the mediator
+//so reintegrating this is a todo that isn't in priority
+
+//need to try just having this guy exit when screen on broadcast comes in
+//see if we can run that along with the auto dismiss standard functionality that fires autodismissactivity
+//at the screen on broadcast
+
+
 
 public class BasicGuardService extends MediatorService {
 	

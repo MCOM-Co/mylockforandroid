@@ -21,7 +21,7 @@ public class SettingsActivity extends Activity {
 	
 	public boolean triedstart = false;
 		
-	public boolean persistentNotif = true;
+	public boolean persistentNotif = false;
     
     public boolean boot = false;
     public boolean shakewake = false;
