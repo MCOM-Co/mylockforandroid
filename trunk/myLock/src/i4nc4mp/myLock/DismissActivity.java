@@ -1,8 +1,11 @@
 package i4nc4mp.myLock;
 
+import i4nc4mp.myLock.ManageKeyguard.LaunchOnKeyguardExit;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
@@ -21,6 +24,7 @@ import android.view.WindowManager;
 //it seems this could be fixed by doing a moveTaskToBack on the guard activity once dismiss actually gains focus
 
 public class DismissActivity extends Activity {
+      public boolean done = false;
       
       protected void onCreate(Bundle icicle) {
       super.onCreate(icicle);
@@ -28,13 +32,18 @@ public class DismissActivity extends Activity {
       
       requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
       getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+    		  //| WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
     		  | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
     		  | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
       
       Log.v("dismiss","creating dismiss window");
       
-           
+      //when using the show when locked the dismiss doesn't actually happen. lol.    
       updateLayout();
+      
+      //register for user present so we don't have to manually check kg with the keyguard manager
+      IntentFilter userunlock = new IntentFilter (Intent.ACTION_USER_PRESENT);
+      registerReceiver(unlockdone, userunlock);
 
 }      
       protected View inflateView(LayoutInflater inflater) {
@@ -47,31 +56,50 @@ public class DismissActivity extends Activity {
       setContentView(inflateView(inflater));
   }
   
-  
-  @Override
-  public void onWindowFocusChanged (boolean hasFocus) {
-      if (hasFocus) {
-    	  //this should be the first safe point to kill the guard and start finishing
-    	  //should eliminate the need for the finish delay thread.
-    	  Log.v("handoff complete","dismiss window gained focus, closing all");
-    	  
-    	  //send callback to the guard which will start closing it
-    	  Intent intent = new Intent("i4nc4mp.myLock.lifecycle.CALL_START");
-          getApplicationContext().sendBroadcast(intent);
-          
-          PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-          myPM.userActivity(SystemClock.uptimeMillis(), true);
-          
-          moveTaskToBack(true);
-          //this actually ensures a clean finish because we have no history flag
+  BroadcastReceiver unlockdone = new BroadcastReceiver() {
+	    
+	    public static final String present = "android.intent.action.USER_PRESENT";
 
-          }
-  }
+	    @Override
+	    public void onReceive(Context context, Intent intent) {
+	    	if (!intent.getAction().equals(present)) return;
+	    	if (!done) {
+	    		Log.v("dismiss user present","sending to back");
+	    		done = true;
+	    	   	moveTaskToBack(true);
+	    	}
+	    }
+  };
+  
+  /*
+  @Override
+  public void onWindowFocusChanged (boolean hasFocus) { 
+	  	Log.v("dismiss gained focus","now waiting for user present");
+	  }
+
+          }*/
   
   @Override
   public void onDestroy() {
       super.onDestroy();
-     
+      
+      
+      //Context mCon = getApplicationContext();
+      //ManageKeyguard.initialize(mCon);
+      //boolean kg = ManageKeyguard.inKeyguardRestrictedInputMode();
+      
+      unregisterReceiver(unlockdone);
       Log.v("destroy_dismiss","Destroying");
+      
+      //if we get destroyed and the KG is still active, we have a problem
+      //Try to recover via the KM secure exit API.
+      /*if (kg) {
+    	  ManageKeyguard.disableKeyguard(mCon);
+    	  ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
+  	        public void LaunchOnKeyguardExitSuccess() {
+  	           Log.v("handoff fallout", "successfully recovered via secure exit");
+  	           
+  	        	}
+  			});*/
+      }
   }
-}

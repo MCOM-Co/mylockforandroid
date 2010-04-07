@@ -50,12 +50,12 @@ public class Toggler extends Service {
 public void getPrefs() {
 	SharedPreferences settings = getSharedPreferences("myLock", 0);
 	active = settings.getBoolean("serviceactive", false);
-	//guard = settings.getBoolean("slideGuard", false);
+	guard = settings.getBoolean("wallpaper", false);
 }
 	
 private void startService(){
 		Intent i = new Intent();
-		//if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService"); else
+		if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService"); else
 		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
 		startService(i);
 		Log.d( getClass().getSimpleName(), "startService()" );
@@ -63,7 +63,7 @@ private void startService(){
 
 private void stopService() {
 		Intent i = new Intent();
-		//if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService"); else
+		if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService"); else
 		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
 		stopService(i);
 		Log.d( getClass().getSimpleName(), "stopService()" );

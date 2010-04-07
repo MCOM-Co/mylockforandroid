@@ -5,5 +5,6 @@
   android:layout_height="fill_parent"
   >
   <!-- style="@android:style/Theme.Wallpaper" -->
-<TextView android:text="myLock - press back to unlock" android:id="@+id/TextView01" android:layout_width="fill_parent" android:layout_height="fill_parent" android:gravity="center"></TextView>
+  <!-- android:text="∞" android:textSize="30sp" -->
+<TextView android:text="waiting for OS to wake up..." android:id="@+id/TextView01" android:layout_width="fill_parent" android:layout_height="fill_parent" android:gravity="center"></TextView>
 </LinearLayout>

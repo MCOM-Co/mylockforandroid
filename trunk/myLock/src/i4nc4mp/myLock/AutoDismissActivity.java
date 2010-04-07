@@ -2,7 +2,10 @@ package i4nc4mp.myLock;
 
 import android.app.Activity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 
 import android.util.Log;
@@ -10,88 +13,67 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 
-//One shot dismiss_keyguard activity. functions by launching, then finishing 50 ms later
-//we use it so we don't have to use the pre-2.0 dismiss & secure exit commands (which are really strict)
+//One shot dismiss_keyguard activity. Launch, wait for system to confirm KG is clear, minimize, exit
+//avoids the pre-2.0 dismiss & secure exit commands (which are really strict and break often)
 
 public class AutoDismissActivity extends Activity {
- 
-      protected void onCreate(Bundle icicle) {
-      super.onCreate(icicle);
+	public boolean done = false;
+    
+    protected void onCreate(Bundle icicle) {
+    super.onCreate(icicle);
 
-      
-      requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
-      getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-    		 | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-    		 | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-      
-      
-      Log.v("dismiss","creating dismiss window");
-      
-      updateLayout();
+    
+    requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+    getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+  		  //| WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+  		  | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+  		  | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    
+    Log.v("dismiss","creating dismiss window");
+    
+    //when using the show when locked the dismiss doesn't actually happen. lol.    
+    updateLayout();
+    
+    //register for user present so we don't have to manually check kg with the keyguard manager
+    IntentFilter userunlock = new IntentFilter (Intent.ACTION_USER_PRESENT);
+    registerReceiver(unlockdone, userunlock);
+
+}      
+    protected View inflateView(LayoutInflater inflater) {
+    return inflater.inflate(R.layout.dismisslayout, null);
 }
-      
-      protected View inflateView(LayoutInflater inflater) {
-      return inflater.inflate(R.layout.dismisslayout, null);
-  }
 
-  private void updateLayout() {
-      LayoutInflater inflater = LayoutInflater.from(this);
+private void updateLayout() {
+    LayoutInflater inflater = LayoutInflater.from(this);
 
-      setContentView(inflateView(inflater));
-  }
-  
-  @Override
-  public void onResume() {
-	  super.onResume();
-	  
-	  Log.v("dismiss","resume occurred");
-  }
-  
-  @Override
-  public void onPause() {
-	  super.onPause();
-	  
-	  Log.v("dismiss","pause occurred");
-  }
-  
- 
-  @Override
-  public void onWindowFocusChanged (boolean hasFocus) {
-      if (hasFocus) {
-    	  //this should be the first safe point to kill the guard and start finishing
-    	  //should eliminate the need for the finish delay thread.
-    	  Log.v("dismiss complete","gained focus, doing finish broadcasts");
-          
-          //PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-          //myPM.userActivity(SystemClock.uptimeMillis(), true);
-    	  
-    	
-    	//callback mediator for final handling of the stupid wake lock
-          Intent intent = new Intent("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED");
-          getApplicationContext().sendBroadcast(intent);
-          
-          moveTaskToBack(true);
-          //this actually ensures a clean finish because we have no history flag
-          //seems like sometimes stop/destroy isn't called immediately and waits for some action from user
-          finish();//just for good measure
-          
-          
-          
-          }
-  }
-  
-  @Override
-  public void onStop() {
-	  super.onStop();
-	  
-	  Log.v("dismiss stop","waiting for destroy");
-	  
-  }
-  
-  @Override
-  public void onDestroy() {
-      super.onDestroy();
-     
-      Log.v("destroy_dismiss","Destroying");
-  }
+    setContentView(inflateView(inflater));
+}
+
+BroadcastReceiver unlockdone = new BroadcastReceiver() {
+	    
+	    public static final String present = "android.intent.action.USER_PRESENT";
+
+	    @Override
+	    public void onReceive(Context context, Intent intent) {
+	    	if (!intent.getAction().equals(present)) return;
+	    	if (!done) {
+	    		Log.v("dismiss user present","sending to back");
+	    		done = true;
+	    		//callback mediator for final handling of the stupid wake lock
+	            Intent i = new Intent("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED");
+	            getApplicationContext().sendBroadcast(i);
+	    	   	moveTaskToBack(true);
+	    	   	finish();
+	    	}
+	    }
+};
+
+@Override
+public void onDestroy() {
+    super.onDestroy();      
+   
+    unregisterReceiver(unlockdone);
+    Log.v("destroy_dismiss","Destroying");
+
+    }
 }

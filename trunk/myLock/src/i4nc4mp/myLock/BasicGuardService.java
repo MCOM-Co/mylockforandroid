@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -22,6 +23,19 @@ import android.util.Log;
 //see if we can run that along with the auto dismiss standard functionality that fires autodismissactivity
 //at the screen on broadcast
 
+/*
+ * Basic Guard lifecycle
+ * At start, we register for user present broadcast
+ * this broadcast will come in if the keyguard is successfully closed
+ * I am assuming this should be the same time that focus gain occurs in the dismiss activity.
+ * 
+ * We manage and choose when to launch dismiss - we go dormant for outside events
+ * option to exit without dismiss on slide wake - this will present normal lockscreen
+ * not many but a few users want to guard the slider from pocket bumps - hence, lockscreen
+ * 
+ * In essence - IF there is no user present, exist and display wallpaper.
+ * Once user IS present, send self to back and close out when convenient.
+ */
 
 
 public class BasicGuardService extends MediatorService {
@@ -48,6 +62,7 @@ public class BasicGuardService extends MediatorService {
     
     Handler serviceHandler;
     Task myTask = new Task();
+    public int waited = 0;
     
     @Override
     public void onDestroy() {
@@ -86,7 +101,7 @@ public class BasicGuardService extends MediatorService {
     public void onRestartCommand() {
             
             SharedPreferences settings = getSharedPreferences("myLock", 0);
-            boolean fgpref = settings.getBoolean("FG", true);
+            boolean fgpref = settings.getBoolean("FG", false);
                                  
 /*========Settings change re-start commands that come from settings activity*/
     
@@ -108,7 +123,7 @@ public class BasicGuardService extends MediatorService {
             SharedPreferences settings = getSharedPreferences("myLock", 0);
             SharedPreferences.Editor editor = settings.edit();
             
-            persistent = settings.getBoolean("FG", true);
+            persistent = settings.getBoolean("FG", false);
             timeoutenabled = settings.getBoolean("timeout", false);
                         
             if (persistent) doFGstart();
@@ -145,6 +160,7 @@ public class BasicGuardService extends MediatorService {
             
             IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLock.lifecycle.IDLE_TIMEOUT");
             registerReceiver(idleExit, idleFinish);
+            
             
             IntentFilter lockStart = new IntentFilter ("i4nc4mp.myLock.lifecycle.LOCKSCREEN_PRIMED");
             registerReceiver(lockStarted, lockStart);
@@ -225,9 +241,20 @@ public class BasicGuardService extends MediatorService {
     class Task implements Runnable {
     public void run() {
             Context mCon = getApplicationContext();
-            Log.v("startLock task","executing, PendingLock is " + PendingLock);
-            if (!PendingLock) return;//ensures break the attempt cycle if user has aborted the lock
-            //user can abort timeout sleep by any key wakeup
+            if (waited == 0) Log.v("startLock task","beginning KG check cycle");
+            if (!PendingLock) {
+            	Log.v("startLock user abort","detected wakeup before lock started");
+            	waited = 0;
+            	return;
+            	//ensures break the attempt cycle if user has aborted the lock
+            }
+            
+            if (waited == 20) {
+            	Log.v("startLock abort","system or app seems to be suppressing lockdown");
+            	waited = 0;
+            	PendingLock = false;
+            	return;
+            }
             
             
             //see if any keyguard exists yet
@@ -236,9 +263,13 @@ public class BasicGuardService extends MediatorService {
                             
                             //the keyguard exists here on first try if this isn't a timeout lock
                             shouldLock = false;
+                            waited = 0;
                             StartLock(mCon);//take over the lock
                     }
-                    else serviceHandler.postDelayed(myTask, 500L);
+                    else {
+                    	waited++;
+                    	serviceHandler.postDelayed(myTask, 500L);
+                    }
                     
                             
             }               
@@ -246,7 +277,16 @@ public class BasicGuardService extends MediatorService {
     
     @Override
     public void onScreenWakeup() {
-            if (!PendingLock) return;
+    	if (!shouldLock) {
+        	//lock activity is active so let's populate the screen wake awareness
+        	SharedPreferences settings = getSharedPreferences("myLock", 0);
+            SharedPreferences.Editor editor = settings.edit();
+            editor.putBoolean("screen", true);
+            editor.commit();
+        }    
+    	
+    	
+    	if (!PendingLock) return;
             //we only handle this when we get a screen on that's happening while we are waiting for a lockscreen start callback
                     
                             
@@ -270,7 +310,14 @@ public class BasicGuardService extends MediatorService {
     @Override
     public void onScreenSleep() {
             //when sleep after an unlock, start the lockscreen again
-            
+    	SharedPreferences settings = getSharedPreferences("myLock", 0);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putBoolean("screen", false);
+        editor.commit();
+        //always populate our screen state ref for lock activity to check
+        //we only switch the flag on during the lock activity life cycle    
+    	
+    	
             if (receivingcall || placingcall) {
                     Log.v("mediator screen off","call flag in progress, aborting handling");
                     return;//don't handle during calls at all
@@ -332,7 +379,7 @@ public class BasicGuardService extends MediatorService {
     	PowerManager myPM = (PowerManager) getSystemService(Context.POWER_SERVICE);
         myPM.userActivity(SystemClock.uptimeMillis(), false);
     	
-    Class w = DismissActivity.class; 
+    Class w = AutoDismissActivity.class; 
                   
     Intent dismiss = new Intent(context, w);
     dismiss.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK//required for a service to launch activity
@@ -372,11 +419,7 @@ public class BasicGuardService extends MediatorService {
             
             //if call ends while asleep and not in the KG-restored mode (watching for prox wake)
             //then KG is still restored, and we can't catch it due to timing
-            
-            //right now we can't reliably check the screen state
-    		//instead we will restart the guard if call came in waking up device
-    		//otherwise we will just do nothing besides dismiss any restored kg
-            
+                        
             Context mCon = getApplicationContext();
             
             Log.v("call end","checking if we need to exit KG");
@@ -387,42 +430,20 @@ public class BasicGuardService extends MediatorService {
             //this will tell us if the phone ever restored the keyguard
             //phone occasionally brings it back to life but suppresses it
             
-            //2.1 isScreenOn will allow us the logic:
+            boolean screen = isScreenOn();
             
-            //restart lock if it is asleep and relocked
-            //dismiss lock if it is awake and relocked
-            //do nothing if it is awake and not re-locked
-            //wake up if it is asleep and not re-locked (not an expected case)
-            
-            //right now we will always dismiss as user expects that ONLY the slide open will be guarded
-            //when awake and not slider opened it will need to be dismissed.
-            //this basically means those times when phone wants to be asleep and locked
-            //we are actually causing a wakeup/unlock,
-            //but we can't respect that case till we have 2.1
-            
-            
-            /*
-            if (callWake) {
-                    Log.v("wakeup call end","restarting lock activity.");
-                    callWake = false;
-                    PendingLock = true;
-                    StartLock(mCon);
-                    //when we restart here, the guard activity is getting screen on event
-                    //and calling its own dismiss as if it was a user initiated wakeup
-                    //TODO but this logic will be needed for guarded custom lockscreen version
+            if (!screen) {
+            	//asleep case, only detected on 2.1+
+            	
+            	Log.v("asleep call end","restarting lock activity.");
+                PendingLock = true;
+                StartLock(mCon);
             }
             else {
-            	//KG may or may not be about to come back and screen may or may not be awake
-            	//these factors depend on what the user did during call
-            	//all we will do is dismiss any keyguard that exists, which will cause wake if it is asleep
-            	//if (IsAwake()) {}
-                    Log.v("call end","checking if we need to exit KG");
-                    shouldLock = true;
-                    if (KG) StartDismiss(mCon);
-            }*/
-            shouldLock = true;
-            if (KG) StartDismiss(mCon);
-            
+            	//awake or pre-2.1 (causing wakeup if asleep & locked)
+            	shouldLock = true;
+            	if (KG) StartDismiss(mCon);
+            }
     }
     
     @Override
@@ -431,6 +452,22 @@ public class BasicGuardService extends MediatorService {
         getApplicationContext().sendBroadcast(intent);
         //lets the activity know it should not treat focus loss as a navigation exit
         //this will keep activity alive, only stopping it at call start
+    }
+    
+    public boolean isScreenOn() {
+    	//Allows us to tap into the 2.1 screen check if available
+    	
+    	if(Integer.parseInt(Build.VERSION.SDK) < 7) { 
+    		
+    		return true;
+    		//our own isAwake doesn't work sometimes when prox sensor shut screen off
+    		//better to treat as awake then to think we are awake when actually asleep
+    		
+    	}
+    	else {
+    		PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+    		return myPM.isScreenOn();
+    	}
     }
     
 //============================

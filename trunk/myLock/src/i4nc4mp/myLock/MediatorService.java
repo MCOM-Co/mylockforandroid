@@ -40,6 +40,8 @@ public class MediatorService extends Service {
 	public boolean placingcall = false;
 	//true when state 0 to 2 occurs
 	
+	private TelephonyManager tm = null;
+	
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -61,6 +63,7 @@ public class MediatorService extends Service {
 		
 		pause();//disengage from screen broadcasts
 		
+		tm.listen(Detector, PhoneStateListener.LISTEN_NONE);
 		
 		}
 	
@@ -82,7 +85,7 @@ public class MediatorService extends Service {
 		activate();//registers to receive the screen broadcasts
 				  	
     	//register with the telephony mgr to make sure we can read call state
-    	final TelephonyManager tm = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE); 
+    	tm = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE); 
         assert(tm != null); 
         tm.listen(Detector, PhoneStateListener.LISTEN_CALL_STATE);
         
@@ -105,17 +108,13 @@ PhoneStateListener Detector = new PhoneStateListener() {
     	public void onCallStateChanged(int state, String incomingNumber) 
         {
     		if (state == 2) {//change to call active
-    			if (lastphonestate==1) {
-    				//receivingcall = true;
-    				//now set at the ring start so ringing is treated as received call
-    				Log.v("mediator","user accepted call");
-    			}    			
-    			if (lastphonestate==0) {
-    				placingcall = true;
-                }
+    			if (lastphonestate==0) placingcall = true;
+                
     			//set the flags so subclasses can know what kind of call
     			//call reaction method
     			onCallStart();
+    			//TODO implement onCallAccept for something that needs to be done only when incoming is answered
+    			//vs onCallOriginate
             
             //pause();
     		}
@@ -131,7 +130,7 @@ PhoneStateListener Detector = new PhoneStateListener() {
     			if (lastphonestate==1) {
     				//state 1 to 0 is user pressed ignore or missed the call
     				receivingcall = false;
-    				Log.v("mediator","user ignored or missed call");
+    				//Log.v("mediator","user ignored or missed call");
     				onCallMiss();
     			}
     			else {
