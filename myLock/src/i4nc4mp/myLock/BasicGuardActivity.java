@@ -6,7 +6,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
@@ -15,35 +17,19 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.TextView;
 
-
-//Guarded mode - Lockscreen replacement that's designed to be used without pattern mode on
-//the mediator for this mode does the pattern suppress with option for idle timeout
-//it simply replaces the lockscreen, does not touch any wakeup rules
-
-
-//When it is time to exit (by back key or slidingtab) we start a one shot dismiss activity.
-//The dismiss activity will load, wait to gain focus, then finish
-//Here, we finish in the background via a callback from the dismiss focus gain
 
 //For this lifecycle, we go dormant for any outside event
 //such as incoming call ringing, alarm, handcent popup, etc.
 //we detect going dormant by losing focus while already paused.
 //if focus loss occurs while not paused, it means the user is actively navigating out of the woken lockscreen
+//FIXME integrate the new stop without focus loss that is being caused by handcent latest ver
 
-//for the exits that occur from navigation, we're forced to use the pre-2.0 exit method
-//due to bugs in the overall implementation of the new flags.. there's no way to really allow the navigation exit
-//when only show_when_locked is active. i can't seem to make it cooperate with dismissActivity
-//because the KG comes back and blocks it
-//however, for instant exit, the dismissActivity code is flawless
 
 public class BasicGuardActivity extends Activity {
 	//import from the guard activity from Complete revision
 	Handler serviceHandler;
     Task myTask = new Task();
-    //OtherTask dismissthread = new OtherTask(); 
 
 
 /* Lifecycle flags */
@@ -67,16 +53,15 @@ public boolean pendingExit = false;
 public boolean slideWakeup = false;
 //we will set this when we detect slideopen, only used with instant unlock (replacement for 2c ver)
 
+public boolean slideGuard = false;
+//user pref whether to have the slide wake show lockscreen. default is still auto exit
+
 public boolean pendingDismiss = false;
 //will be set true when we launch the dismiss window for auto and user requested exits
 //this ensures focus changes and pause/resume will be ignored to allow dismiss activity to finish
 
 public boolean resurrected = false;
 //just to handle return from dormant, avoid treating it same as a user initiated wake
-
-public boolean isScreenOn = false;
-//temporary solution for pre 2.1 screen checking
-//we will simply set it in the screen on event
 
 //====Items in the default custom lockscreen
 /*
@@ -99,7 +84,6 @@ protected void onCreate(Bundle icicle) {
 
     requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
-    		//| WindowManager.LayoutParams.FLAG_FULLSCREEN);
     
     updateLayout();
     
@@ -154,8 +138,17 @@ protected void onCreate(Bundle icicle) {
     
     IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLock.lifecycle.IDLE_TIMEOUT");
     registerReceiver(idleExit, idleFinish);
+    
+    
+    IntentFilter userunlock = new IntentFilter (Intent.ACTION_USER_PRESENT);
+    registerReceiver(unlockdone, userunlock);
+    
+    
             
     serviceHandler = new Handler();
+    
+    SharedPreferences settings = getSharedPreferences("myLock", 0);
+    slideGuard = settings.getBoolean("slideGuard", false);
 }
     
     /*public void updateClock() {
@@ -214,25 +207,43 @@ BroadcastReceiver screenon = new BroadcastReceiver() {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-            if (!intent.getAction().equals(Screenon)) return;
-    
-            if (resurrected) {
-            	//ignore this wake as we do not actually want instant exit
-            	resurrected = false;
-            	Log.v("guard resurrected","ignoring invalid screen on");
+            if (!intent.getAction().equals(Screenon) || finishing) return;
+            Log.v("guard is handling wakeup","deciding whether to dismiss");
+            
+            
+            if (hasWindowFocus() && !resurrected && !pendingDismiss) {             	
+            	
+            	if (slideWakeup && slideGuard){
+            		finishing = true;
+            	    finish();
+            	}//this screen will exit, yielding to the regular unlock screen
+            	//the callback ensures that it will be recreated if user fails to complete unlock
+            	//TODO add a haptic notif so user might know if this pocket wake happened
+            	else {
+            		StartDismiss(context);
+            	} 
             }
-            if (hasWindowFocus() && !slideWakeup && !resurrected) {
+            else {
+            	if (resurrected) {
+                	//ignore this wake as we do not actually want instant exit
+                	resurrected = false;
+                	Log.v("guard resurrected","ignoring invalid screen on");
+                }
             	
-               	//StartDismiss(getApplicationContext());
-               	//now tell mediator we need to exit & set pending exit flag
-            	pendingDismiss = true;
-            	
-          	  //Intent i = new Intent("i4nc4mp.myLock.lifecycle.EXIT_REQUEST");
-              //getApplicationContext().sendBroadcast(i);
-            	
-            	StartDismiss(context);
-              
-              
+            	//TODO possible alternative to this:
+            	//Always exit when slide wakeup detected
+            	//mediator also detect slide wakeup and fire auto dismiss if not slide guarded
+            	//result is user still sees lockscreen on slider despite having wallpaper enabled
+            	if (slideWakeup && !slideGuard && pendingDismiss) {
+            		ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
+            	        public void LaunchOnKeyguardExitSuccess() {
+            	           Log.v("slide wake exit", "closing the guard window");
+            	           pendingDismiss = false;
+            	           finishing = true;
+            	           finish();
+            	        	}
+            			});
+            		}
             }
             
     return;//avoid unresponsive receiver error outcome
@@ -247,7 +258,7 @@ BroadcastReceiver callStarted = new BroadcastReceiver() {
     //we are going to be dormant while this happens, therefore we need to force finish
     Log.v("guard received broadcast","completing callback and finish");
     
-    //StopCallback();
+    StopCallback();
     finish();
     
     return;
@@ -278,6 +289,30 @@ public void onReceive(Context context, Intent intent) {
     return;
     }};
 
+    
+    BroadcastReceiver unlockdone = new BroadcastReceiver() {
+	    
+	    public static final String present = "android.intent.action.USER_PRESENT";
+
+	    @Override
+	    public void onReceive(Context context, Intent intent) {
+	    	if (!intent.getAction().equals(present)) return;
+	    	Log.v("user present","Keyguard is now fully dismissed");
+	    	//if we try to hide or request close before this moment it causes a frozen lockscreen
+	    	
+	    	if (pendingDismiss) {
+	    		pendingDismiss = false;//prevent duplicate handling
+	    		//system sometimes calls this several times
+	    		StopCallback();
+	    		moveTaskToBack(true);//minimize self
+	    		finish();//request destruction, or else we just sit minimized in the background
+	    	}
+	    	else Log.v("unexpected user present","there might be an external kg disable event occurring");
+	    	
+	    }
+    };
+    
+    
     class Task implements Runnable {
     public void run() {
             
@@ -289,16 +324,9 @@ public void onReceive(Context context, Intent intent) {
             }});
     }}
     
-    /*class OtherTask implements Runnable {
-    public void run() {
-    		onBackPressed();
-    	}
-    }*/
     
-    
-    //FIXME slide open should just close the activity, causing keyguard to come back
-    //user slides it to confirm unlock
-    /*
+//here, if slide guarded mode is active in prefs, we will hide self to reveal normal lockscreen
+//when slider wakes device TODO not yet implemented
     @Override
 public void onConfigurationChanged(Configuration newConfig) {
     super.onConfigurationChanged(newConfig);
@@ -308,13 +336,19 @@ public void onConfigurationChanged(Configuration newConfig) {
             else {
             	Log.v("slide-open wake","setting state flag");
             	slideWakeup = true;
+            	if (!slideGuard) {
+            		//we will do a KM secure exit here for performance reasons
+            		pendingDismiss = true;
+            		ManageKeyguard.disableKeyguard(getApplicationContext());
+            	}
+            	
             }           
     }
     else if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES) {
     	Log.v("slide closed","lockscreen activity got the config change from background");
     }
                   
-}*/
+}
 
     @Override
 protected void onStop() {
@@ -323,6 +357,7 @@ protected void onStop() {
     if (pendingDismiss) return;
     
     if (finishing) {
+    	//deliberate user action exit not caused by handoffs to other events
             Log.v("lock stop","we have been unlocked by a user exit request");
     }
     else if (paused) {
@@ -337,6 +372,7 @@ protected void onStop() {
             //we got paused, lost focus, then finally stopped
             //this only happens if user is navigating out via notif, popup, or home key shortcuts
             Log.v("lock stop","onStop is telling mediator we have been unlocked by user navigation");
+            //if (dormant) finishing = true;//this would happen if user left via handcent dialog
         }
     }
     else Log.v("unexpected onStop","lockscreen was stopped for unknown reason");
@@ -371,19 +407,29 @@ protected void onPause() {
             
     }
     else {
-    	Log.v("lock paused","normal pause - we still have focus");
-    	if (slideWakeup) {
-    		Log.v("returning to sleep","toggling slide wakeup false");
-    		slideWakeup = false;
-    	}
-    	if (resurrected) {
-    		Log.v("returning to sleep","toggling resurrected false");
-    		resurrected = false;
-    		//sometimes the invalid screen on doesn't happen
-    		//in that case we just turn off the flag at next pause
-    	}
+    	if (pendingDismiss) {
+      		Log.v("handoff to dismiss window","pausing, expecting user present soon");
+      		//here we could queue something to recover from fallout of user present
+      		//it seems to be caused by the handcent service.. it breaks the handoff
+      		//causing lockscreen to come up which has to be unlocked before user present happens
+      	}
+    	else if (hasWindowFocus()) Log.v("lock paused","normal pause - we still have focus");
+      	else Log.v("lock paused","exit pause - don't have focus");
+      	
+      	if (slideWakeup) {
+      		Log.v("returning to sleep","toggling slide wakeup false");
+      		slideWakeup = false;
+      	}
+      	if (resurrected) {
+      		Log.v("returning to sleep","toggling resurrected false");
+      		resurrected = false;
+      		//sometimes the invalid screen on doesn't happen
+      		//in that case we just turn off the flag at next pause
+      		//FIXME need to ignore this in the autodismiss also
+      		//without it the phone is unlocking after missed call
+      	}
+      }
     }
-}
 
 @Override
 protected void onResume() {
@@ -409,8 +455,7 @@ public void onDestroy() {
    unregisterReceiver(callStarted);
    unregisterReceiver(callPending);
    unregisterReceiver(idleExit);
-   
-   StopCallback();
+   unregisterReceiver(unlockdone);
     
    Log.v("destroy Guard","Destroying");
 }
@@ -440,17 +485,31 @@ public void onWindowFocusChanged (boolean hasFocus) {
             }
     }
     else if (!pendingDismiss) {                                                  
-            if (!finishing && paused) {
-                            if (!dormant) {
-                                    Log.v("home key exit","launching full secure exit");
-                                                                                    
-                                    ManageKeyguard.disableKeyguard(getApplicationContext());
-                                    serviceHandler.postDelayed(myTask, 50);
-                                            
-                                    
-                            }
-                            else Log.v("dormant handoff complete","the external event now has focus");
-            }
+        if (!finishing && paused) {
+//Handcent popup issue-- we haven't gotten resume & screen on yet
+//Handcent is taking focus first thing
+//So it is now behaving like an open of notif panel where we aren't stopped and aren't even getting paused
+      	  
+     //we really need to know we were just resumed and had screen come on to do this exit
+                        
+                        if (dormant) Log.v("dormant handoff complete","the external event now has focus");
+                        else {
+                      	  if (isScreenOn()) {
+                                Log.v("home key exit","launching full secure exit");
+                                                                                
+                                ManageKeyguard.disableKeyguard(getApplicationContext());
+                                serviceHandler.postDelayed(myTask, 50);
+                      	  }
+                      	  else {
+                      		  //Here's the handcent case
+                      		  //if you then exit via a link on pop,
+                      		  //we do get the user nav handling on onStop
+                      		  Log.v("popup event","focus handoff before screen on, nav exit possible");
+                      		  dormant = true;                            
+                      		  //we need to be dormant so we realize once the popup goes away
+                      	  }
+                        }
+        }
             else if (!paused) {
                     //not paused, losing focus, we are going to manually disable KG
                     Log.v("focus yielded while active","about to exit through notif nav");
@@ -504,5 +563,27 @@ public void StartDismiss(Context context) {
                     
     pendingDismiss = true;
     startActivity(dismiss);
+}
+
+public boolean isScreenOn() {
+	//Allows us to tap into the 2.1 screen check if available
+	
+	boolean on = false;
+	
+	if(Integer.parseInt(Build.VERSION.SDK) < 7) { 
+		//we will bind to mediator and ask for the isAwake, if on pre 2.1
+		//for now we will just use a pref since we only need it during life cycle
+		//so we don't have to also get a possibly unreliable screen on broadcast within activity
+		Log.v("pre 2.1 screen check","grabbing screen state from prefs");
+		SharedPreferences settings = getSharedPreferences("myLock", 0);
+	   	on = settings.getBoolean("screen", false);
+		
+	}
+	else {
+		PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+		on = myPM.isScreenOn();
+	}
+	
+	return on;
 }
 }

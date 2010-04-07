@@ -28,6 +28,8 @@ public class SettingsActivity extends Activity {
     
     public boolean guard = false;
     
+    public boolean WPlockscreen = false;
+    
     public boolean active = false;
 
     public CheckBox toggle;
@@ -47,6 +49,7 @@ public class SettingsActivity extends Activity {
           	public void onClick(View v){
           		if (toggle.isChecked()) {
           			startService();
+          			active = true;//so we will know if what to do if user changes any more checks after this
             		Toast.makeText(SettingsActivity.this, "myLock is now enabled", Toast.LENGTH_SHORT).show();
           		}
           		else {
@@ -54,6 +57,7 @@ public class SettingsActivity extends Activity {
           			//or if the device was rebooted without a clean exit
           			//it will still think it is running
           			stopService();
+          			active = false;
           			Toast.makeText(SettingsActivity.this, "myLock is now disabled", Toast.LENGTH_SHORT).show();
           		}
           	}
@@ -72,7 +76,7 @@ public class SettingsActivity extends Activity {
 
                // Don't forget to commit your edits!!!
                editor.commit();
-               getPrefs();
+               
                if (active) startService();//call start service, so it can react to the change
                //make sure not to start it up if we aren't already
            }
@@ -110,7 +114,7 @@ public class SettingsActivity extends Activity {
                        // Don't forget to commit your edits!!!
                        editor.commit();
                        //finally, do the change
-                       getPrefs();
+                       
                        if (active) startService();
                        //this start just has the mediator check prefs and notice the change
                			                       
@@ -132,19 +136,43 @@ public class SettingsActivity extends Activity {
 
                // Don't forget to commit your edits!!!
                editor.commit();
-     
-               //The current mode needs to be stopped
-               //stopService();//it will go by the existing pref
-               //toggle.setChecked(false);
-               //Toast.makeText(SettingsActivity.this, "myLock must disable to apply change.", Toast.LENGTH_SHORT).show();
-               //guard = !guard;//toggle it locally for reference of next toggle press
                
              //finally, do the change
-               getPrefs();
-               if (active) startService();
+               
+               if (active && !WPlockscreen) startService();
+               //the autodismiss mediator needs to know we toggled the mode
+               //wallpaper lockscreen just checks when it is created
                }
                });
-    }
+    
+    
+    final CheckBox wpbox = (CheckBox)findViewById(R.id.wplock);
+    
+    wpbox.setChecked((WPlockscreen));        
+    
+    wpbox.setOnClickListener(new OnClickListener() {
+
+ 	   public void onClick(View v) {
+            SharedPreferences set = getSharedPreferences("myLock", 0);
+            SharedPreferences.Editor editor = set.edit(); 
+            
+            editor.putBoolean("wallpaper", wpbox.isChecked());
+            //WPlockscreen = wpbox.isChecked();
+            
+            // Don't forget to commit your edits!!!
+            editor.commit();
+  
+            if (active) {
+            	stopService();//stop existing mode
+            	WPlockscreen = !WPlockscreen;
+            	startService();//startup the new mediator
+            }
+            else WPlockscreen = wpbox.isChecked();
+            
+
+            }
+    });
+ }
     
     public void getPrefs() {
     	SharedPreferences settings = getSharedPreferences("myLock", 0);
@@ -162,6 +190,8 @@ public class SettingsActivity extends Activity {
         active = settings.getBoolean("serviceactive", false);
         
         guard = settings.getBoolean("slideGuard", false);
+        
+        WPlockscreen = settings.getBoolean("wallpaper", false);
     }
     
     @Override
@@ -176,16 +206,16 @@ public class SettingsActivity extends Activity {
     private void startService(){
    			Intent i = new Intent();
    			
-   			//if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService"); else
-   			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
+   			if (WPlockscreen) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
+   			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
    			startService(i);
    			Log.d( getClass().getSimpleName(), "startService()" );
    		}
     
     private void stopService() {
 			Intent i = new Intent();
-			//if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService"); else
-			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
+			if (WPlockscreen) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
+			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
 			stopService(i);
 			Log.d( getClass().getSimpleName(), "stopService()" );
     }

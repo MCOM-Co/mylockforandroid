@@ -67,8 +67,8 @@ public class UserPresentService extends Service {
 	    	Intent i = new Intent();
 	    	
 	    	SharedPreferences settings = getSharedPreferences("myLock", 0);
-	    	boolean guard = settings.getBoolean("slideGuard",false);
-			//if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService"); else
+	    	boolean guard = settings.getBoolean("wallpaper",false);
+			if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService"); else
 	    	i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
 			startService(i);
 	    	//call stopSelf

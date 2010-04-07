@@ -49,6 +49,8 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
     //public boolean idle = false;
     //when the idle alarm intent comes in we set this true to properly start closing down
     
+    public boolean callmissed = false;
+    
     Handler serviceHandler;
     Task myTask = new Task();
     
@@ -308,13 +310,17 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
         
     @Override
     public void onScreenWakeup() {
-    	if (receivingcall || placingcall) {
-    		Log.v("auto dismiss service","aborting screen wake handling due to call in progress");
+    	if (receivingcall || placingcall || callmissed) {
+    		Log.v("auto dismiss service","aborting screen wake handling due to call state");
+    		if (callmissed) callmissed = false;
     		return;
     	}
     	//no handling during a call just to avoid conflicts because we use wakelock
     	//this means lockscreen will exist if user has tabbed out of the phone
     	//user may also see it if a call is missed or ignored, this prevents pocket redial
+    	//this event happens at the ignore/miss due to the lockscreen appearing
+    	//it is actually a bug in the lockscreen that sends the screen on when it was already on
+    	
     	if (slideGuarded && slideWakeup) return;//no dismiss when slide guard active
     	
     	ManageKeyguard.initialize(getApplicationContext());
@@ -337,8 +343,9 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             slideWakeup = false;
         }
         
-        dismissed = false;
-        //flag will allow us to know we are coming into a slide wakeup
+        dismissed = false;//flag will allow us to know we are coming into a slide wakeup
+        callmissed = false;//just in case we didn't get the bad screen on after call is missed
+       
     }
     
     public void StartDismiss(Context context) {
@@ -424,6 +431,12 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             //shouldLock = true;
             if (KG) StartDismiss(mCon);
             
+    }
+    
+    @Override
+    public void onCallMiss() {
+    	callmissed = true;
+    	//flag so we can suppress handling of the screen on we seem to get at phone state change
     }
     
 //============================

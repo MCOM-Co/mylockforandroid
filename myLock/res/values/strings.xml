@@ -6,11 +6,13 @@
 <string name="fgBox">Display myLock icon in the notification panel</string>
 <string name="shakeBox">Shake will unlock from sleep (may impact battery life)</string>
 <string name="bootBox">Automatically enable myLock after device reboot</string>
-<string name="slideGuard">Guard droid keypad slide from auto-unlocking (will not work unless animation is enabled)</string>
+<string name="slideGuard">Require lockscreen when waking via sliding the keypad slider open (droid)</string>
 <string name="unguard">Advanced mode - volume and camera (and trackball on the nexus one) will wake and unlock.</string>
-<string name="HowToText1">myLock skips the lockscreen for you. This means that you still wake up the phone with the power key or any keypad button while the slider is open, but the unlock screen will no longer be required.</string>
-<string name="HowToText2">When you enable myLock, pattern lock is automatically disabled, and it will conveniently restore when myLock is disabled. Please note that start at boot will occur after you unlock the lockscreen or security pattern the first time, for OS security reasons. This may not work if you have wavesecure or screebl starting at boot.</string>
-<string name="HowToText3">If you experience any problems, download Log Collector (free from the market) to email us at myLockandroid@gmail.com. Be sure to list the problem symptoms and what other services are running in the Settings->Applications->Running Services screen.</string>
+<string name="wplock">Hide lockscreen and show the wallpaper during auto-unlock (best results with all animations enabled in the display settings)</string>
+<string name="HowToText1">myLock automatically minimizes the lockscreen. Side buttons remain locked down, but waking the phone with the slider, keypad buttons, or power key will auto unlock. If you prefer not to see the lockscreen, you can toggle to hide it and see just wallpaper instead.</string>
+<string name="HowToText2">When you enable myLock, pattern lock is automatically disabled, and it will conveniently restore when myLock is disabled.</string>
+<string name="HowToText3">Please note that start at boot will occur after you unlock the lockscreen or security pattern the first time, for OS security reasons. This may not work if you have wavesecure or screebl starting at boot.</string>
+<string name="Troubleshooting">Please see our faq and troubleshooting pages linked on our site (mylockandroid.blogspot.com) first. If you notice an issue that happens consistently, download Log Collector (free from the market) to email us at myLockandroid@gmail.com. Be sure to list the problem symptoms and what other services are running in the Settings->Applications->Running Services screen. I will research the cause of the trouble and code a fix when possible.</string>
 
 
 </resources>
