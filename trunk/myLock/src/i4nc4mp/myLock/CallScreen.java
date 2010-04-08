@@ -5,7 +5,8 @@ package i4nc4mp.myLock;
 /*
  *  method for accepting call
  *  
- *  Intent new_intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+   Intent new_intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+ 
     new_intent.putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_HEADSETHOOK));
    context.sendOrderedBroadcast(new_intent, null);
    
