@@ -1,0 +1,9 @@
+#summary helper addon to allow toggling via profile apps and Locale
+
+= Not Yet Implemented =
+
+public Intent putExtra (String name, String value) 
+Since: API Level 1 Add extended data to the intent. The name must include a package prefix, for example the app com.android.contacts would use names like "com.android.contacts.ShowAll".
+
+
+We can use this to add the extra command "off" or "on" so we can use the same command of launching the Toggler service inside the main myLock package to check the state and determine if the toggle is necessary. very simple code modification.
