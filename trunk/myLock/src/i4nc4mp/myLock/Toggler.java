@@ -32,16 +32,29 @@ public class Toggler extends Service {
 		
 		getPrefs();
 		
-		//TryToggle();
-		
-		if (!active) {
+		boolean target = intent.getBooleanExtra("i4nc4mp.myLock.TargetState", !active);
+		//button doesn't supply, so default is opposite of known state
+		//toggle which fixes wrong active state by stopping first
+						
+		if (target) {
 			startService();
     		Toast.makeText(Toggler.this, "myLock is now enabled", Toast.LENGTH_SHORT).show();
 		}
 		else {
 			stopService();
-  			Toast.makeText(Toggler.this, "myLock is now disabled", Toast.LENGTH_SHORT).show();
+			getPrefs();
+			if (active) {
+				//failed due to false-active needs to correct pref
+				SharedPreferences set = getSharedPreferences("myLock", 0);
+				SharedPreferences.Editor editor = set.edit();
+	            editor.putBoolean("serviceactive", false);
+
+	            // Don't forget to commit your edits!!!
+	            editor.commit();
+			}
+			Toast.makeText(Toggler.this, "myLock is now disabled", Toast.LENGTH_SHORT).show();
 		}
+		
 		//added to prevent android "restarting" this after it dies/is purged causing unexpected toggle
 		stopSelf();//close so it won't be sitting idle in the running services window
 		return START_NOT_STICKY;//ensure it won't be restarted by the OS, we only want explicit starts
