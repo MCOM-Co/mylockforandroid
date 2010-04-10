@@ -27,7 +27,8 @@ import android.util.Log;
 
 public class AutoDismiss extends MediatorService implements SensorEventListener {
 	public boolean persistent = false;
-    //public boolean timeoutenabled = false;
+    public boolean timeoutenabled = false;
+    
 	public boolean shakemode = false;
 	public boolean slideGuarded = false;
 
@@ -42,12 +43,6 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
     
     public boolean dismissed = false;
     //will just toggle true after dismiss callback - used to help ensure airtight lifecycle
-    
-    //public boolean pendingwake = false;
-    //set while slide open wakeup is in progress
-    
-    //public boolean idle = false;
-    //when the idle alarm intent comes in we set this true to properly start closing down
     
     public boolean callmissed = false;
     
@@ -108,8 +103,6 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
         		//editor.commit();
             }
 
-                
-                //unregisterReceiver(idleExit);
             	unregisterReceiver(lockStopped);
                                
                 
@@ -130,6 +123,7 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             
             SharedPreferences settings = getSharedPreferences("myLock", 0);
             boolean fgpref = settings.getBoolean("FG", false);
+            boolean idlepref = settings.getBoolean("timeout", false);
             boolean shakepref = settings.getBoolean("shake", false);
             boolean guardpref = settings.getBoolean("slideGuard", false);
                                  
@@ -144,8 +138,9 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
                     }
                     else doFGstart();//so FG mode is started again
             }
-            else if (shakemode != shakepref) shakemode = shakepref;
+            else if (shakepref != shakemode) shakemode = shakepref;
             else if (guardpref != slideGuarded) slideGuarded = guardpref;
+            else if (idlepref != timeoutenabled) timeoutenabled = idlepref;
             else {
 /*========Safety start that ensures the settings activity toggle button can work, first press to start, 2nd press to stop*/
                   Log.v("toggle request","user first press of toggle after a startup at boot");
@@ -160,7 +155,7 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             SharedPreferences.Editor editor = settings.edit();
             
             persistent = settings.getBoolean("FG", false);
-            //timeoutenabled = settings.getBoolean("timeout", false);
+            timeoutenabled = settings.getBoolean("timeout", false);
             shakemode = settings.getBoolean("shake", false);
             slideGuarded = settings.getBoolean("slideGuard", false);
                         
@@ -191,46 +186,15 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
     			//editor.commit();
             }
             
-            
-            //ManageWakeLock.acquirePartial(getApplicationContext());
-            //if not always holding partial we would only acquire at Lock activity exit callback
-            //we found we always need it to ensure key events will not occasionally drop on the floor from idle state wakeup
-            
-            /*
-            IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLock.lifecycle.IDLE_TIMEOUT");
-            registerReceiver(idleExit, idleFinish);
-            
-             * 
-             */
-            
             serviceHandler = new Handler();
             
             IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED");
             registerReceiver(lockStopped, lockStop);
             
-         
-            
             
             editor.putBoolean("serviceactive", true);
             editor.commit();
     }
-    
-    /*
-    BroadcastReceiver idleExit = new BroadcastReceiver() {
-            @Override
-        public void onReceive(Context context, Intent intent) {
-            if (!intent.getAction().equals("i4nc4mp.myLock.lifecycle.IDLE_TIMEOUT")) return;
-                            
-            idle = true;
-            
-            PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-            myPM.userActivity(SystemClock.uptimeMillis(), true);
-            
-            Log.v("mediator idle reaction","preparing to restore KG.");
-                        
-            //the idle flag will cause proper handling on receipt of the exit callback from lockscreen
-            //we basically unlock as if user requested, but then force KG back on in the callback reaction
-    }};*/
     
     BroadcastReceiver lockStopped = new BroadcastReceiver() {
         @Override
@@ -240,8 +204,6 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
         //couldn't get any other method to avoid the KG from shutting screen back off
         //when dismiss activity sent itself to back
         //it would ignore all user activity pokes and log "ignoring user activity while turning off screen"
-        
-       
         
         if (!slideWakeup) {
         	dismissed = true;
@@ -264,14 +226,7 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
                     //this means that a config change happened and the keyboard is open.     
             	if(!dismissed) {
             		Log.v("slider wake event","setting state flag, screen state is " + isScreenOn());
-            		slideWakeup = true;
-            		
-            		//if (!slideGuarded)
-            		
-                    //the first thing we get is the slider event when user slides it open from sleep
-                    //screen on broadcast is always delayed as cpu wakes
-            		//launching the dismiss earlier seemed to cause the resleep bug
-                    //seems users experiencing this have their phones running faster, causing same end result    
+            		slideWakeup = true;    
             	}
             	else Log.v("slider event","Ignoring since already dismissed");
             }
@@ -305,24 +260,30 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
         	else {
         		PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
         		return myPM.isScreenOn();
+        		//unlike following the broadcasts this one is accurate. 
+        		//most people have 2.1 now so it should be a non-issue
         	}
         }
         
     @Override
-    public void onScreenWakeup() {
+    public void onScreenWakeup() {    	
+    	if (timeoutenabled) IdleTimer.cancel(getApplicationContext());
+        //since now awake, cancel idle alarm. should be every wake so we can cancel if call causes wake
+    	
+    	
+    	//now check for call state flags
     	if (receivingcall || placingcall || callmissed) {
     		Log.v("auto dismiss service","aborting screen wake handling due to call state");
     		if (callmissed) callmissed = false;
     		return;
-    	}
-    	//no handling during a call just to avoid conflicts because we use wakelock
-    	//this means lockscreen will exist if user has tabbed out of the phone
-    	//user may also see it if a call is missed or ignored, this prevents pocket redial
+    	}    	
     	//this event happens at the ignore/miss due to the lockscreen appearing
     	//it is actually a bug in the lockscreen that sends the screen on when it was already on
     	
-    	if (slideGuarded && slideWakeup) return;//no dismiss when slide guard active
+    	if (slideGuarded && slideWakeup) return;
+    	//no dismiss when slide guard active
     	
+    	//now let's see if the KG is even up
     	ManageKeyguard.initialize(getApplicationContext());
     	boolean KG = ManageKeyguard.inKeyguardRestrictedInputMode();
     	
@@ -338,13 +299,20 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             SensorManager.SENSOR_DELAY_NORMAL);
         //standard workaround runs the listener at all times.
         //i will only register at off and release it once we are awake
+        
+        
+        dismissed = false;//flag will allow us to know we are coming into a slide wakeup
+        callmissed = false;//just in case we didn't get the bad screen on after call is missed
+        
         if (slideWakeup) {
         	Log.v("back to sleep","turning off slideWakeup");
             slideWakeup = false;
         }
         
-        dismissed = false;//flag will allow us to know we are coming into a slide wakeup
-        callmissed = false;//just in case we didn't get the bad screen on after call is missed
+        if (timeoutenabled) IdleTimer.start(getApplicationContext());
+        //we need to get user present here to effectively know if user unlocked from a slide wake
+        //right now we are allowing the timer to restart with the activity of slide wake but not unlock
+        //when we would really want it to continue without restarting in that situation
        
     }
     

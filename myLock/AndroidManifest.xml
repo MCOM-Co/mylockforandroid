@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="i4nc4mp.myLock"
-      android:versionCode="12"
-      android:versionName="1.3 - revision 3c with plugin support">
+      android:versionCode="14"
+      android:versionName="1.3.2 - with plugin support">
       
       <!-- Permission Declaration (so plugin download will work) -->
     <permission android:name="i4nc4mp.myLock.permission.toggle"
@@ -61,6 +61,16 @@
         	<action android:name="android.intent.action.BOOT_COMPLETED" />
         </intent-filter>
         </receiver>
+        <receiver
+            android:name=".IdleTimeout"
+        >
+            <intent-filter>
+                <action
+                    android:name="i4nc4mp.myLock.IDLE_TIMEOUT" />
+            </intent-filter>
+        </receiver>
+        
+        
         <service android:name=".Toggler"
         android:permission="i4nc4mp.myLock.permission.toggle"
         android:exported="true"></service>

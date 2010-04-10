@@ -13,7 +13,6 @@ public class UserPresentService extends Service {
 	//this will be started when myLock is shut off due to idle timeout, or at bootup
 	//it starts everything up once we receive user present broadcast (meaning the lockscreen was completed)
 	//just bridges the gap between an idle timeout or first startup and the user authentication of their pattern
-	//TODO possible that pattern setting won't be able to get set back to on if a battery pull is done before idle timer finishes?
 	
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -68,8 +67,8 @@ public class UserPresentService extends Service {
 	    	
 	    	SharedPreferences settings = getSharedPreferences("myLock", 0);
 	    	boolean guard = settings.getBoolean("wallpaper",false);
-			if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService"); else
-	    	i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
+			if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
+			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
 			startService(i);
 	    	//call stopSelf
 			stopSelf();
