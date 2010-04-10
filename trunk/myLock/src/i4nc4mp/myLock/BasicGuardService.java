@@ -57,9 +57,6 @@ public class BasicGuardService extends MediatorService {
     public boolean callWake = false;
     //set this flag to handle restart guard activity after call that woke device ends
     
-    public boolean idle = false;
-    //when the idle alarm intent comes in we set this true to properly start closing down
-    
     Handler serviceHandler;
     Task myTask = new Task();
     public int waited = 0;
@@ -85,7 +82,6 @@ public class BasicGuardService extends MediatorService {
                 serviceHandler.removeCallbacks(myTask);
                 serviceHandler = null;
                 
-                unregisterReceiver(idleExit);
                 unregisterReceiver(lockStarted);
                 unregisterReceiver(lockStopped);
                 
@@ -102,6 +98,7 @@ public class BasicGuardService extends MediatorService {
             
             SharedPreferences settings = getSharedPreferences("myLock", 0);
             boolean fgpref = settings.getBoolean("FG", false);
+            boolean idlepref = settings.getBoolean("timeout", false);
                                  
 /*========Settings change re-start commands that come from settings activity*/
     
@@ -111,7 +108,8 @@ public class BasicGuardService extends MediatorService {
                                     persistent = false;
                     }
                     else doFGstart();//so FG mode is started again
-            }       
+            }
+            else if (idlepref != timeoutenabled) timeoutenabled = idlepref;
             else {
 /*========Safety start that ensures the settings activity toggle button can work, first press to start, 2nd press to stop*/
                             Log.v("toggle request","user first press of toggle after a startup at boot");
@@ -158,9 +156,6 @@ public class BasicGuardService extends MediatorService {
             //if not always holding partial we would only acquire at Lock activity exit callback
             //we found we always need it to ensure key events will not occasionally drop on the floor from idle state wakeup
             
-            IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLock.lifecycle.IDLE_TIMEOUT");
-            registerReceiver(idleExit, idleFinish);
-            
             
             IntentFilter lockStart = new IntentFilter ("i4nc4mp.myLock.lifecycle.LOCKSCREEN_PRIMED");
             registerReceiver(lockStarted, lockStart);
@@ -183,14 +178,7 @@ public class BasicGuardService extends MediatorService {
             
             Log.v("lock start callback","Lock Activity is primed");                
                                 
-                if (timeoutenabled) IdleTimer.start(getApplicationContext());
-                                
-                //if we don't get user unlock callback within user-set idle timeout
-                //this alarm kills off the lock activity and this service, restores KG, & starts the user present service
-                
-                //TODO we're going to want to start at stop it within the activity wakeup as well
-                //example: stop when user deliberately wakes lockscreen to use it
-                //start again if sleeping again from that screenwake
+            if (timeoutenabled) IdleTimer.start(getApplicationContext());
                                     
     }};
     
@@ -205,37 +193,8 @@ public class BasicGuardService extends MediatorService {
                             
             Log.v("lock exit callback","Lock Activity is finished");
                                                                             
-                    
-            if (!idle) {
-                    if (timeoutenabled) IdleTimer.cancel(getApplicationContext());
-                                        
-        		   
-                    }
-            else {                          
-                    ManageKeyguard.reenableKeyguard();//not necessary here in show when locked mode
-                                                              
-                    Intent u = new Intent();
-                    u.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UserPresentService");
-                    //service that reacts to the completion of the keyguard to start this mediator again
-                    startService(u);
-                    stopSelf();
-                    }                       
-    }};
-   
-   BroadcastReceiver idleExit = new BroadcastReceiver() {
-            @Override
-        public void onReceive(Context context, Intent intent) {
-            if (!intent.getAction().equals("i4nc4mp.myLock.lifecycle.IDLE_TIMEOUT")) return;
-                            
-            idle = true;
-            
-            PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-            myPM.userActivity(SystemClock.uptimeMillis(), true);
-            
-            Log.v("mediator idle reaction","preparing to restore KG.");
-                        
-            //the idle flag will cause proper handling on receipt of the exit callback from lockscreen
-            //we basically unlock as if user requested, but then force KG back on in the callback reaction
+            if (timeoutenabled) IdleTimer.cancel(getApplicationContext());
+                          
     }};
     
     class Task implements Runnable {
