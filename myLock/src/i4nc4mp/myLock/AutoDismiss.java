@@ -107,9 +107,7 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             	unregisterReceiver(lockStopped);
                 
             	
-            	SharedPreferences addonprefs = getSharedPreferences("myLockAutoUnlockprefs", 0);
-            	//Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
-                addonprefs.unregisterOnSharedPreferenceChangeListener(idlelisten);
+            	settings.unregisterOnSharedPreferenceChangeListener(prefslisten);
                 
                 editor.putBoolean("serviceactive", false);
                 editor.commit();
@@ -123,33 +121,6 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
                 if (shakemode) mSensorEventManager.unregisterListener(this);
                 
 }
-    @Override
-    public void onRestartCommand() {
-            
-            SharedPreferences settings = getSharedPreferences("myLock", 0);
-            boolean fgpref = settings.getBoolean("FG", false);
-
-            boolean shakepref = settings.getBoolean("shake", false);
-            boolean guardpref = settings.getBoolean("slideGuard", false);
-                                 
-/*========Settings change re-start commands that come from settings activity*/
-//FIXME i believe there is a settings listener we can use instead of having to re-start to check prefs
-            
-    
-            if (persistent != fgpref) {//user changed pref
-                    if (persistent) {
-                                    stopForeground(true);//kills the ongoing notif
-                                    persistent = false;
-                    }
-                    else doFGstart();//so FG mode is started again
-            }
-            else if (shakepref != shakemode) shakemode = shakepref;
-            else if (guardpref != slideGuarded) slideGuarded = guardpref;
-            else {
-/*========Safety start that ensures the settings activity toggle button can work, first press to start, 2nd press to stop*/
-                  Log.v("toggle request","user first press of toggle after a startup at boot");
-                    }               
-    }
     
     @Override
     public void onFirstStart() {
@@ -168,12 +139,10 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             //turn off shake listener that we got in onCreate as we only start at sleep
             
             
-            SharedPreferences addonprefs = getSharedPreferences("myLockAutoUnlockprefs", 0);
-        	//Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
-            timeoutenabled = (addonprefs.getInt("idletime", 0) != 0);
+            timeoutenabled = (settings.getInt("idletime", 0) != 0);
             
             //register a listener to update this if pref is changed to 0
-            addonprefs.registerOnSharedPreferenceChangeListener(idlelisten);
+            settings.registerOnSharedPreferenceChangeListener(prefslisten);
  
                         
             //we have to toggle pattern lock off to use a custom lockscreen
@@ -208,14 +177,22 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             editor.commit();
     }
     
-    SharedPreferences.OnSharedPreferenceChangeListener idlelisten = new OnSharedPreferenceChangeListener () {
+    SharedPreferences.OnSharedPreferenceChangeListener prefslisten = new OnSharedPreferenceChangeListener () {
     	@Override
     	public void onSharedPreferenceChanged (SharedPreferences sharedPreference, String key) {
-    		if ("idletime".equals(key)) {
-    			timeoutenabled = (sharedPreference.getInt(key, 0) != 0);
+      		if ("FG".equals(key)) {
+    			boolean fgpref = sharedPreference.getBoolean(key, false);
+    			if(!fgpref && persistent) {
+    				stopForeground(true);//kills the ongoing notif
+    			    persistent = false;
+    			}
+    			else if (fgpref && !persistent) doFGstart();//so FG mode is started again
+      		}
+    		if ("shake".equals(key)) shakemode = sharedPreference.getBoolean(key, false);
+    		if ("slideGuard".equals(key)) slideGuarded = sharedPreference.getBoolean(key, false);
+    		if ("idletime".equals(key)) timeoutenabled = (sharedPreference.getInt(key, 0) != 0);
     		}
-    	}
-    };
+    	};
     
     BroadcastReceiver lockStopped = new BroadcastReceiver() {
         @Override

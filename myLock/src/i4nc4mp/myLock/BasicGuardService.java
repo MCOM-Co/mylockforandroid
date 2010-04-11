@@ -86,9 +86,7 @@ public class BasicGuardService extends MediatorService {
                 unregisterReceiver(lockStarted);
                 unregisterReceiver(lockStopped);
                 
-                SharedPreferences addonprefs = getSharedPreferences("myLockAutoUnlockprefs", 0);
-            	//Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
-                addonprefs.unregisterOnSharedPreferenceChangeListener(idlelisten);
+                settings.unregisterOnSharedPreferenceChangeListener(prefslisten);
                 
                 
                 editor.putBoolean("serviceactive", false);
@@ -97,30 +95,6 @@ public class BasicGuardService extends MediatorService {
                 ManageWakeLock.releasePartial();
                 
 }
-
-    @Override
-    public void onRestartCommand() {
-            
-            SharedPreferences settings = getSharedPreferences("myLock", 0);
-            
-            boolean fgpref = settings.getBoolean("FG", false);
-    
-                                 
-/*========Settings change re-start commands that come from settings activity*/
-            //FIXME need to change this to a listener
-    
-            if (persistent != fgpref) {//user changed pref
-                    if (persistent) {
-                                    stopForeground(true);//kills the ongoing notif
-                                    persistent = false;
-                    }
-                    else doFGstart();//so FG mode is started again
-            }
-            else {
-/*========Safety start that ensures the settings activity toggle button can work, first press to start, 2nd press to stop*/
-                            Log.v("toggle request","user first press of toggle after a startup at boot");
-                    }               
-    }
     
     @Override
     public void onFirstStart() {
@@ -131,12 +105,10 @@ public class BasicGuardService extends MediatorService {
                         
             if (persistent) doFGstart();
             
-            SharedPreferences addonprefs = getSharedPreferences("myLockAutoUnlockprefs", 0);
-        	//Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
-            timeoutenabled = (addonprefs.getInt("idletime", 0) != 0);
+            timeoutenabled = (settings.getInt("idletime", 0) != 0);
             
             //register a listener to update this if pref is changed to 0
-            addonprefs.registerOnSharedPreferenceChangeListener(idlelisten);
+            settings.registerOnSharedPreferenceChangeListener(prefslisten);
             
             //we have to toggle pattern lock off to use a custom lockscreen
             try {
@@ -179,14 +151,21 @@ public class BasicGuardService extends MediatorService {
             editor.commit();
     }
     
-    SharedPreferences.OnSharedPreferenceChangeListener idlelisten = new OnSharedPreferenceChangeListener () {
+    SharedPreferences.OnSharedPreferenceChangeListener prefslisten = new OnSharedPreferenceChangeListener () {
     	@Override
     	public void onSharedPreferenceChanged (SharedPreferences sharedPreference, String key) {
-    		if ("idletime".equals(key)) {
-    			timeoutenabled = (sharedPreference.getInt(key, 0) != 0);
+      		if ("FG".equals(key)) {
+    			boolean fgpref = sharedPreference.getBoolean(key, false);
+    			if(!fgpref && persistent) {
+    				stopForeground(true);//kills the ongoing notif
+    			    persistent = false;
+    			}
+    			else if (fgpref && !persistent) doFGstart();//so FG mode is started again
+      		}
+
+    		if ("idletime".equals(key)) timeoutenabled = (sharedPreference.getInt(key, 0) != 0);
     		}
-    	}
-    };
+    	};
     
     BroadcastReceiver lockStarted = new BroadcastReceiver() {
             @Override
