@@ -2,11 +2,14 @@ package i4nc4mp.myLock;
 
 
 import android.app.Activity;
-import android.content.Context;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.CheckBox;
@@ -186,6 +189,28 @@ public class SettingsActivity extends Activity {
         guard = settings.getBoolean("slideGuard", false);
         
         WPlockscreen = settings.getBoolean("wallpaper", false);
+    }
+    
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.options_menu, menu);
+        return true;
+    }
+    
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case R.id.idlesetup:
+        	Intent setup = new Intent();
+        	setup.setClassName("i4nc4mp.myLock.idleLock", "i4nc4mp.myLock.idleLock.IdleSetup");
+        	try {
+        		startActivity(setup);
+        	}
+        	catch (ActivityNotFoundException e) {
+        		Toast.makeText(SettingsActivity.this, "please download the idle lock addon", Toast.LENGTH_SHORT).show();
+        	}
+            return true;
+        }
+        return false;
     }
     
     @Override

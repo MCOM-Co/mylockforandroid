@@ -177,9 +177,16 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             editor.commit();
     }
     
+    @Override
+    public void onRestartCommand() {
+    	timeoutenabled = (getSharedPreferences("myLock", 0).getInt("idletime", 0) != 0);
+    }
+    
     SharedPreferences.OnSharedPreferenceChangeListener prefslisten = new OnSharedPreferenceChangeListener () {
     	@Override
     	public void onSharedPreferenceChanged (SharedPreferences sharedPreference, String key) {
+    		Log.v("pref change","the changed key is " + key);
+    		
       		if ("FG".equals(key)) {
     			boolean fgpref = sharedPreference.getBoolean(key, false);
     			if(!fgpref && persistent) {
@@ -190,7 +197,6 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
       		}
     		if ("shake".equals(key)) shakemode = sharedPreference.getBoolean(key, false);
     		if ("slideGuard".equals(key)) slideGuarded = sharedPreference.getBoolean(key, false);
-    		if ("idletime".equals(key)) timeoutenabled = (sharedPreference.getInt(key, 0) != 0);
     		}
     	};
     
@@ -307,7 +313,10 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             slideWakeup = false;
         }
         
-        if (timeoutenabled) IdleTimer.start(getApplicationContext());
+        if (timeoutenabled) {
+        	Log.v("idle lock","starting timer");
+        	IdleTimer.start(getApplicationContext());
+        }
         //we need to get user present here to effectively know if user unlocked from a slide wake
         //right now we are allowing the timer to restart with the activity of slide wake but not unlock
         //when we would really want it to continue without restarting in that situation
