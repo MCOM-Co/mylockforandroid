@@ -21,5 +21,7 @@
 <string name="permlab_toggle">myLock plug-in permission</string>
 <string name="permdesc_toggle">Allows plug-ins to toggle myLock</string>
 
+<string name="userlabel">myLock auto unlock</string>
+
 
 </resources>

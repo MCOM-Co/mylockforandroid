@@ -38,8 +38,6 @@ public boolean finishing = false;//flag on when an event causes unlock, back off
 
 public boolean paused = false;
 
-public boolean idle = false;
-
 public boolean dormant = false;
 //special lifecycle phase- we are waiting in the background for outside event to return focus to us
 //an example of this is while a call is ringing. we have to force the state
@@ -63,18 +61,6 @@ public boolean pendingDismiss = false;
 public boolean resurrected = false;
 //just to handle return from dormant, avoid treating it same as a user initiated wake
 
-//====Items in the default custom lockscreen
-/*
-private Button mrewindIcon;
-private Button mplayIcon;
-private Button mpauseIcon;
-private Button mforwardIcon;
-
-public TextView curhour;
-public TextView curmin;
-
-public TextView batt;
-*/
     
     
     //very very complicated business.
@@ -87,45 +73,6 @@ protected void onCreate(Bundle icicle) {
     
     updateLayout();
     
-    /* this is the custom lockscreen stuff
-    curhour = (TextView) findViewById(R.id.hourText);
-    
-    curmin = (TextView) findViewById(R.id.minText);
-    
-    batt = (TextView) findViewById(R.id.batt);
-    
-   updateClock();
-    
-    mrewindIcon = (Button) findViewById(R.id.PrevButton); 
-    
-    mrewindIcon.setOnClickListener(new View.OnClickListener() {
-        public void onClick(View v) {
-         Intent intent;
-         intent = new Intent("com.android.music.musicservicecommand.previous");
-         getApplicationContext().sendBroadcast(intent);
-         }
-      });
-
-    mplayIcon = (Button) findViewById(R.id.PlayToggle); 
-
-    mplayIcon.setOnClickListener(new View.OnClickListener() {
-        public void onClick(View v) {
-         Intent intent;
-         intent = new Intent("com.android.music.musicservicecommand.togglepause");
-         getApplicationContext().sendBroadcast(intent);
-         
-         }
-      });
-    
-    mforwardIcon = (Button) findViewById(R.id.NextButton); 
-
-    mforwardIcon.setOnClickListener(new View.OnClickListener() {
-        public void onClick(View v) {
-         Intent intent;
-         intent = new Intent("com.android.music.musicservicecommand.next");
-         getApplicationContext().sendBroadcast(intent);
-         }
-      });*/
     
     IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
             registerReceiver(screenon, onfilter);
@@ -136,9 +83,7 @@ protected void onCreate(Bundle icicle) {
     IntentFilter callpend = new IntentFilter ("i4nc4mp.myLock.lifecycle.CALL_PENDING");
     registerReceiver(callPending, callpend);
     
-    IntentFilter idleFinish = new IntentFilter ("i4nc4mp.myLock.lifecycle.IDLE_TIMEOUT");
-    registerReceiver(idleExit, idleFinish);
-    
+  
     
     IntentFilter userunlock = new IntentFilter (Intent.ACTION_USER_PRESENT);
     registerReceiver(unlockdone, userunlock);
@@ -151,34 +96,6 @@ protected void onCreate(Bundle icicle) {
     slideGuard = settings.getBoolean("slideGuard", false);
 }
     
-    /*public void updateClock() {
-            GregorianCalendar Calendar = new GregorianCalendar();         
-        
-            int mHour = Calendar.get(GregorianCalendar.HOUR_OF_DAY);
-            int mMin = Calendar.get(GregorianCalendar.MINUTE);
-            
-            String hour = new String("");
-            String min = new String("");
-            
-        if (mHour <10) hour = hour + "0";
-        hour = hour + mHour;
-        
-        if (mMin <10) min = min + "0";
-        min = min + mMin;
-        
-        curhour.setText(hour);
-        curmin.setText(min);
-        
-        
-        //update battery as it is also a form of time passing
-        
-        SharedPreferences settings = getSharedPreferences("myLock", 0);
-        int battlevel = settings.getInt("BattLevel", 0);
-        
-        batt.setText(battlevel + "%");
-        
-        
-    }*/
     
     
            
@@ -273,20 +190,6 @@ BroadcastReceiver callPending = new BroadcastReceiver() {
             //forcing dormant state here will allow us to only exit if call is answered
             dormant = true;
             return;                 
-    }};
-
-
-    BroadcastReceiver idleExit = new BroadcastReceiver() {
-    @Override
-public void onReceive(Context context, Intent intent) {
-    if (!intent.getAction().equals("i4nc4mp.myLock.lifecycle.IDLE_TIMEOUT")) return;
-    
-    finishing = true;
-    idle = true;
-    
-    Log.v("exit intent received","calling finish");
-    finish();//we will still have focus because this comes from the mediator as a wake event
-    return;
     }};
 
     
@@ -454,7 +357,6 @@ public void onDestroy() {
    unregisterReceiver(screenon);
    unregisterReceiver(callStarted);
    unregisterReceiver(callPending);
-   unregisterReceiver(idleExit);
    unregisterReceiver(unlockdone);
     
    Log.v("destroy Guard","Destroying");

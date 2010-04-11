@@ -18,7 +18,8 @@ public class IdleTimer {
     }
 
     public static void start(Context ctx) {
-    	SharedPreferences settings = ctx.getSharedPreferences("myLock", 0);
+    	SharedPreferences settings = ctx.getSharedPreferences("myLockAutoUnlockprefs", 0);
+    	//Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
     	int minutes = settings.getInt("idletime", 30);
     	
     	long timeout = minutes * 60000;

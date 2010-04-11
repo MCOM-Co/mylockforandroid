@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.res.Configuration;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -104,7 +105,11 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             }
 
             	unregisterReceiver(lockStopped);
-                               
+                
+            	
+            	SharedPreferences addonprefs = getSharedPreferences("myLockAutoUnlockprefs", 0);
+            	//Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
+                addonprefs.unregisterOnSharedPreferenceChangeListener(idlelisten);
                 
                 editor.putBoolean("serviceactive", false);
                 editor.commit();
@@ -123,7 +128,7 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             
             SharedPreferences settings = getSharedPreferences("myLock", 0);
             boolean fgpref = settings.getBoolean("FG", false);
-            boolean idlepref = settings.getBoolean("timeout", false);
+
             boolean shakepref = settings.getBoolean("shake", false);
             boolean guardpref = settings.getBoolean("slideGuard", false);
                                  
@@ -140,7 +145,6 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             }
             else if (shakepref != shakemode) shakemode = shakepref;
             else if (guardpref != slideGuarded) slideGuarded = guardpref;
-            else if (idlepref != timeoutenabled) timeoutenabled = idlepref;
             else {
 /*========Safety start that ensures the settings activity toggle button can work, first press to start, 2nd press to stop*/
                   Log.v("toggle request","user first press of toggle after a startup at boot");
@@ -155,13 +159,21 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             SharedPreferences.Editor editor = settings.edit();
             
             persistent = settings.getBoolean("FG", false);
-            timeoutenabled = settings.getBoolean("timeout", false);
+            
             shakemode = settings.getBoolean("shake", false);
             slideGuarded = settings.getBoolean("slideGuard", false);
                         
             if (persistent) doFGstart();
             if (shakemode) mSensorEventManager.unregisterListener(this);
             //turn off shake listener that we got in onCreate as we only start at sleep
+            
+            
+            SharedPreferences addonprefs = getSharedPreferences("myLockAutoUnlockprefs", 0);
+        	//Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
+            timeoutenabled = (addonprefs.getInt("idletime", 0) != 0);
+            
+            //register a listener to update this if pref is changed to 0
+            addonprefs.registerOnSharedPreferenceChangeListener(idlelisten);
  
                         
             //we have to toggle pattern lock off to use a custom lockscreen
@@ -195,6 +207,15 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             editor.putBoolean("serviceactive", true);
             editor.commit();
     }
+    
+    SharedPreferences.OnSharedPreferenceChangeListener idlelisten = new OnSharedPreferenceChangeListener () {
+    	@Override
+    	public void onSharedPreferenceChanged (SharedPreferences sharedPreference, String key) {
+    		if ("idletime".equals(key)) {
+    			timeoutenabled = (sharedPreference.getInt(key, 0) != 0);
+    		}
+    	}
+    };
     
     BroadcastReceiver lockStopped = new BroadcastReceiver() {
         @Override

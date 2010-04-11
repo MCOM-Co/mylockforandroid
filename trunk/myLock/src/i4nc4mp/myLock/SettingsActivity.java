@@ -2,6 +2,7 @@ package i4nc4mp.myLock;
 
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -11,11 +12,7 @@ import android.view.View.OnClickListener;
 import android.widget.CheckBox;
 import android.widget.Toast;
 
-//=====most reasonable moderate = want pattern to come on if phone is left idle for too long
-//If not in secure mode, idle timeout option is set. User enters a number of minutes. if 0, no timeout gets enabled
-//when set to 1 or more, idle timer will run
-
-//TODO implement a box user can put number of minutes to enable idle lockdown
+//getSharedPreferences("myLockAutoUnlockprefs", Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
 
 public class SettingsActivity extends Activity {
 	
@@ -39,10 +36,25 @@ public class SettingsActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.settingsactivity);
        
-      getPrefs();//grabs our user's current settings for startup commands
+      getPrefs();
+      //grabs our user's current settings for startup commands
+      //these settings are private
+
+      //now make sure the addon accessible pref file gets created within our context
+      SharedPreferences addonpref = getSharedPreferences("myLockAutoUnlockprefs", 0);
+      //Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
+      SharedPreferences.Editor a = addonpref.edit();
+      boolean exists = addonpref.getBoolean("exists", false);
+      //it will be false if it doesn't exist!
+      if (!exists) {
+    	  a.putBoolean("exists", true);
+    	  a.commit();
+      }//now we exist in this app package context so the settings from the addon can get access
+      		
+
       
      toggle = (CheckBox)findViewById(R.id.activeBox);
-      
+
       toggle.setChecked(active);
         
       toggle.setOnClickListener(new OnClickListener() {
@@ -176,11 +188,6 @@ public class SettingsActivity extends Activity {
     
     public void getPrefs() {
     	SharedPreferences settings = getSharedPreferences("myLock", 0);
-    	
-    	/*if (settings == null) {
-        	Log.v("getprefs","failed due to settings null. using defaults.");
-        	return;        
-        }*/
     	
         persistentNotif = settings.getBoolean("FG", false);
         
