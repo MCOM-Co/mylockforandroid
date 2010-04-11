@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 public class IdleTimer {
     private static final int REQUEST_ID = 0;
 
-    //intent will be caught in both the mediator and the lockactivity
     private static PendingIntent buildIntent(Context ctx) {
         Intent intent = new Intent("i4nc4mp.myLock.IDLE_TIMEOUT");
         PendingIntent sender = PendingIntent.getBroadcast(ctx, REQUEST_ID, intent, PendingIntent.FLAG_CANCEL_CURRENT);
@@ -18,7 +17,7 @@ public class IdleTimer {
     }
 
     public static void start(Context ctx) {
-    	SharedPreferences settings = ctx.getSharedPreferences("myLockAutoUnlockprefs", 0);
+    	SharedPreferences settings = ctx.getSharedPreferences("myLock", 0);
     	//Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
     	int minutes = settings.getInt("idletime", 30);
     	

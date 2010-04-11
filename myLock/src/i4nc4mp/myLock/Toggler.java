@@ -38,11 +38,19 @@ public class Toggler extends Service {
 						
 		if (target) {
 			startService();
-    		Toast.makeText(Toggler.this, "myLock is now enabled", Toast.LENGTH_SHORT).show();
+    		if (!active) Toast.makeText(Toggler.this, "myLock is now enabled", Toast.LENGTH_SHORT).show();
+    		//the pref was obtained before start command. so if it was not active before, now is, send toast
 		}
 		else {
+			if (!active) {
+				stopSelf();
+				return START_NOT_STICKY;
+				//we do nothing if already showing not active
+			}
+			
 			stopService();
 			getPrefs();
+			//now check if we succeeded
 			if (active) {
 				//failed due to false-active needs to correct pref
 				SharedPreferences set = getSharedPreferences("myLock", 0);
@@ -52,7 +60,8 @@ public class Toggler extends Service {
 	            // Don't forget to commit your edits!!!
 	            editor.commit();
 			}
-			Toast.makeText(Toggler.this, "myLock is now disabled", Toast.LENGTH_SHORT).show();
+			else Toast.makeText(Toggler.this, "myLock is now disabled", Toast.LENGTH_SHORT).show();
+			
 		}
 		
 		//added to prevent android "restarting" this after it dies/is purged causing unexpected toggle

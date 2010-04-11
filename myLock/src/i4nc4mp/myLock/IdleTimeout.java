@@ -3,6 +3,7 @@ package i4nc4mp.myLock;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 public class IdleTimeout extends BroadcastReceiver {
 	//for these guarded modes we do not have to do anything except stop the service
@@ -17,11 +18,13 @@ public class IdleTimeout extends BroadcastReceiver {
 		// TODO Auto-generated method stub
 		if("i4nc4mp.myLock.IDLE_TIMEOUT".equals(intent.getAction())) {
 			//this is the action we are registered for via manifest declaration
+			Log.v("idle lock","timeout reached, locking down");
 			
 			//close the current service via Toggler with target false
 			Intent i = new Intent();
 			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.Toggler");
 			i.putExtra("i4nc4mp.myLock.TargetState", false);
+			context.startService(i);
 			
 			//start up the user present to wait for next unlock
 			Intent u = new Intent();

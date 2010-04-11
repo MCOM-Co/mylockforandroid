@@ -67,6 +67,7 @@ android:sharedUserLabel
         </receiver>
         <receiver
             android:name=".IdleTimeout"
+            android:enabled="true"
         >
             <intent-filter>
                 <action

@@ -94,6 +94,14 @@ public class BasicGuardService extends MediatorService {
                 
                 ManageWakeLock.releasePartial();
                 
+                
+              //when we get closed, it might be due to locale or idle lock
+            	if (!shouldLock) {
+                    //if our lock activity is alive, send broadcast to close it
+                    
+                    Intent intent = new Intent("i4nc4mp.myLock.lifecycle.CALL_START");
+                    getApplicationContext().sendBroadcast(intent);
+                    }
 }
     
     @Override
@@ -151,9 +159,16 @@ public class BasicGuardService extends MediatorService {
             editor.commit();
     }
     
+    @Override
+    public void onRestartCommand() {
+    	timeoutenabled = (getSharedPreferences("myLock", 0).getInt("idletime", 0) != 0);
+    }
+    
     SharedPreferences.OnSharedPreferenceChangeListener prefslisten = new OnSharedPreferenceChangeListener () {
     	@Override
     	public void onSharedPreferenceChanged (SharedPreferences sharedPreference, String key) {
+    		Log.v("pref change","the changed key is " + key);
+    		
       		if ("FG".equals(key)) {
     			boolean fgpref = sharedPreference.getBoolean(key, false);
     			if(!fgpref && persistent) {
@@ -162,8 +177,6 @@ public class BasicGuardService extends MediatorService {
     			}
     			else if (fgpref && !persistent) doFGstart();//so FG mode is started again
       		}
-
-    		if ("idletime".equals(key)) timeoutenabled = (sharedPreference.getInt(key, 0) != 0);
     		}
     	};
     
@@ -178,7 +191,10 @@ public class BasicGuardService extends MediatorService {
             
             Log.v("lock start callback","Lock Activity is primed");                
                                 
-            if (timeoutenabled) IdleTimer.start(getApplicationContext());
+            if (timeoutenabled) {
+            	Log.v("idle lock","starting timer");
+            	IdleTimer.start(getApplicationContext());
+            }
                                     
     }};
     
