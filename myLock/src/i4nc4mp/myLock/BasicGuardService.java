@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Build;
 import android.os.Handler;
 import android.os.PowerManager;
@@ -85,6 +86,10 @@ public class BasicGuardService extends MediatorService {
                 unregisterReceiver(lockStarted);
                 unregisterReceiver(lockStopped);
                 
+                SharedPreferences addonprefs = getSharedPreferences("myLockAutoUnlockprefs", 0);
+            	//Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
+                addonprefs.unregisterOnSharedPreferenceChangeListener(idlelisten);
+                
                 
                 editor.putBoolean("serviceactive", false);
                 editor.commit();
@@ -97,10 +102,12 @@ public class BasicGuardService extends MediatorService {
     public void onRestartCommand() {
             
             SharedPreferences settings = getSharedPreferences("myLock", 0);
+            
             boolean fgpref = settings.getBoolean("FG", false);
-            boolean idlepref = settings.getBoolean("timeout", false);
+    
                                  
 /*========Settings change re-start commands that come from settings activity*/
+            //FIXME need to change this to a listener
     
             if (persistent != fgpref) {//user changed pref
                     if (persistent) {
@@ -109,7 +116,6 @@ public class BasicGuardService extends MediatorService {
                     }
                     else doFGstart();//so FG mode is started again
             }
-            else if (idlepref != timeoutenabled) timeoutenabled = idlepref;
             else {
 /*========Safety start that ensures the settings activity toggle button can work, first press to start, 2nd press to stop*/
                             Log.v("toggle request","user first press of toggle after a startup at boot");
@@ -122,10 +128,16 @@ public class BasicGuardService extends MediatorService {
             SharedPreferences.Editor editor = settings.edit();
             
             persistent = settings.getBoolean("FG", false);
-            timeoutenabled = settings.getBoolean("timeout", false);
                         
             if (persistent) doFGstart();
-                        
+            
+            SharedPreferences addonprefs = getSharedPreferences("myLockAutoUnlockprefs", 0);
+        	//Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
+            timeoutenabled = (addonprefs.getInt("idletime", 0) != 0);
+            
+            //register a listener to update this if pref is changed to 0
+            addonprefs.registerOnSharedPreferenceChangeListener(idlelisten);
+            
             //we have to toggle pattern lock off to use a custom lockscreen
             try {
                     patternsetting = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.LOCK_PATTERN_ENABLED);
@@ -166,6 +178,15 @@ public class BasicGuardService extends MediatorService {
             editor.putBoolean("serviceactive", true);
             editor.commit();
     }
+    
+    SharedPreferences.OnSharedPreferenceChangeListener idlelisten = new OnSharedPreferenceChangeListener () {
+    	@Override
+    	public void onSharedPreferenceChanged (SharedPreferences sharedPreference, String key) {
+    		if ("idletime".equals(key)) {
+    			timeoutenabled = (sharedPreference.getInt(key, 0) != 0);
+    		}
+    	}
+    };
     
     BroadcastReceiver lockStarted = new BroadcastReceiver() {
             @Override
