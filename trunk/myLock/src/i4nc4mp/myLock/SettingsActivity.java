@@ -38,11 +38,10 @@ public class SettingsActivity extends Activity {
        
       getPrefs();
       //grabs our user's current settings for startup commands
-      //these settings are private
 
+      /*
       //now make sure the addon accessible pref file gets created within our context
-      SharedPreferences addonpref = getSharedPreferences("myLockAutoUnlockprefs", 0);
-      //Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
+      SharedPreferences addonpref = getSharedPreferences("myLockAutoUnlockprefs", Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
       SharedPreferences.Editor a = addonpref.edit();
       boolean exists = addonpref.getBoolean("exists", false);
       //it will be false if it doesn't exist!
@@ -50,7 +49,9 @@ public class SettingsActivity extends Activity {
     	  a.putBoolean("exists", true);
     	  a.commit();
       }//now we exist in this app package context so the settings from the addon can get access
-      		
+      
+      * ----------not necessary now that we use a shared userID declared in manifest
+      */
 
       
      toggle = (CheckBox)findViewById(R.id.activeBox);
@@ -88,9 +89,6 @@ public class SettingsActivity extends Activity {
 
                // Don't forget to commit your edits!!!
                editor.commit();
-               
-               if (active) startService();//call start service, so it can react to the change
-               //make sure not to start it up if we aren't already
            }
        });
                      
@@ -124,12 +122,7 @@ public class SettingsActivity extends Activity {
                 	   editor.putBoolean("shake", shake.isChecked());
 
                        // Don't forget to commit your edits!!!
-                       editor.commit();
-                       //finally, do the change
-                       
-                       if (active) startService();
-                       //this start just has the mediator check prefs and notice the change
-               			                       
+                       editor.commit();            			                       
                    }
                });
        shake.setVisibility(View.GONE);//hide it for now
@@ -148,12 +141,6 @@ public class SettingsActivity extends Activity {
 
                // Don't forget to commit your edits!!!
                editor.commit();
-               
-             //finally, do the change
-               
-               if (active && !WPlockscreen) startService();
-               //the autodismiss mediator needs to know we toggled the mode
-               //wallpaper lockscreen just checks when it is created
                }
                });
     
@@ -231,10 +218,5 @@ public class SettingsActivity extends Activity {
     public void onBackPressed() {
     	finish();
     }
-
-protected void onDestroy() {
-	  super.onDestroy();
-	  Log.d( getClass().getSimpleName(), "onDestroy()" );
-	}
 }
 

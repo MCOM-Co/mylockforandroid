@@ -3,7 +3,7 @@
       package="i4nc4mp.myLock"
       android:versionCode="14"
       android:versionName="1.3.2 - with plugin support"
-      android:sharedUserId="myLockAutoUnlock"
+      android:sharedUserId="i4nc4mp.myLockAutoUnlock"
       android:sharedUserLabel="@string/userlabel" >
       
 The name of a Linux user ID that will be shared with other applications. By default, Android assigns each application its own unique user ID. However, if this attribute is set to the same value for two or more applications, they will all share the same ID — provided that they are also signed by the same certificate. Application with the same user ID can access each other's data and, if desired, run in the same process.
