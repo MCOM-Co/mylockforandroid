@@ -1,9 +1,6 @@
 #summary helper addon to allow toggling via profile apps and Locale
 
-= Not Yet Implemented =
+= Overview =
+The addon provides helper app icons for Enable and Disable. These apps can be set with any profile based app. I also coded a simple Locale plugin so you can attach the desired myLock state to any condition. But Locale could also be set to launch the helper app if users already have that plugin. May be able to expand plug in to interact with the timeout mode, quite easily.
 
-public Intent putExtra (String name, String value) 
-Since: API Level 1 Add extended data to the intent. The name must include a package prefix, for example the app com.android.contacts would use names like "com.android.contacts.ShowAll".
-
-
-We can use this to add the extra command "off" or "on" so we can use the same command of launching the Toggler service inside the main myLock package to check the state and determine if the toggle is necessary. very simple code modification. the service can getIntent.getExtra or something to see what state it is supposed to be going to and check the serviceActive pref against that.
+We decided to make this a donate addon. I don't like the idea of separate versions with largely overlapping functionality. Users can buy the addon to support the project without any hassle. It also upgrades their functionality.
