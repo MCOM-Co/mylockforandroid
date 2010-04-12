@@ -31,7 +31,7 @@ public class BootHandler extends Service {
 		if (active) {
 			editor.putBoolean("serviceactive", false);
 		
-			Log.v("restart recovery","corrected pref flags");
+			Log.v("restart recovery","corrected active flag");
 			editor.commit();
 		}
 		

@@ -57,10 +57,7 @@
                 android:taskAffinity=""
                 android:screenOrientation="nosensor"
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>
-        <activity android:name="PatternRestoreActivity"
-        android:excludeFromRecents="true"
-                android:launchMode="standard"
-                android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
+
         <receiver android:name=".myLockBootReceiver" 
         android:enabled="true" 
         android:exported="false"

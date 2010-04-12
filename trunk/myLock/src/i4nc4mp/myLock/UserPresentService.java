@@ -54,6 +54,7 @@ public class UserPresentService extends Service {
 		
 		ManageKeyguard.disableKeyguard(getApplicationContext());
 		serviceHandler.postDelayed(myTask, 50L);
+		
 		return START_NOT_STICKY;
 		//we would never get killed while sitting idle waiting for a user to come back and unlock
 	}
