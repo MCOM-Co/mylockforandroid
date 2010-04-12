@@ -44,9 +44,7 @@ public class BasicGuardService extends MediatorService {
 	public boolean persistent = false;
     public boolean timeoutenabled = false;
     
-    public int patternsetting = 0;
-    //we'll see if the user has pattern enabled when we startup
-    //so we can disable it and then restore when we finish
+    public boolean security = false;
     
 /* Life-Cycle Flags */
     public boolean shouldLock = true;
@@ -69,17 +67,11 @@ public class BasicGuardService extends MediatorService {
         SharedPreferences settings = getSharedPreferences("myLock", 0);
         SharedPreferences.Editor editor = settings.edit();
             
-            if (patternsetting == 1) {
-            	            	
-                android.provider.Settings.System.putInt(getContentResolver(), 
-                    android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
-                    
-                
-        		editor.putBoolean("securepaused", false);
-        		
-        		// Don't forget to commit your edits!!!
-        		//editor.commit();
-            }
+        //toggle security back on
+        	if (security) {
+        		android.provider.Settings.System.putInt(getContentResolver(), 
+        				android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
+        	}
                 serviceHandler.removeCallbacks(myTask);
                 serviceHandler = null;
                 
@@ -110,6 +102,7 @@ public class BasicGuardService extends MediatorService {
             SharedPreferences.Editor editor = settings.edit();
             
             persistent = settings.getBoolean("FG", false);
+            security = settings.getBoolean("security", false);
                         
             if (persistent) doFGstart();
             
@@ -118,26 +111,11 @@ public class BasicGuardService extends MediatorService {
             //register a listener to update this if pref is changed to 0
             settings.registerOnSharedPreferenceChangeListener(prefslisten);
             
-            //we have to toggle pattern lock off to use a custom lockscreen
-            try {
-                    patternsetting = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.LOCK_PATTERN_ENABLED);
-            } catch (SettingNotFoundException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-            }
             
-            if (patternsetting == 1) {      
-    android.provider.Settings.System.putInt(getContentResolver(), 
+            //toggle out of security
+            if (security) {
+            	android.provider.Settings.System.putInt(getContentResolver(), 
                     android.provider.Settings.System.LOCK_PATTERN_ENABLED, 0);
-    
-    			
-    			editor.putBoolean("securepaused", true);
-    			//will be flagged off on successful exit w/ restore of pattern requirement
-    			//otherwise, it is caught by the boot handler... if myLock gets force closed/uninstalled
-    			//there's no clean resolution to this pause.
-
-    			// Don't forget to commit your edits!!!
-    			//editor.commit();
             }
             
                             

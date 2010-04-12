@@ -6,6 +6,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -23,7 +24,7 @@ public class SettingsActivity extends Activity {
 		
 	public boolean persistentNotif = false;
     
-    public boolean boot = false;
+    public boolean security = false;
     public boolean shakewake = false;
     
     public boolean guard = false;
@@ -33,6 +34,7 @@ public class SettingsActivity extends Activity {
     public boolean active = false;
 
     public CheckBox toggle;
+    public CheckBox secured;
     	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -40,23 +42,8 @@ public class SettingsActivity extends Activity {
         setContentView(R.layout.settingsactivity);
        
       getPrefs();
-      //grabs our user's current settings for startup commands
-
-      /*
-      //now make sure the addon accessible pref file gets created within our context
-      SharedPreferences addonpref = getSharedPreferences("myLockAutoUnlockprefs", Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
-      SharedPreferences.Editor a = addonpref.edit();
-      boolean exists = addonpref.getBoolean("exists", false);
-      //it will be false if it doesn't exist!
-      if (!exists) {
-    	  a.putBoolean("exists", true);
-    	  a.commit();
-      }//now we exist in this app package context so the settings from the addon can get access
-      
-      * ----------not necessary now that we use a shared userID declared in manifest
-      */
-
-      
+      	
+            
      toggle = (CheckBox)findViewById(R.id.activeBox);
 
       toggle.setChecked(active);
@@ -94,23 +81,6 @@ public class SettingsActivity extends Activity {
                editor.commit();
            }
        });
-                     
-       final CheckBox bootup = (CheckBox)findViewById(R.id.bootBox);
-       
-       bootup.setChecked((boot));        
-       
-       bootup.setOnClickListener(new OnClickListener() {
-
-                   public void onClick(View v) {
-                	   SharedPreferences set = getSharedPreferences("myLock", 0);
-                	   SharedPreferences.Editor editor = set.edit(); 
-                	   
-                	   editor.putBoolean("boot", bootup.isChecked());
-
-                       // Don't forget to commit your edits!!!
-                       editor.commit();
-                   }
-               });
        
        final CheckBox shake = (CheckBox)findViewById(R.id.shakeBox);
 
@@ -174,6 +144,20 @@ public class SettingsActivity extends Activity {
 
             }
     });
+    
+    secured = (CheckBox)findViewById(R.id.secureBox);
+    
+    secured.setChecked((security));        
+    
+    secured.setOnClickListener(new OnClickListener() {
+
+                public void onClick(View v) {
+             	   //hint to the observant user
+                	Toast.makeText(SettingsActivity.this, "Please change security from system prefs", Toast.LENGTH_LONG).show();
+                	secured.setChecked(!secured.isChecked());
+                	//undo the change
+                }
+            });
  }
     
     public void getPrefs() {
@@ -181,7 +165,6 @@ public class SettingsActivity extends Activity {
     	
         persistentNotif = settings.getBoolean("FG", false);
         
-        boot = settings.getBoolean("boot", false);
         shakewake = settings.getBoolean("shake", false);
         
         active = settings.getBoolean("serviceactive", false);
@@ -189,6 +172,34 @@ public class SettingsActivity extends Activity {
         guard = settings.getBoolean("slideGuard", false);
         
         WPlockscreen = settings.getBoolean("wallpaper", false);
+        
+        //if service is not active, force security setting based on system
+        //if it is active we are going to rely on the pref setting
+                
+        if (!active) {
+        	
+        security = getPatternSetting();
+        
+        SharedPreferences.Editor e = settings.edit();
+        e.putBoolean("security", security);
+        e.commit();
+        }
+        else security = settings.getBoolean("security", false);
+    }
+    
+    public boolean getPatternSetting() {
+    	int patternsetting = 0;
+
+        try {
+                patternsetting = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.LOCK_PATTERN_ENABLED);
+        } catch (SettingNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+        }
+        
+        boolean s = (patternsetting == 1);
+        
+        return s;
     }
     
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -206,7 +217,7 @@ public class SettingsActivity extends Activity {
         		startActivity(setup);
         	}
         	catch (ActivityNotFoundException e) {
-        		Toast.makeText(SettingsActivity.this, "please download the idle lock addon", Toast.LENGTH_SHORT).show();
+        		Toast.makeText(SettingsActivity.this, "Please download Idle Lock addon", Toast.LENGTH_LONG).show();
         	}
             return true;
         }
@@ -219,6 +230,7 @@ public class SettingsActivity extends Activity {
     	
     	getPrefs();
     	toggle.setChecked(active);
+    	secured.setChecked(security);
     }
     
     /*start and stop methods rely on pref and are only used by toggle button*/
