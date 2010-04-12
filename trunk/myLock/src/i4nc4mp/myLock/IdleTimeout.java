@@ -3,6 +3,8 @@ package i4nc4mp.myLock;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.PowerManager;
+import android.os.SystemClock;
 import android.util.Log;
 
 public class IdleTimeout extends BroadcastReceiver {
@@ -25,11 +27,15 @@ public class IdleTimeout extends BroadcastReceiver {
 			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.Toggler");
 			i.putExtra("i4nc4mp.myLock.TargetState", false);
 			context.startService(i);
+			//this will cause security to be turned back on
 			
-			//start up the user present to wait for next unlock
+
+			
+			//start up the user present to wait for next unlock.
+			//when it starts it closes the non-secure KG and then re-enables with the secure one
 			Intent u = new Intent();
 		    u.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UserPresentService");
-		    context.startService(u);		
+		    context.startService(u);
 		}
 	}
 }

@@ -34,9 +34,7 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
 	public boolean slideGuarded = false;
 
     
-    public int patternsetting = 0;
-    //we'll see if the user has pattern enabled when we startup
-    //so we can disable it and then restore when we finish
+    public boolean security = false;
     
     public boolean slideWakeup = false;
   //we will set this when we detect slideopen, only used with instant unlock
@@ -91,22 +89,18 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             
         SharedPreferences settings = getSharedPreferences("myLock", 0);
         SharedPreferences.Editor editor = settings.edit();
-            
-            if (patternsetting == 1) {
-            	            	
+        
+        
+        	
+            if (security) {
+            //restore security lock 	
                 android.provider.Settings.System.putInt(getContentResolver(), 
                     android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
-                    
-                
-        		editor.putBoolean("securepaused", false);
-        		
-        		// Don't forget to commit your edits!!!
-        		//editor.commit();
             }
 
+            
             	unregisterReceiver(lockStopped);
-                
-            	
+                            	
             	settings.unregisterOnSharedPreferenceChangeListener(prefslisten);
                 
                 editor.putBoolean("serviceactive", false);
@@ -134,6 +128,10 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             shakemode = settings.getBoolean("shake", false);
             slideGuarded = settings.getBoolean("slideGuard", false);
                         
+            security = settings.getBoolean("security", false);
+            //We need to check for security mode if we have a pattern when attempting to start
+            //if the security mode isn't on, we need to notify user and abort start
+            
             if (persistent) doFGstart();
             if (shakemode) mSensorEventManager.unregisterListener(this);
             //turn off shake listener that we got in onCreate as we only start at sleep
@@ -144,29 +142,13 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             //register a listener to update this if pref is changed to 0
             settings.registerOnSharedPreferenceChangeListener(prefslisten);
  
-                        
-            //we have to toggle pattern lock off to use a custom lockscreen
-            try {
-                    patternsetting = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.LOCK_PATTERN_ENABLED);
-            } catch (SettingNotFoundException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-            }
             
-            if (patternsetting == 1) {      
+           //toggle out of security
+            if (security) {
     android.provider.Settings.System.putInt(getContentResolver(), 
                     android.provider.Settings.System.LOCK_PATTERN_ENABLED, 0);
-    
-    			
-    			editor.putBoolean("securepaused", true);
-    			//will be flagged off on successful exit w/ restore of pattern requirement
-    			//otherwise, it is caught by the boot handler... if myLock gets force closed/uninstalled
-    			//there's no clean resolution to this pause.
-
-    			// Don't forget to commit your edits!!!
-    			//editor.commit();
             }
-            
+            	
             serviceHandler = new Handler();
             
             IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED");
