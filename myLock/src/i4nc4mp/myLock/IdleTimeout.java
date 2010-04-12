@@ -3,24 +3,26 @@ package i4nc4mp.myLock;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.PowerManager;
-import android.os.SystemClock;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 public class IdleTimeout extends BroadcastReceiver {
-	//for these guarded modes we do not have to do anything except stop the service
-	//if the guard exists it will merely wakeup and call the lockscreen cancel
-	//which will not work because pattern mode had been restored when service exits
 	
-	//advanced mode is the only one where its tricky
-	//and requires closing the lock activity & re-enable keyguard call
+	//advanced mode is the only one where its tricky since no KG exists at timeout call
+	//advanced mode has to maintain a Disable call before every StartLock
+	//then cause a wake + exit and re-enable call at timeout
 	
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		// TODO Auto-generated method stub
 		if("i4nc4mp.myLock.IDLE_TIMEOUT".equals(intent.getAction())) {
 			//this is the action we are registered for via manifest declaration
-			Log.v("idle lock","timeout reached, locking down");
+			
+			SharedPreferences prefs = context.getSharedPreferences("myLock", 0);
+			boolean security = prefs.getBoolean("security", false);
+			
+			if (security) {
+				Log.v("idle lock","timeout reached, locking down");
 			
 			//close the current service via Toggler with target false
 			Intent i = new Intent();
@@ -36,6 +38,13 @@ public class IdleTimeout extends BroadcastReceiver {
 			Intent u = new Intent();
 		    u.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UserPresentService");
 		    context.startService(u);
+			}
+			else {
+				//turn off the timeout, we don't want it to go off again while security isn't on
+				Log.v("idle lock","timeout reached, security was off- disabling timer");
+				SharedPreferences.Editor e = prefs.edit();
+				e.putInt("idletime", 0);
+			}
 		}
 	}
 }
