@@ -40,6 +40,7 @@ public class Toggler extends Service {
 			startService();
     		if (!active) Toast.makeText(Toggler.this, "myLock is now enabled", Toast.LENGTH_SHORT).show();
     		//the pref was obtained before start command. so if it was not active before, now is, send toast
+    		//prevents Toast if it was already running and something called start to it again
 		}
 		else {
 			if (!active) {
@@ -47,10 +48,13 @@ public class Toggler extends Service {
 				return START_NOT_STICKY;
 				//we do nothing if already showing not active
 			}
-			
+			else {
+			//this means a real stop attempt or incorrect active flag but no mediator running
+			//either way the result is stopped
 			stopService();
+			/*
 			getPrefs();
-			//now check if we succeeded
+			
 			if (active) {
 				//failed due to false-active needs to correct pref
 				SharedPreferences set = getSharedPreferences("myLock", 0);
@@ -60,7 +64,13 @@ public class Toggler extends Service {
 	            // Don't forget to commit your edits!!!
 	            editor.commit();
 			}
-			else Toast.makeText(Toggler.this, "myLock is now disabled", Toast.LENGTH_SHORT).show();
+			else 
+			//this fails because the setting we are trying to check hasnt been updated quite yet
+			*/
+			Toast.makeText(Toggler.this, "myLock is now disabled", Toast.LENGTH_SHORT).show();
+			//will always be sent even if was already stopped regardless of active flag
+			//fix is to register a listener but the timing is more trouble than it is worth
+			}
 			
 		}
 		
