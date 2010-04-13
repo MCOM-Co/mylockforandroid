@@ -13,9 +13,9 @@
 <string name="wplock">Hide lockscreen and show the wallpaper during auto-unlock (best results with all animations enabled in the display settings)</string>
 
 
-<string name="HowToText1">myLock automatically minimizes the lockscreen. Side buttons remain locked down, but waking the phone with the slider, keypad buttons, or power key will auto unlock. If you prefer not to see the lockscreen, you can toggle to hide it and see just wallpaper instead.</string>
-<string name="HowToText2">.</string>
-<string name="HowToText3">.</string>
+<string name="HowToText1">myLock automatically minimizes the lockscreen. Side buttons remain locked down, but waking the phone with the slider, keypad buttons, or power key will auto unlock.</string>
+<string name="HowToText2">If the phone reboots while myLock is running, it will start back up automatically with your preferred settings.</string>
+<string name="HowToText3">Do not attempt to change the security pattern or create one while myLock is enabled. Always uncheck enabled first. </string>
 <string name="Troubleshooting">Please see our faq and troubleshooting pages linked on our site (mylockandroid.blogspot.com) first. If you notice an issue that happens consistently, download Log Collector (free from the market) to email us at myLockandroid@gmail.com. Be sure to list the problem symptoms and what other services are running in the Settings->Applications->Running Services screen. I will research the cause of the trouble and code a fix when possible.</string>
 
 <string name="permlab_toggle">myLock plug-in permission</string>

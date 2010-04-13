@@ -35,6 +35,8 @@ public class BootHandler extends Service {
 			editor.commit();
 		}
 		
+		Intent i = new Intent();
+		
 		//security mode requires that we force security on at boot and launch user present
 		//we basically treat boot like an idle timeout
 		if (secure) {
@@ -42,16 +44,17 @@ public class BootHandler extends Service {
 			
 			android.provider.Settings.System.putInt(getContentResolver(), 
                     android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
-
-			Intent i = new Intent();
 			
 			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UserPresentService");		
-			startService(i);
+			
+		}
+		else {
+			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.Toggler");
+  			i.putExtra("i4nc4mp.myLock.TargetState", true);
 		}
 		
-		//I know I'm asking for complaints from non-security users who used start at boot. oh well
-			
-				
+		startService(i);//start user present or toggler
+						
 		stopSelf();
 		
 		return START_NOT_STICKY;//ensure it won't be restarted
