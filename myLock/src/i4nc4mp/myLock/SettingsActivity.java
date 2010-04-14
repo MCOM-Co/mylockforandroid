@@ -42,7 +42,11 @@ public class SettingsActivity extends Activity {
         setContentView(R.layout.settingsactivity);
        
       getPrefs();
-      	
+     
+      //TODO
+      //case - settings is launched and still has active pref from service being killed in some fashion
+      //in this instance we want to call a duplicate start command, this ensures it is now running
+      //to match checkbox
             
      toggle = (CheckBox)findViewById(R.id.activeBox);
 

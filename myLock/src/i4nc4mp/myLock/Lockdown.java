@@ -60,7 +60,7 @@ public class Lockdown extends Activity {
     	//shouldn't really happen since we force sleep and don't provide a way to re-wake
     	
     	Intent slap = new Intent("i4nc4mp.myLock.FORCE_LOCK");
-	    getApplicationContext().sendBroadcast(slap);
+	    sendBroadcast(slap);
     }
     
 	public void setBright(float value) {

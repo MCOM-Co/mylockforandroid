@@ -65,11 +65,22 @@ public class UserPresentService extends Service {
 			//case - user has unlocked immediately on startup
 			//they are going about the phone like a boss
 			//TIME TO SLAP THEM WITH A LOCKDOWN
+			
+			/*
 			Intent slap = new Intent();
 	    	slap.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.Lockdown");
 	    	slap.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY |
 	    			Intent.FLAG_ACTIVITY_NEW_TASK);
 	    	getApplicationContext().startActivity(slap);
+	    	
+	    	*
+	    	*The smooth "fading out" lockdown is broken while we have the home key bug
+	    	*
+	    	*Just use instant version for now.
+	    	*/
+			
+			Intent slap = new Intent("i4nc4mp.myLock.FORCE_LOCK");
+		    getApplicationContext().sendBroadcast(slap);
 	    	secured = true;
 		}
 		
