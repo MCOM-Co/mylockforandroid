@@ -1,4 +1,4 @@
-#summary Info on how myLock can help users who want to get in and out of pattern mode
+#summary Info on how myLock handling of security
 
 = Introduction =
 
@@ -39,3 +39,8 @@ if (patternsetting == 1) {
   * full lockdown - want to retain pattern security or alternative pin code security at all times in conjunction with an enhanced lockscreen.
 
 Idle timeout security - with any lesser security method allow a time period (or locale preference) where the most secure mode starts itself.
+
+= How to force a sleep/lockdown =
+Coming from non-secure, if the device is awake and in use and we want to force lockdown, we first change system lock pref from above to 1 (on), then we launch an activity with the flag keep screen on, and use window manager to set its brightness to 0.0. This forces screen off, and the user will try to wake back up, but when they press power, it is the real system sleep on first press. Then the secure lockscreen occurs. The 2nd press wakes up to the secure lockscreen.
+
+With this activity I also intercept key events to return true, basically enforcing a no-input lockdown. This was first implemented in v1.3.4a to help enforce security after a reboot.
