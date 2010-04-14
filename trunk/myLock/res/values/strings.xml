@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 <string name="welcome">myLock Settings</string>
-<string name="app_name">myLock basic</string>
+<string name="app_name">myLock Auto Unlock</string>
 <string name="activeBox">Enabled</string>
 <string name="fgBox">Display myLock icon in the notification panel</string>
 

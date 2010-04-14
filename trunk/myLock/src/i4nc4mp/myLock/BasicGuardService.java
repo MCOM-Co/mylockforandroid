@@ -332,7 +332,7 @@ public class BasicGuardService extends MediatorService {
     	PowerManager myPM = (PowerManager) getSystemService(Context.POWER_SERVICE);
         myPM.userActivity(SystemClock.uptimeMillis(), false);
     	
-    Class w = AutoDismissActivity.class; 
+    Class w = DismissActivity.class; 
                   
     Intent dismiss = new Intent(context, w);
     dismiss.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK//required for a service to launch activity
