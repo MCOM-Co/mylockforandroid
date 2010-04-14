@@ -17,6 +17,8 @@ public class UserPresentService extends Service {
 	
 	//it is only used when the user has turned on security mode
 	
+	//there is a special lockdown activity we use if no KG is detected on startup
+	
 	public boolean secured = false;
 	
 	Handler serviceHandler;
@@ -52,8 +54,24 @@ public class UserPresentService extends Service {
 				
 		serviceHandler = new Handler();
 		
-		ManageKeyguard.disableKeyguard(getApplicationContext());
-		serviceHandler.postDelayed(myTask, 50L);
+		ManageKeyguard.initialize(getApplicationContext());
+		if (ManageKeyguard.inKeyguardRestrictedInputMode()) {
+			//case - user has not unlocked the non-secure KG. Screen will probably be asleep
+			//clear the standard keyguard. the delay waits 50 ms then forces the secure keyguard on
+			ManageKeyguard.disableKeyguard(getApplicationContext());
+			serviceHandler.postDelayed(myTask, 50L);
+		}
+		else {
+			//case - user has unlocked immediately on startup
+			//they are going about the phone like a boss
+			//TIME TO SLAP THEM WITH A LOCKDOWN
+			Intent slap = new Intent();
+	    	slap.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.Lockdown");
+	    	slap.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY |
+	    			Intent.FLAG_ACTIVITY_NEW_TASK);
+	    	getApplicationContext().startActivity(slap);
+	    	secured = true;
+		}
 		
 		return START_NOT_STICKY;
 		//we would never get killed while sitting idle waiting for a user to come back and unlock
@@ -67,16 +85,19 @@ public class UserPresentService extends Service {
 	    @Override
 	    public void onReceive(Context context, Intent intent) {
 	    	if (!intent.getAction().equals(present)) return;
+	    	if (!secured) return;
+	    	//just in case it sends us a user present from the non-secure kg
+	    	//if user is actively unlocking it immediately on boot
+	    	
 	    	Log.v("user unlocking","Keyguard was completed by user");
+	    	
 	    	//send myLock start intent
 	    	Intent i = new Intent();
-	    	
-	    	SharedPreferences settings = getSharedPreferences("myLock", 0);
-	    	boolean guard = settings.getBoolean("wallpaper",false);
-			if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
-			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
+	    
+			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.Toggler");
+			i.putExtra("i4nc4mp.myLock.TargetState", true);
 			startService(i);
-	    	//call stopSelf
+			
 			stopSelf();
 	    	return;
 	    
