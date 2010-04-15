@@ -12,6 +12,9 @@
 <string name="unguard">Advanced mode - volume and camera (and trackball on the nexus one) will wake and unlock.</string>
 <string name="wplock">Hide lockscreen and show the wallpaper during auto-unlock (best results with all animations enabled in the display settings)</string>
 
+<string name="AutoMode">Auto unlock - lockscreen visible during unlock, side keys locked</string>
+<string name="HideLock">Hide lockscreen - wallpaper shown instead, side keys locked</string>
+<string name="Advanced">Advanced mode - removes lockscreen, side keys wake and unlock</string>
 
 <string name="HowToText1">myLock automatically minimizes the lockscreen. Side buttons remain locked down, but waking the phone with the slider, keypad buttons, or power key will auto unlock.</string>
 <string name="HowToText2">If the phone reboots while myLock is running, it will start back up automatically with your preferred settings.</string>
