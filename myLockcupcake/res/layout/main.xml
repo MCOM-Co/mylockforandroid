@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_height="fill_parent" android:layout_width="fill_parent">
+<LinearLayout
+	android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:gravity="center_horizontal"
+    > 
+<!-- CheckBox android:text="@string/shakeBox" android:id="@+id/shakeBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox  -->
+<CheckBox android:text="@string/activeBox" android:id="@+id/activeBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
+
+<CheckBox android:text="@string/shakeBox" android:id="@+id/shakeBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
+<CheckBox android:text="@string/slideGuard" android:id="@+id/slideGuard" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
+
+<CheckBox android:text="@string/secureBox" android:id="@+id/secureBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
+
+<TextView android:text="@string/HowToText1" android:id="@+id/HowTo1" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:text="@string/HowToText2" android:id="@+id/HowTo2" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:text="@string/HowToText3" android:id="@+id/HowTo3" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:text="Troubleshooting--" android:id="@+id/TroubleTitle" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:text="@string/Troubleshooting" android:id="@+id/Trouble" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+</LinearLayout></ScrollView>
