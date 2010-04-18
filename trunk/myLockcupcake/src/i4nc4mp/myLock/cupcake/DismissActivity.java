@@ -20,6 +20,7 @@ import android.view.WindowManager;
 
 public class DismissActivity extends Activity {
       private boolean done = true;
+      private boolean exited = false;
       private boolean kg;
       
       @Override
@@ -71,10 +72,12 @@ public class DismissActivity extends Activity {
   
   @Override
   public void onWindowFocusChanged(boolean hasFocus) {
+	  if (exited) return;
 	  ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
+		  
 	        public void LaunchOnKeyguardExitSuccess() {
 	           Log.v("secure exit success", "gained focus & cleared KG");
-	           
+	           exited = true;
 	        	}
 			});
   }
@@ -85,7 +88,7 @@ public class DismissActivity extends Activity {
                   
       if (kg) {
     	  unregisterReceiver(unlockdone);
-    	  if (done) ManageKeyguard.reenableKeyguard();
+    	  if (done && exited) ManageKeyguard.reenableKeyguard();
       }
       Log.v("destroy_dismiss","Destroying");
       

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent"
+  android:id="@+id/main" 
+>
+
+<TextView android:layout_height="wrap_content" android:layout_width="wrap_content"
+android:id="@+id/TextView01" android:layout_alignParentTop="true"
+android:text="@string/howto"/>
+
+
+
+<SeekBar android:progress="0" android:max="60" android:id="@+id/time"
+android:layout_width="300sp" android:layout_height="52sp" android:padding="13sp"
+android:layout_centerInParent="true"></SeekBar>
+
+<TextView android:layout_height="wrap_content" android:layout_width="wrap_content"
+android:id="@+id/barpos" android:layout_above="@id/time" android:layout_centerHorizontal="true"/>
+
+
+
+<Button android:text="Apply" android:id="@+id/done" android:layout_width="wrap_content" android:layout_height="wrap_content"
+android:layout_below="@id/time" android:layout_centerHorizontal="true"></Button>
+
+<TextView android:layout_height="wrap_content" android:layout_width="wrap_content" android:text="@string/req"
+	android:layout_alignParentBottom="true"/> 
+
+</RelativeLayout>

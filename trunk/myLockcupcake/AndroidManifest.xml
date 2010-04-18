@@ -13,6 +13,11 @@
             </intent-filter>
         </activity>
         
+        
+        <activity android:name="IdleSetup"
+                  android:label="@string/app_name">
+        </activity>
+   <!-- used for the wakeup lock dismissal -->
    <activity android:name="DismissActivity"
                 android:excludeFromRecents="true"
                 android:launchMode="standard"
@@ -20,6 +25,17 @@
                 android:taskAffinity=""
                 android:screenOrientation="nosensor"
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/> 
+   
+   
+   <!-- used to force screen off after enabling security at boot --> 
+    <activity android:name="Lockdown"
+                android:excludeFromRecents="true"
+                android:launchMode="singleTask"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen"
+                android:taskAffinity=""
+                android:screenOrientation="portrait"></activity>
+                
+     
     
         <receiver android:name="ToggleWidget" >
 			<intent-filter>
@@ -27,13 +43,47 @@
     		</intent-filter>
     	<meta-data android:name="android.appwidget.provider"
                android:resource="@xml/toggle_widget" />
-</receiver>        
+</receiver>
+
+	<receiver android:name=".myLockBootReceiver" 
+        android:enabled="true" 
+        android:exported="false"
+        android:label="myLockBootReceiver">
+        <intent-filter>
+        	<action android:name="android.intent.action.BOOT_COMPLETED" />
+        </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".IdleTimeout"
+            android:enabled="true"
+        >
+            <intent-filter>
+                <action
+                    android:name="i4nc4mp.myLock.IDLE_TIMEOUT" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".ForceLock"
+            android:enabled="true"
+        >
+            <intent-filter>
+                <action
+                    android:name="i4nc4mp.myLock.FORCE_LOCK" />
+            </intent-filter>
+        </receiver>
+
+
         <service android:name=".AutoDismiss">
         </service>
         <service android:name=".Toggler">
         </service>
+        
+        <service android:name=".BootHandler"></service>
+        <service android:name=".UserPresentService"></service>
+        
+        
     </application>
-    
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission
     android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission

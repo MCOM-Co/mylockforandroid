@@ -20,8 +20,9 @@ import android.util.Log;
 //It's not great because the timing is obtuse and it is not exactly the definition
 //of a smooth end user experience.
 
-//TODO it might be possible to port the actual activity by calling disable in the onCreate
-//then calling secure exit in onStart
+//however, with the use of the ported dismiss activity it gets a lot smoother
+//since the pre 2.0 lockscreen is just a small dialog
+
 
 
 //we mediate wakeup & call end, to fire Disable KG & Secure Exit if the lockscreen is detected
@@ -98,9 +99,6 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
                     android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
             }
 
-            
-            	unregisterReceiver(lockStopped);
-                            	
             	settings.unregisterOnSharedPreferenceChangeListener(prefslisten);
                 
                 editor.putBoolean("serviceactive", false);
@@ -147,11 +145,7 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
                     android.provider.Settings.System.LOCK_PATTERN_ENABLED, 0);
             }
             	
-            serviceHandler = new Handler();
-            
-            IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED");
-            registerReceiver(lockStopped, lockStop);
-            
+            serviceHandler = new Handler();            
             
             editor.putBoolean("serviceactive", true);
             editor.commit();
@@ -169,21 +163,9 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
     		
       		if ("shake".equals(key)) shakemode = sharedPreference.getBoolean(key, false);
     		if ("slideGuard".equals(key)) slideGuarded = sharedPreference.getBoolean(key, false);
+    		if ("idletime".equals(key)) timeoutenabled = (sharedPreference.getInt("idletime", 0) != 0);
     		}
     	};
-    
-    BroadcastReceiver lockStopped = new BroadcastReceiver() {
-        @Override
-    public void onReceive(Context context, Intent intent) {
-        if (!intent.getAction().equals("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED")) return;
-        
-       
-       
-        
-        
-        //if (shakemode) mSensorEventManager.unregisterListener(AutoDismiss.this);
-        return;
-        }};
         
         @Override
         public void onConfigurationChanged(Configuration newConfig) {
@@ -227,8 +209,9 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
         }
         
         public void doExit(Context m) {
-        	//ManageKeyguard.disableKeyguard(m);
         	StartDismiss(m);
+        	
+        	//ManageKeyguard.disableKeyguard(m);
         	//serviceHandler.postDelayed(myTask, 50L);
         }
         
@@ -243,7 +226,7 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
         
     @Override
     public void onScreenWakeup() {    	
-    	//if (timeoutenabled) IdleTimer.cancel(getApplicationContext());
+    	if (timeoutenabled) IdleTimer.cancel(getApplicationContext());
         //since now awake, cancel idle alarm. should be every wake so we can cancel if call causes wake
     	
     	//now check for call state flags
@@ -284,10 +267,10 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             slideWakeup = false;
         }
         
-        /*if (timeoutenabled) {
+        if (timeoutenabled) {
         	Log.v("idle lock","starting timer");
         	IdleTimer.start(getApplicationContext());
-        }*/
+        }
         //we need to get user present here to effectively know if user unlocked from a slide wake
         //right now we are allowing the timer to restart with the activity of slide wake but not unlock
         //when we would really want it to continue without restarting in that situation
