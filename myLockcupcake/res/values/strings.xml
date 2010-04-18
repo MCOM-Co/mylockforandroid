@@ -16,6 +16,9 @@
 <string name="HowToText3">Do not attempt to change the security pattern or create one while myLock is enabled. Always uncheck enabled first. </string>
 <string name="Troubleshooting">Please see our faq and troubleshooting pages linked on our site (mylockandroid.blogspot.com) first. If you notice an issue that happens consistently, download Log Collector (free from the market) to email us at myLockandroid@gmail.com. Be sure to list the problem symptoms and what other services are running in the Settings->Applications->Running Services screen. I will research the cause of the trouble and code a fix when possible.</string>
 
+<string name="howto">Each time the phone sleeps, the timer begins. If left asleep for the amount of time set, pattern security is restored, disabling myLock. When you unlock the pattern, myLock restarts itself.</string>
+<string name="req">IMPORTANT: Enable the security pattern and set myLock to secure mode before configuring idle lock.</string>
+
 <string name="permlab_toggle">myLock plug-in permission</string>
 <string name="permdesc_toggle">Allows plug-ins to toggle myLock</string>
 

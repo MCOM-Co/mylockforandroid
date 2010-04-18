@@ -173,12 +173,12 @@ public class SettingsActivity extends Activity {
         switch (item.getItemId()) {
         case R.id.idlesetup:
         	Intent setup = new Intent();
-        	setup.setClassName("i4nc4mp.myLock.idleLock", "i4nc4mp.myLock.idleLock.IdleSetup");
+        	setup.setClassName("i4nc4mp.myLock.cupcake", "i4nc4mp.myLock.cupcake.IdleSetup");
         	try {
         		startActivity(setup);
         	}
         	catch (ActivityNotFoundException e) {
-        		Toast.makeText(SettingsActivity.this, "Please download Idle Lock addon", Toast.LENGTH_LONG).show();
+        		//Toast.makeText(SettingsActivity.this, "Please download Idle Lock addon", Toast.LENGTH_LONG).show();
         	}
             return true;
         }
