@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="i4nc4mp.myLock"
       android:versionCode="18"
-      android:versionName="1.3.4a - with plugin support"
+      android:versionName="1.3.4b - with plugin support"
       android:sharedUserId="i4nc4mp.myLockAutoUnlock"
       android:sharedUserLabel="@string/userlabel" >
       
@@ -82,19 +82,36 @@
                 android:taskAffinity=""
                 android:screenOrientation="portrait">
                 </activity>
-                
+        <!-- for testing we can launch from main       
        <activity android:name="UnguardActivity"
                 android:excludeFromRecents="true"
                 android:launchMode="singleTask"
                 android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen"
                 android:taskAffinity=""
                 android:screenOrientation="portrait">
-                <!-- for testing we can launch from main -->
+                
                 <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
                </activity>
+               -->
+               
+        <activity android:name="CallPrompt"
+				android:label="myLock"
+                android:excludeFromRecents="true"
+                android:launchMode="standard"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                android:taskAffinity=""
+                android:screenOrientation="portrait">
+               </activity>
+               
+               <receiver android:name=".PhoneReceiver"
+               				android:enabled="true">
+                <intent-filter>
+                        <action android:name="android.intent.action.PHONE_STATE" />
+                </intent-filter>
+        </receiver>
 
         <receiver android:name=".myLockBootReceiver" 
         android:enabled="true" 

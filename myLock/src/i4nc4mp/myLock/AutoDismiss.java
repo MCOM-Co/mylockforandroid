@@ -27,23 +27,24 @@ import android.util.Log;
 //we mediate wakeup & call end, to fire dismiss activity if the lockscreen is detected
 
 public class AutoDismiss extends MediatorService implements SensorEventListener {
-	public boolean persistent = false;
-    public boolean timeoutenabled = false;
+	private boolean persistent = false;
+    private boolean timeoutenabled = false;
     
-	public boolean shakemode = false;
-	public boolean slideGuarded = false;
+	private boolean shakemode = false;
+	private boolean slideGuarded = false;
 
     
-    public boolean security = false;
+    private boolean security = false;
     
-    public boolean slideWakeup = false;
+    private boolean slideWakeup = false;
   //we will set this when we detect slideopen, only used with instant unlock
+    private boolean useAnswerPrompt = false;
+
     
-    
-    public boolean dismissed = false;
+    private boolean dismissed = false;
     //will just toggle true after dismiss callback - used to help ensure airtight lifecycle
     
-    public boolean callmissed = false;
+    private boolean callmissed = false;
     
     Handler serviceHandler;
     Task myTask = new Task();
@@ -179,6 +180,7 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
       		}
     		if ("shake".equals(key)) shakemode = sharedPreference.getBoolean(key, false);
     		if ("slideGuard".equals(key)) slideGuarded = sharedPreference.getBoolean(key, false);
+    		if ("answerprompt".equals(key)) useAnswerPrompt = sharedPreference.getBoolean(key, false);
     		}
     	};
     
@@ -395,6 +397,22 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
     	callmissed = true;
     	//flag so we can suppress handling of the screen on we seem to get at phone state change
     }
+    
+    /* not yet implemented - we have a receiver in the phone package itself right now
+     * (non-Javadoc)
+     * @see i4nc4mp.myLock.MediatorService#onCallRing()
+     
+    @Override
+    public void onCallRing() {
+    	if (useAnswerPrompt) {
+    		//launch the call prompt from mylock.phone addon
+    		Intent p = new Intent();
+    		p.setClassName("i4nc4mp.myLock.phone", "i4nc4mp.myLock.phone.CallPrompt");
+    		p.addFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION
+    				| Intent.FLAG_ACTIVITY_NEW_TASK);
+    		getApplicationContext().startActivity(p);
+    	}
+    }*/
     
 //============================
     
