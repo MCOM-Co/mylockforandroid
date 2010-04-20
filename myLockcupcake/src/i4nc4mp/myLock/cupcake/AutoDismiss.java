@@ -1,10 +1,8 @@
 package i4nc4mp.myLock.cupcake;
 
 import i4nc4mp.myLock.cupcake.ManageKeyguard.LaunchOnKeyguardExit;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.res.Configuration;
@@ -28,23 +26,23 @@ import android.util.Log;
 //we mediate wakeup & call end, to fire Disable KG & Secure Exit if the lockscreen is detected
 
 public class AutoDismiss extends MediatorService implements SensorEventListener {
-	public boolean persistent = false;
+	
     public boolean timeoutenabled = false;
     
 	public boolean shakemode = false;
 	public boolean slideGuarded = false;
 
     
-    public boolean security = false;
+    private boolean security = false;
     
-    public boolean slideWakeup = false;
+    private boolean slideWakeup = false;
   //we will set this when we detect slideopen, only used with instant unlock
     
     
-    public boolean dismissed = false;
+    private boolean dismissed = false;
     //will just toggle true after dismiss callback - used to help ensure airtight lifecycle
     
-    public boolean callmissed = false;
+    private boolean callmissed = false;
     
     Handler serviceHandler;
     Task myTask = new Task();
@@ -89,20 +87,24 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
     	super.onDestroy();
             
         SharedPreferences settings = getSharedPreferences("myLock", 0);
-        SharedPreferences.Editor editor = settings.edit();
+        //SharedPreferences.Editor editor = settings.edit();
+    	settings.unregisterOnSharedPreferenceChangeListener(prefslisten);
         
         
         	
             if (security) {
-            //restore security lock 	
+            //restore security lock
+            	
+
+                
                 android.provider.Settings.System.putInt(getContentResolver(), 
                     android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
             }
 
-            	settings.unregisterOnSharedPreferenceChangeListener(prefslisten);
+
                 
-                editor.putBoolean("serviceactive", false);
-                editor.commit();
+                //editor.putBoolean("serviceactive", false);
+                //editor.commit();
                 
                 serviceHandler.removeCallbacks(myTask);
                 serviceHandler = null;
@@ -119,7 +121,7 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
     	
     	//first acquire the prefs that need to be initialized
             SharedPreferences settings = getSharedPreferences("myLock", 0);
-            SharedPreferences.Editor editor = settings.edit();
+            //SharedPreferences.Editor editor = settings.edit();
             
             
             shakemode = settings.getBoolean("shake", false);
@@ -141,14 +143,18 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             
            //toggle out of security
             if (security) {
+            	
     android.provider.Settings.System.putInt(getContentResolver(), 
                     android.provider.Settings.System.LOCK_PATTERN_ENABLED, 0);
             }
             	
             serviceHandler = new Handler();            
             
-            editor.putBoolean("serviceactive", true);
-            editor.commit();
+            //editor.putBoolean("serviceactive", true);
+            //editor.commit();
+            
+            
+            
     }
     
     @Override
