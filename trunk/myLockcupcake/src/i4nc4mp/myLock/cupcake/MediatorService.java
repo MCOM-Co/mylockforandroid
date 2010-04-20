@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -19,15 +20,14 @@ import android.util.Log;
 //when screen events need handling
 
 public class MediatorService extends Service {
-	
-	public boolean initialized = false;
-	//flag set true after the first onStartCommand
-		
-	public boolean active = false;
+			
+	private boolean active = false;
 	//whether receivers are active- safety flag in the registration methods
 	
 	private boolean awake = false;
 	//flag toggled by screen broadcast events
+	
+	private boolean exists = false;
 
 		
 /*Phone Status Flags*/
@@ -46,7 +46,7 @@ public class MediatorService extends Service {
 	@Override
 	public IBinder onBind(Intent arg0) {
 		Log.d(getClass().getSimpleName(), "onBind()");
-		return null;//we don't bind
+		return ExistStub;
 	}
 	
 	@Override
@@ -65,6 +65,8 @@ public class MediatorService extends Service {
 		
 		tm.listen(Detector, PhoneStateListener.LISTEN_NONE);
 		
+		exists = false;
+		
 		}
 	
 	@Override
@@ -72,7 +74,7 @@ public class MediatorService extends Service {
 		super.onStart(intent, startId);
 		
 		
-		if (initialized) {
+		if (exists) {
 			onRestartCommand();
 			
 			return;//don't proceed - the rest of the start command is initialization code
@@ -90,7 +92,8 @@ public class MediatorService extends Service {
         
         onFirstStart();//The subclass will place init actions in an override here
     	
-        initialized = true;
+        
+        exists = true;
     	return;
 	}
 	
@@ -209,6 +212,12 @@ void pause() {
     unregisterReceiver(screenoff);
 	active = false;
 }
+
+private IsActive.Stub ExistStub = new IsActive.Stub() {
+    public boolean Exists() throws RemoteException {
+          return exists;
+    }
+};
 
 public void onFirstStart() {
 	//do first inits

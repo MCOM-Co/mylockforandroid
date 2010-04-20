@@ -1,6 +1,5 @@
 package i4nc4mp.myLock.cupcake;
 
-
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
@@ -18,99 +17,43 @@ import android.widget.Toast;
 
 //getSharedPreferences("myLockAutoUnlockprefs", Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
 
-public class SettingsActivity extends Activity {
-	
-	public boolean triedstart = false;
-		
-	public boolean persistentNotif = false;
-    
-    public boolean security = false;
-    public boolean shakewake = false;
-    
-    public boolean guard = false;
-    
-    public boolean WPlockscreen = false;
-    
-    public boolean active = false;
+//Most important top level state items handled here
+//Does user want the service active?
+//Is pattern security active?
 
-    public CheckBox toggle;
-    public CheckBox secured; 
+//User launches individual prefs screens from menu. 
+//We want security and service state to be understood by user in the primary setup screen
+
+public class SettingsActivity extends Activity {
+    
+    private boolean security = false;
+    
+    private boolean enabled = false;
+    
+    private boolean active = false;
+    
+    
+    private CheckBox toggle;
+    private CheckBox secured; 
     	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-       
-      getPrefs();
-     
-      //TODO
-      //case - settings is launched and still has active pref from service being killed in some fashion
-      //in this instance we want to call a duplicate start command, this ensures it is now running
-      //to match checkbox
             
      toggle = (CheckBox) findViewById(R.id.activeBox);
-
-      toggle.setChecked(active);
         
       toggle.setOnClickListener(new OnClickListener() {
           	public void onClick(View v){
-          		if (toggle.isChecked()) {
-          			startService();
-          			active = true;//so we will know if what to do if user changes any more checks after this
-            		Toast.makeText(SettingsActivity.this, "myLock is now enabled", Toast.LENGTH_SHORT).show();
+          		enabled = toggle.isChecked();
+          		toggleService(enabled);
           		}
-          		else {
-          			//the stop case will do nothing if the service had crashed or been force closed
-          			//or if the device was rebooted without a clean exit
-          			//it will still think it is running
-          			stopService();
-          			active = false;
-          			Toast.makeText(SettingsActivity.this, "myLock is now disabled", Toast.LENGTH_SHORT).show();
-          		}
-          	}
+          	
           });
               
              
-       final CheckBox shake = (CheckBox)findViewById(R.id.shakeBox);
-
-       shake.setChecked((shakewake));        
-               
-       shake.setOnClickListener(new OnClickListener() {
-
-                   public void onClick(View v) {
-                	   SharedPreferences set = getSharedPreferences("myLock", 0);
-                	   SharedPreferences.Editor editor = set.edit(); 
-                	   
-                	   editor.putBoolean("shake", shake.isChecked());
-
-                       // Don't forget to commit your edits!!!
-                       editor.commit();            			                       
-                   }
-               });
-       shake.setVisibility(View.GONE);//hide it for now
-       
-       final CheckBox slideguard = (CheckBox)findViewById(R.id.slideGuard);
-       
-       slideguard.setChecked((guard));        
-       
-       slideguard.setOnClickListener(new OnClickListener() {
-
-    	   public void onClick(View v) {
-               SharedPreferences set = getSharedPreferences("myLock", 0);
-               SharedPreferences.Editor editor = set.edit(); 
-               
-               editor.putBoolean("slideGuard", slideguard.isChecked());
-
-               // Don't forget to commit your edits!!!
-               editor.commit();
-               }
-               });
-    
-    
         
-    secured = (CheckBox)findViewById(R.id.secureBox);
-    
-    secured.setChecked((security));        
+    secured = (CheckBox)findViewById(R.id.secureBox);   
     
     secured.setOnClickListener(new OnClickListener() {
 
@@ -124,20 +67,29 @@ public class SettingsActivity extends Activity {
  }
     
     public void getPrefs() {
-    	SharedPreferences settings = getSharedPreferences("myLock", 0);
+    	//Is service Active? Should it be active?
+    	//Is security pattern on? Was myLock started with pattern enabled?
     	
+    	SharedPreferences settings = getSharedPreferences("myLock", 0);
+            
+        enabled = settings.getBoolean("enabled", false);
         
-        shakewake = settings.getBoolean("shake", false);
+		//ManageMediator m = new ManageMediator();
+        //active = m.bind(getApplicationContext());
+        //m = null;
         
-        active = settings.getBoolean("serviceactive", false);
+        active = ManageMediator.bind(getApplicationContext());
         
-        guard = settings.getBoolean("slideGuard", false);
+        if (enabled && !active) {
+        	toggleService(true);
+        	active = true;
+        }
+        //start if we aren't active & user's last known intention was enabled
+        //case would be a crash or task killer/force stop
+        //user will see a toast that we have done the enable
+        //TODO -- need to implement enabled check in the boot handler
         
-        
-        //if service is not active, force security setting based on system
-        //if it is active we are going to rely on the pref setting
-                
-        if (!active) {
+        if (!enabled) {//only check for security change while not enabled
         	
         security = getPatternSetting();
         
@@ -170,19 +122,18 @@ public class SettingsActivity extends Activity {
     }
     
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-        case R.id.idlesetup:
-        	Intent setup = new Intent();
-        	setup.setClassName("i4nc4mp.myLock.cupcake", "i4nc4mp.myLock.cupcake.IdleSetup");
+    	int id = item.getItemId();
+    	Intent setup = new Intent();
+        if(id ==  R.id.idlesetup) setup.setClassName("i4nc4mp.myLock.cupcake", "i4nc4mp.myLock.cupcake.IdleSetup");
+        else if (id == R.id.mainprefs) setup.setClassName("i4nc4mp.myLock.cupcake", "i4nc4mp.myLock.cupcake.MainPreferenceActivity");
+        
         	try {
         		startActivity(setup);
         	}
         	catch (ActivityNotFoundException e) {
-        		//Toast.makeText(SettingsActivity.this, "Please download Idle Lock addon", Toast.LENGTH_LONG).show();
+        		return false;
         	}
-            return true;
-        }
-        return false;
+        	return true;
     }
     
     @Override
@@ -190,24 +141,18 @@ public class SettingsActivity extends Activity {
     	super.onResume();
     	
     	getPrefs();
-    	toggle.setChecked(active);
+    	toggle.setChecked(enabled);
+    	//in case toggler got invoked by widget or plug-in
     	secured.setChecked(security);
     }
     
-    /*start and stop methods rely on pref and are only used by toggle button*/
-    private void startService(){
+    private void toggleService(boolean on){
    			Intent i = new Intent();
    			
-   			i.setClassName("i4nc4mp.myLock.cupcake", "i4nc4mp.myLock.cupcake.AutoDismiss");
+   			i.setClassName("i4nc4mp.myLock.cupcake", "i4nc4mp.myLock.cupcake.Toggler");
+   			i.putExtra("i4nc4mp.myLock.TargetState", on);
    			startService(i);
    			Log.d( getClass().getSimpleName(), "startService()" );
-   		}
-    
-    private void stopService() {
-			Intent i = new Intent();
-			i.setClassName("i4nc4mp.myLock.cupcake", "i4nc4mp.myLock.cupcake.AutoDismiss");
-			stopService(i);
-			Log.d( getClass().getSimpleName(), "stopService()" );
-    }
+   		}    
 }
 
