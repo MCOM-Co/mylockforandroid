@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+    <RelativeLayout
+    	android:layout_width="fill_parent"
+    	android:layout_height="wrap_content"
+    	android:layout_centerInParent="true"
+    	>
+    <Button  
+    android:layout_width="wrap_content" 
+    android:layout_height="wrap_content"
+    android:id="@+id/mid"
+    android:text="Accept Call"
+    android:layout_centerInParent="true"
+
+    />
+	<!-- Extra buttons, can't get them to work right now
+	<Button  
+    android:layout_width="wrap_content" 
+    android:layout_height="wrap_content"
+    android:id="@+id/answerbutton"
+    android:text="yes"
+    android:layout_toLeftOf="@id/mid"
+    android:layout_centerVertical="true"
+    />
+    <Button  
+    android:layout_width="wrap_content" 
+    android:layout_height="wrap_content"
+    android:id="@+id/rejectbutton"
+    android:text="no"
+    android:layout_toRightOf="@id/mid"
+    android:layout_centerVertical="true"
+    />
+     -->
+</RelativeLayout>
+</RelativeLayout>

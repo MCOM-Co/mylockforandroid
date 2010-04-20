@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+      package="i4nc4mp.myLock.phone"
+      android:versionCode="1"
+      android:versionName="1.0">
+    <application android:icon="@drawable/icon" android:label="@string/app_name">
+
+		<activity android:name="CallPrompt"
+				android:exported="true"
+				android:label="myLock"
+                android:excludeFromRecents="true"
+                android:launchMode="standard"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                android:taskAffinity=""
+                android:screenOrientation="portrait">
+               </activity>
+               
+               <receiver android:name=".PhoneReceiver"
+               				android:enabled="true">
+                <intent-filter>
+                        <action android:name="android.intent.action.PHONE_STATE" />
+                </intent-filter>
+        </receiver>
+	
+
+    </application>
+    
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    
+    <uses-sdk android:minSdkVersion="5" />
+    <uses-sdk android:targetSdkVersion="7" />
+
+</manifest> 
