@@ -96,22 +96,6 @@
             </intent-filter>
                </activity>
                -->
-               
-        <activity android:name="CallPrompt"
-				android:label="myLock"
-                android:excludeFromRecents="true"
-                android:launchMode="standard"
-                android:theme="@android:style/Theme.Translucent.NoTitleBar"
-                android:taskAffinity=""
-                android:screenOrientation="portrait">
-               </activity>
-               
-               <receiver android:name=".PhoneReceiver"
-               				android:enabled="true">
-                <intent-filter>
-                        <action android:name="android.intent.action.PHONE_STATE" />
-                </intent-filter>
-        </receiver>
 
         <receiver android:name=".myLockBootReceiver" 
         android:enabled="true" 
