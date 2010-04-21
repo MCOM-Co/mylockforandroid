@@ -2,10 +2,14 @@ package i4nc4mp.myLock;
 
 
 import android.app.Service;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.RemoteViews;
 import android.widget.Toast;
 
 public class Toggler extends Service {
@@ -36,7 +40,7 @@ Log.v("Toggler","Starting");
 		//start if we've been told to start and did not already exist				
 		if (target && !active) {
 			startService();
-			updateEnablePref(true);
+			updateEnablePref(true, getApplicationContext());
     		Toast.makeText(Toggler.this, "myLock is now enabled", Toast.LENGTH_SHORT).show();
     		
 		}//stop if we've been told to stop and did already exist
@@ -45,7 +49,7 @@ Log.v("Toggler","Starting");
 				stopService();
 				Toast.makeText(Toggler.this, "myLock is now disabled", Toast.LENGTH_SHORT).show();
 				
-				updateEnablePref(false);
+				updateEnablePref(false, getApplicationContext());
 		}//log the request - locale condition may send a desired state that already exists
 		else Log.v("toggler","unhandled outcome - target was not a change");
 		
@@ -59,13 +63,26 @@ public void getPrefs() {
 	guard = settings.getBoolean("wallpaper", false);
 }
 
-private void updateEnablePref(boolean on) {
+private void updateEnablePref(boolean on, Context mCon) {
 	SharedPreferences set = getSharedPreferences("myLock", 0);
 	SharedPreferences.Editor editor = set.edit();
     editor.putBoolean("enabled", on);
 
     // Don't forget to commit your edits!!!
     editor.commit();
+    
+    //Lastly, send the update to any widgets
+    AppWidgetManager mgr = AppWidgetManager.getInstance(getApplicationContext());
+    ComponentName comp = new ComponentName(mCon.getPackageName(), ToggleWidget.class.getName());
+    //int[] widgets = mgr.getAppWidgetIds (comp);
+    RemoteViews views = new RemoteViews(mCon.getPackageName(), R.layout.togglelayout);
+	int img;
+    //on = ManageMediator.bind(context);
+    if (on) img = R.drawable.widg_on_icon;
+    else img = R.drawable.widg_off_icon;
+    views.setImageViewResource(R.id.toggleButton, img);
+    mgr.updateAppWidget(comp, views);
+    
 }
 	
 private void startService(){
