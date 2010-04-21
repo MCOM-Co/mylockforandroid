@@ -5,7 +5,7 @@
 <string name="activeBox">Enabled</string>
 
 
-<string name="secureBox">Security Pattern - Pattern lock will be turned off while myLock is running and forced on at reboot. Idle Lock does not work unless you set a pattern first.</string>
+<string name="secureBox">Security Pattern - Pattern lock will be turned off while myLock is running and forced on at reboot. Please set pattern before enabling myLock. </string>
 <string name="guard_on">Require lockscreen when waking via sliding the keypad slider open</string>
 <string name="guard_off">Waking via sliding keypad open will auto unlock</string>
 <string name="unguard">Advanced mode - volume and camera (and trackball on the nexus one) will wake and unlock.</string>
