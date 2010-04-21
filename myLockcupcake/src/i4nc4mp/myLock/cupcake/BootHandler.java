@@ -40,16 +40,9 @@ public class BootHandler extends Service {
 		
 		boolean secure = settings.getBoolean("security", false);
 
-		boolean active = settings.getBoolean("serviceactive", false);
+		boolean active = settings.getBoolean("enabled", false);
 		
 		boolean waitforuser = true;
-		
-		if (active) {
-			editor.putBoolean("serviceactive", false);
-		
-			Log.v("restart recovery","corrected active flag");
-			editor.commit();
-		}
 		
 		Intent u = new Intent();
 		u.setClassName("i4nc4mp.myLock.cupcake", "i4nc4mp.myLock.cupcake.UserPresentService");
@@ -91,13 +84,15 @@ public class BootHandler extends Service {
 		}
 		else waitforuser = false;
 		
-		//Don't wait if not aware of security or we already started system secure and got are already unlocked
+		//Don't wait if not aware of security or we already started system secure and already unlocked
 		
 		Log.v("Startup result","wait for user flag is " + waitforuser);
 		
-		if (waitforuser) startService(u);//start user present
-		else startService(i);//start toggler
 		
+		if (waitforuser) startService(u);//start user present
+		else if (secure || active) startService(i);//start toggler
+		//condition causes start at boot to only be considered when security was on
+		//or we were enabled before the reboot
 		setForeground(false);
 		stopSelf();
 		

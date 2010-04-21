@@ -87,8 +87,7 @@ public class SettingsActivity extends Activity {
         //start if we aren't active & user's last known intention was enabled
         //case would be a crash or task killer/force stop
         //user will see a toast that we have done the enable
-        //TODO -- need to implement enabled check in the boot handler
-        
+    
         if (!enabled) {//only check for security change while not enabled
         	
         security = getPatternSetting();
