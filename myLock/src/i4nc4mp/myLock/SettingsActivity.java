@@ -19,19 +19,22 @@ import android.widget.Toast;
 //getSharedPreferences("myLockAutoUnlockprefs", Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
 
 public class SettingsActivity extends Activity {
-	
-	public boolean triedstart = false;
 		
-	public boolean persistentNotif = false;
+	private boolean persistentNotif = false;	
     
-    public boolean security = false;
-    public boolean shakewake = false;
+    private boolean shakewake = false;
     
-    public boolean guard = false;
+    private boolean guard = false;
     
-    public boolean WPlockscreen = false;
+    private boolean WPlockscreen = false;
     
-    public boolean active = false;
+    
+    private boolean security = false;
+    
+    private boolean enabled = false;
+    
+    private boolean active = false;	
+    
 
     public CheckBox toggle;
     public CheckBox secured;
@@ -40,34 +43,17 @@ public class SettingsActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.settingsactivity);
-       
-      getPrefs();
-     
-      //TODO
-      //case - settings is launched and still has active pref from service being killed in some fashion
-      //in this instance we want to call a duplicate start command, this ensures it is now running
-      //to match checkbox
             
+        getPrefs();
+        //moving Prefs into a real pref activity
+        
      toggle = (CheckBox)findViewById(R.id.activeBox);
-
-      toggle.setChecked(active);
         
       toggle.setOnClickListener(new OnClickListener() {
-          	public void onClick(View v){
-          		if (toggle.isChecked()) {
-          			startService();
-          			active = true;//so we will know if what to do if user changes any more checks after this
-            		Toast.makeText(SettingsActivity.this, "myLock is now enabled", Toast.LENGTH_SHORT).show();
-          		}
-          		else {
-          			//the stop case will do nothing if the service had crashed or been force closed
-          			//or if the device was rebooted without a clean exit
-          			//it will still think it is running
-          			stopService();
-          			active = false;
-          			Toast.makeText(SettingsActivity.this, "myLock is now disabled", Toast.LENGTH_SHORT).show();
-          		}
-          	}
+    	  public void onClick(View v){
+        		enabled = toggle.isChecked();
+        		toggleService(enabled);
+        		}
           });
               
        final CheckBox fg = (CheckBox)findViewById(R.id.fgBox);
@@ -132,26 +118,24 @@ public class SettingsActivity extends Activity {
             SharedPreferences set = getSharedPreferences("myLock", 0);
             SharedPreferences.Editor editor = set.edit(); 
             
+              
+            if (enabled) {
+            	Toast.makeText(SettingsActivity.this, "Please disable myLock first", Toast.LENGTH_LONG).show();
+            	wpbox.setChecked(!wpbox.isChecked());
+            }
+            //FIXME - we will have a radiogroup that hides when enabled. 
+            //user will understand when it reappears on disable that only select mode during disable
+            else {
             editor.putBoolean("wallpaper", wpbox.isChecked());
             //WPlockscreen = wpbox.isChecked();
-            
             // Don't forget to commit your edits!!!
             editor.commit();
-  
-            if (active) {
-            	stopService();//stop existing mode
-            	WPlockscreen = !WPlockscreen;
-            	startService();//startup the new mediator
             }
-            else WPlockscreen = wpbox.isChecked();
-            
 
             }
     });
     
-    secured = (CheckBox)findViewById(R.id.secureBox);
-    
-    secured.setChecked((security));        
+    secured = (CheckBox)findViewById(R.id.secureBox);       
     
     secured.setOnClickListener(new OnClickListener() {
 
@@ -164,23 +148,22 @@ public class SettingsActivity extends Activity {
             });
  }
     
-    public void getPrefs() {
+    public void getStatus() {
     	SharedPreferences settings = getSharedPreferences("myLock", 0);
     	
-        persistentNotif = settings.getBoolean("FG", false);
+    	enabled = settings.getBoolean("enabled", false);//only set by toggler
+    	
+    	active = ManageMediator.bind(getApplicationContext());
         
-        shakewake = settings.getBoolean("shake", false);
-        
-        active = settings.getBoolean("serviceactive", false);
-        
-        guard = settings.getBoolean("slideGuard", false);
-        
-        WPlockscreen = settings.getBoolean("wallpaper", false);
+        if (enabled && !active) {
+        	toggleService(true);
+        	active = true;
+        }
         
         //if service is not active, force security setting based on system
         //if it is active we are going to rely on the pref setting
                 
-        if (!active) {
+        if (!enabled) {
         	
         security = getPatternSetting();
         
@@ -188,7 +171,20 @@ public class SettingsActivity extends Activity {
         e.putBoolean("security", security);
         e.commit();
         }
-        else security = settings.getBoolean("security", false);
+        else security = settings.getBoolean("security", false);	
+    }
+    
+    //TODO about to be converted to a pref activity Menu entry
+    public void getPrefs() {
+    	SharedPreferences settings = getSharedPreferences("myLock", 0);
+    	
+        persistentNotif = settings.getBoolean("FG", false);
+        
+        shakewake = settings.getBoolean("shake", false);
+        
+        guard = settings.getBoolean("slideGuard", false);
+        
+        WPlockscreen = settings.getBoolean("wallpaper", false);
     }
     
     public boolean getPatternSetting() {
@@ -232,28 +228,19 @@ public class SettingsActivity extends Activity {
     public void onResume() {
     	super.onResume();
     	
-    	getPrefs();
-    	toggle.setChecked(active);
+    	getStatus();
+    	
+    	toggle.setChecked(enabled);
     	secured.setChecked(security);
     }
     
-    /*start and stop methods rely on pref and are only used by toggle button*/
-    private void startService(){
-   			Intent i = new Intent();
-   			
-   			if (WPlockscreen) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
-   			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
-   			startService(i);
-   			Log.d( getClass().getSimpleName(), "startService()" );
-   		}
-    
-    private void stopService() {
+    private void toggleService(boolean on){
 			Intent i = new Intent();
-			if (WPlockscreen) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
-			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
-			stopService(i);
-			Log.d( getClass().getSimpleName(), "stopService()" );
-    }
+			
+			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.Toggler");
+			i.putExtra("i4nc4mp.myLock.TargetState", on);
+			startService(i);
+		}
     
     @Override
     public void onBackPressed() {

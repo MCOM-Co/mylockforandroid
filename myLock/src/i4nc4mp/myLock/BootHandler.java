@@ -52,20 +52,12 @@ public class BootHandler extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		SharedPreferences settings = getSharedPreferences("myLock", 0);
-		SharedPreferences.Editor editor = settings.edit();
 		
 		boolean secure = settings.getBoolean("security", false);
 
-		boolean active = settings.getBoolean("serviceactive", false);
+		boolean active = settings.getBoolean("enabled", false);
 		
 		boolean waitforuser = true;
-		
-		if (active) {
-			editor.putBoolean("serviceactive", false);
-		
-			Log.v("restart recovery","corrected active flag");
-			editor.commit();
-		}
 		
 		Intent u = new Intent();
 		u.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UserPresentService");
@@ -112,7 +104,7 @@ public class BootHandler extends Service {
 		Log.v("Startup result","wait for user flag is " + waitforuser);
 		
 		if (waitforuser) startService(u);//start user present
-		else startService(i);//start toggler
+		else if (secure || active) startService(i);//start toggler
 		
 		stopForeground(true);
 		stopSelf();
