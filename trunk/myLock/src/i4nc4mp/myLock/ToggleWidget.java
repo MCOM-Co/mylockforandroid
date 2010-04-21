@@ -1,14 +1,22 @@
 package i4nc4mp.myLock;
 
 //how this works - the widget starts toggler service when clicked
-//toggler's onstart does try toggle
+//we manually update the widget via manager interface when toggler executes a change
+//so we don't have to care about binding the mediator from here at all
 
 import android.app.PendingIntent;
+import android.app.Service;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.os.BatteryManager;
+import android.os.IBinder;
+import android.util.Log;
+import android.view.View;
 import android.widget.RemoteViews;
 
 public class ToggleWidget extends AppWidgetProvider {
@@ -19,7 +27,6 @@ public class ToggleWidget extends AppWidgetProvider {
 	public boolean enabled = false;
 	@Override 
   public void onEnabled(Context context) {	
-		
 		AppWidgetManager mgr = AppWidgetManager.getInstance(context);
 		//retrieve a ref to the manager so we can pass a view update
 		
@@ -69,8 +76,73 @@ public class ToggleWidget extends AppWidgetProvider {
       
       enabled = true;
 		}//as far as I can tell, repeat calls to this do not cause errors
-		else {
+		//else
 			//use this case to check the serviceactive state in prefs and choose the image we want
-		}
+			//context.startService(new Intent(context, DisplayStatus.class));
 	}
+/*	
+public static class DisplayStatus extends Service {
+        
+       
+
+        @Override
+        public int onStartCommand(Intent intent, int flags, int startId) {
+            RemoteViews updateViews = buildUpdate(getApplicationContext());
+
+            if(updateViews != null)
+            {
+                    try
+                    {
+                            // Push update for this widget to the home screen
+                            ComponentName thisWidget = new ComponentName(this, ToggleWidget.class);
+                            if(thisWidget != null)
+                            {
+                                    AppWidgetManager manager = AppWidgetManager.getInstance(this);
+                                    if(manager != null && updateViews != null)
+                                    {
+                                        manager.updateAppWidget(thisWidget, updateViews);
+                                    }
+                            }
+                            
+                            //stop the service, clear up memory, can't do this, need the Broadcast Receiver running
+                            //stopSelf();
+                    }catch(Exception e)
+                    {
+                        Log.e("Widget", "Update Service Failed to Start", e);
+                    }
+            }
+            return START_NOT_STICKY;
+        }
+
+        
+        public RemoteViews buildUpdate(Context context) {           
+            // Build an update that holds the updated widget contents
+            RemoteViews updateViews = new RemoteViews(context.getPackageName(), R.layout.togglelayout);
+            		int img;
+                    boolean on = ManageMediator.bind(context);
+                    if (on) img = R.drawable.widg_on_icon;
+                    else img = R.drawable.widg_off_icon;
+                    updateViews.setImageViewResource(R.id.toggleButton, img);
+                            
+                try
+                {
+                	Intent i = new Intent();
+            		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.Toggler");
+            		PendingIntent myPI = PendingIntent.getService(context, 0, i, 0);
+            		updateViews.setOnClickPendingIntent(R.id.toggleButton, myPI);
+                }catch(Exception e)
+                {
+                        Log.e("ToggleWidget","unknown error",e);
+                }
+                            
+            return updateViews;
+        }
+
+		@Override
+		public IBinder onBind(Intent intent) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+        
+   }*/
 }
