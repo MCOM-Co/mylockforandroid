@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -21,6 +22,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 public class IdleSetup extends Activity {
 	
 	SharedPreferences prefs = null;
+	SharedPreferences settings = null;
 	int min;
 	
 	
@@ -29,8 +31,10 @@ public class IdleSetup extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.idlesetup);
         
-       		 
-		 prefs = getSharedPreferences("myLock", 0);
+        settings = getSharedPreferences("myLock", 0);
+		 prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		 
+		 
 		 //Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
 		 
 		 min = prefs.getInt("idletime", 0);
@@ -78,7 +82,7 @@ public class IdleSetup extends Activity {
 	          		int oldpref = prefs.getInt("idletime", 0);
 	          		
 	          		//Trying to set a time but hasn't launched myLock settings while a pattern was in effect
-	          		if (min != 0 && !prefs.getBoolean("security", false)) {
+	          		if (min != 0 && !settings.getBoolean("security", false)) {
           				Toast.makeText(IdleSetup.this, "Set up a pattern via system prefs first", Toast.LENGTH_LONG).show();
           			}
           			else {
@@ -89,14 +93,6 @@ public class IdleSetup extends Activity {
 	          			
 	          			e.commit();
 	          			
-	          			//we only need to notify active mediator if coming from or going to 0
-	          			if ((min == 0 || oldpref == 0) && prefs.getBoolean("serviceactive", false))
-	          			{
-	          			Intent i = new Intent();
-	          			i.setClassName("i4nc4mp.myLock.cupcake", "i4nc4mp.myLock.cupcake.Toggler");
-	          			i.putExtra("i4nc4mp.myLock.TargetState", true);
-	          			startService(i);
-	          				}
 	          			}
 	          			
 	          	}
