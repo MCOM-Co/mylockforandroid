@@ -48,7 +48,7 @@ public class AutoDismiss extends MediatorService {
     public void onDestroy() {
     	super.onDestroy();
             
-        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        SharedPreferences settings = getSharedPreferences("myLock", 0);//PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
     	settings.unregisterOnSharedPreferenceChangeListener(prefslisten);
         
         
@@ -83,13 +83,13 @@ public class AutoDismiss extends MediatorService {
             //if the security mode isn't on, we need to notify user and abort start
             
             
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
-            slideGuarded = prefs.getBoolean("slideGuard", false);
+            slideGuarded = settings.getBoolean("slideGuard", false);
                    
             timeoutenabled = (settings.getInt("idletime", 0) != 0);
             
-            prefs.registerOnSharedPreferenceChangeListener(prefslisten);
+            settings.registerOnSharedPreferenceChangeListener(prefslisten);
  
             
            //toggle out of security

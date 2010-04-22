@@ -21,7 +21,6 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 
 public class IdleSetup extends Activity {
 	
-	SharedPreferences prefs = null;
 	SharedPreferences settings = null;
 	int min;
 	
@@ -32,12 +31,12 @@ public class IdleSetup extends Activity {
         setContentView(R.layout.idlesetup);
         
         settings = getSharedPreferences("myLock", 0);
-		 prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		 //prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		 
 		 
 		 //Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
 		 
-		 min = prefs.getInt("idletime", 0);
+		 min = settings.getInt("idletime", 0);
 		 
 		 final TextView result = (TextView) findViewById(R.id.barpos);
 		 
@@ -79,7 +78,7 @@ public class IdleSetup extends Activity {
 		 Button done = (Button) findViewById(R.id.done);
 		 done.setOnClickListener(new OnClickListener() {
 	          	public void onClick(View v){
-	          		int oldpref = prefs.getInt("idletime", 0);
+	          		int oldpref = settings.getInt("idletime", 0);
 	          		
 	          		//Trying to set a time but hasn't launched myLock settings while a pattern was in effect
 	          		if (min != 0 && !settings.getBoolean("security", false)) {
@@ -88,7 +87,7 @@ public class IdleSetup extends Activity {
           			else {
 	          		if (min != oldpref) {
 	          			
-	          			SharedPreferences.Editor e = prefs.edit();
+	          			SharedPreferences.Editor e = settings.edit();
 	          			e.putInt("idletime", min);
 	          			
 	          			e.commit();
