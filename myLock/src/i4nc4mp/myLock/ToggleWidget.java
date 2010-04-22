@@ -5,144 +5,82 @@ package i4nc4mp.myLock;
 //so we don't have to care about binding the mediator from here at all
 
 import android.app.PendingIntent;
-import android.app.Service;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.os.BatteryManager;
-import android.os.IBinder;
+import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.RemoteViews;
 
 public class ToggleWidget extends AppWidgetProvider {
 	
-	//TODO custom intent string
-	//"i4nc4mp.myLock.intent.action.TOGGLE_LOCKSCREEN"
-	
-	public boolean enabled = false;
 	@Override 
   public void onEnabled(Context context) {	
 		AppWidgetManager mgr = AppWidgetManager.getInstance(context);
 		//retrieve a ref to the manager so we can pass a view update
-		
-		//here we can access shared prefs to determine which mode the user has enabled so we toggle the correct one
-		//for now I just have one static mediator mode running from toggler.
-		//the idea is to make each mode a separate mediator that has to be started after other mode is stopped
-		
-		Intent i = new Intent();
-		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.Toggler");
-		PendingIntent myPI = PendingIntent.getService(context, 0, i, 0);
-		//intent to start Toggler service
-		
-      // Get the layout for the App Widget
-      RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.togglelayout);
-      
-      //attach the click listener for the service start command intent
-      views.setOnClickPendingIntent(R.id.toggleButton, myPI);
-      
-      //define the componenet for self
-      ComponentName comp = new ComponentName(context.getPackageName(), ToggleWidget.class.getName());
-      
-      //tell the manager to update all instances of the toggle widget with the click listener
-      mgr.updateAppWidget(comp, views);
-      enabled = true;
+		RemoteViews v = makeView(context);
+		ComponentName comp = new ComponentName(context.getPackageName(), ToggleWidget.class.getName());
+		mgr.updateAppWidget(comp, v);
 	}
+	
+	/*
+	@Override
+	public void onReceive (Context context, Intent intent) {
+		super.onReceive(context, intent);
+		String ex = "";
+		Bundle e = intent.getExtras();
+		if (e!=null) ex = e.toString();
+		Log.v("toggle widget","Intent is " + intent.toString() + " extras - " + ex);
+		
+	}
+	*/
+	//some kind of extra is being sent that causes the super implementation to call on update
+	//probably the widget ID.
+	//we're safe to just change the button's image from toggler service
 	
 	@Override
 	public void onUpdate (Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
 		//at boot this seems to be getting called twice
-		if (!enabled) {//catches the case that we are booting
+
+			RemoteViews v = makeView(context);
 			
-		//Intent clickintent = new Intent ("i4nc4mp.myLock.intent.action.TOGGLE_LOCKSCREEN");
-		//PendingIntent myPI = PendingIntent.getBroadcast(context, 0, clickintent, 0);
+			ComponentName comp = new ComponentName(context.getPackageName(), ToggleWidget.class.getName());
+			 appWidgetManager.updateAppWidget(comp, v);
+      
+		//as far as I can tell, repeat calls to this do not cause errors
+	}
+	
+	//We don't need to do anything that retrieves info from network.
+	//this should always be fast enough to avoid ANR
+	public RemoteViews makeView(Context context) {
 				
 		Intent i = new Intent();
 		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.Toggler");
 		PendingIntent myPI = PendingIntent.getService(context, 0, i, 0);
 		//tells the widget button to do start command on toggler service when clicked.
 		
-      // Get the layout for the App Widget and attach an on-click listener to the button
-      RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.togglelayout);
-      ComponentName comp = new ComponentName(context.getPackageName(), ToggleWidget.class.getName());
+		// Spawn view, specify layout
+		RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.togglelayout);
       
-      views.setOnClickPendingIntent(R.id.toggleButton, myPI);
-      appWidgetManager.updateAppWidget(comp, views);
-		//sends this to update the actual widget view that has been spawned
+		//attach an on-click listener to the button element
+		views.setOnClickPendingIntent(R.id.toggleButton, myPI);
       
-      enabled = true;
-		}//as far as I can tell, repeat calls to this do not cause errors
-		//else
-			//use this case to check the serviceactive state in prefs and choose the image we want
-			//context.startService(new Intent(context, DisplayStatus.class));
+		//determine the currently assumed status of service
+		SharedPreferences p = context.getSharedPreferences("myLock",0);
+		boolean on = p.getBoolean("enabled", false);
+      
+		int img;
+      
+		if (on) img = R.drawable.widg_on_icon;
+		else img = R.drawable.widg_off_icon;
+      
+		//change the button image to reflect service state
+		views.setImageViewResource(R.id.toggleButton, img);
+      
+		return views;
+     
 	}
-/*	
-public static class DisplayStatus extends Service {
-        
-       
-
-        @Override
-        public int onStartCommand(Intent intent, int flags, int startId) {
-            RemoteViews updateViews = buildUpdate(getApplicationContext());
-
-            if(updateViews != null)
-            {
-                    try
-                    {
-                            // Push update for this widget to the home screen
-                            ComponentName thisWidget = new ComponentName(this, ToggleWidget.class);
-                            if(thisWidget != null)
-                            {
-                                    AppWidgetManager manager = AppWidgetManager.getInstance(this);
-                                    if(manager != null && updateViews != null)
-                                    {
-                                        manager.updateAppWidget(thisWidget, updateViews);
-                                    }
-                            }
-                            
-                            //stop the service, clear up memory, can't do this, need the Broadcast Receiver running
-                            //stopSelf();
-                    }catch(Exception e)
-                    {
-                        Log.e("Widget", "Update Service Failed to Start", e);
-                    }
-            }
-            return START_NOT_STICKY;
-        }
-
-        
-        public RemoteViews buildUpdate(Context context) {           
-            // Build an update that holds the updated widget contents
-            RemoteViews updateViews = new RemoteViews(context.getPackageName(), R.layout.togglelayout);
-            		int img;
-                    boolean on = ManageMediator.bind(context);
-                    if (on) img = R.drawable.widg_on_icon;
-                    else img = R.drawable.widg_off_icon;
-                    updateViews.setImageViewResource(R.id.toggleButton, img);
-                            
-                try
-                {
-                	Intent i = new Intent();
-            		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.Toggler");
-            		PendingIntent myPI = PendingIntent.getService(context, 0, i, 0);
-            		updateViews.setOnClickPendingIntent(R.id.toggleButton, myPI);
-                }catch(Exception e)
-                {
-                        Log.e("ToggleWidget","unknown error",e);
-                }
-                            
-            return updateViews;
-        }
-
-		@Override
-		public IBinder onBind(Intent intent) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-        
-   }*/
 }

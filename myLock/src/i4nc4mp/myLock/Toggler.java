@@ -12,6 +12,7 @@ import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
+//perhaps toggling duty can be made a part of the ManageMediator as a static method
 public class Toggler extends Service {
 	
 	private boolean target;
@@ -21,7 +22,6 @@ public class Toggler extends Service {
 	
 	@Override
 	public IBinder onBind(Intent intent) {
-		// we don't bind it, just call start from the widget
 		return null;
 	}
 	
@@ -71,17 +71,28 @@ private void updateEnablePref(boolean on, Context mCon) {
     // Don't forget to commit your edits!!!
     editor.commit();
     
-    //Lastly, send the update to any widgets
-    AppWidgetManager mgr = AppWidgetManager.getInstance(getApplicationContext());
+    
+    AppWidgetManager mgr = AppWidgetManager.getInstance(mCon);
     ComponentName comp = new ComponentName(mCon.getPackageName(), ToggleWidget.class.getName());
     //int[] widgets = mgr.getAppWidgetIds (comp);
     RemoteViews views = new RemoteViews(mCon.getPackageName(), R.layout.togglelayout);
+    
 	int img;
     //on = ManageMediator.bind(context);
     if (on) img = R.drawable.widg_on_icon;
     else img = R.drawable.widg_off_icon;
     views.setImageViewResource(R.id.toggleButton, img);
+    
     mgr.updateAppWidget(comp, views);
+    
+    /*
+    ComponentName comp = new ComponentName(mCon.getPackageName(), ToggleWidget.class.getName());
+    Intent w = new Intent();
+    
+    w.setComponent(comp);
+    w.setAction("android.appwidget.action.APPWIDGET_UPDATE");
+    mCon.sendBroadcast(w);
+    */
     
 }
 	
