@@ -22,11 +22,10 @@ public class ToggleWidget extends AppWidgetProvider {
 	
 	@Override 
   public void onEnabled(Context context) {	
-		AppWidgetManager mgr = AppWidgetManager.getInstance(context);
-		//retrieve a ref to the manager so we can pass a view update
-		RemoteViews v = makeView(context);
-		ComponentName comp = new ComponentName(context.getPackageName(), ToggleWidget.class.getName());
-		mgr.updateAppWidget(comp, v);
+		
+		SharedPreferences p = context.getSharedPreferences("myLock",0);
+		makeView(context, p.getBoolean("enabled", false));
+		//use last known state pref as state for first start		
 	}
 	
 	//implemented our own call to the broadcast with bool telling it we toggled.
@@ -57,18 +56,22 @@ public class ToggleWidget extends AppWidgetProvider {
 	public void onUpdate (Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
 		//at boot this seems to be getting called twice
 
-			RemoteViews v = makeView(context);
-			
-			ComponentName comp = new ComponentName(context.getPackageName(), ToggleWidget.class.getName());
-			 appWidgetManager.updateAppWidget(comp, v);
+		SharedPreferences p = context.getSharedPreferences("myLock",0);
+		makeView(context, p.getBoolean("enabled", false));
       
 		//as far as I can tell, repeat calls to this do not cause errors
 	}
 	
 	//We don't need to do anything that retrieves info from network.
 	//this should always be fast enough to avoid ANR
-	public RemoteViews makeView(Context context) {
-				
+	
+	//I've made it static so we can just pass a state to it, and all widgets will be updated as such
+	//saves us duplicating all of this code that also needs to be called by toggler.
+	//much better to be a class method.
+	public static void makeView(Context context, boolean on) {
+		AppWidgetManager mgr = AppWidgetManager.getInstance(context);	
+		
+		
 		Intent i = new Intent();
 		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.Toggler");
 		PendingIntent myPI = PendingIntent.getService(context, 0, i, 0);
@@ -80,10 +83,6 @@ public class ToggleWidget extends AppWidgetProvider {
 		//attach an on-click listener to the button element
 		views.setOnClickPendingIntent(R.id.toggleButton, myPI);
       
-		//determine the currently assumed status of service
-		SharedPreferences p = context.getSharedPreferences("myLock",0);
-		boolean on = p.getBoolean("enabled", false);
-      
 		int img;
       
 		if (on) img = R.drawable.widg_on_icon;
@@ -91,8 +90,12 @@ public class ToggleWidget extends AppWidgetProvider {
       
 		//change the button image to reflect service state
 		views.setImageViewResource(R.id.toggleButton, img);
+		
+		
+		ComponentName comp = new ComponentName(context.getPackageName(), ToggleWidget.class.getName());
+		mgr.updateAppWidget(comp, views);
       
-		return views;
+
      
 	}
 }

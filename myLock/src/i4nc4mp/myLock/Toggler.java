@@ -72,28 +72,7 @@ private void updateEnablePref(boolean on, Context mCon) {
     // Don't forget to commit your edits!!!
     editor.commit();
     
-    
-    AppWidgetManager mgr = AppWidgetManager.getInstance(mCon);
-    ComponentName comp = new ComponentName(mCon.getPackageName(), ToggleWidget.class.getName());
-    //int[] widgets = mgr.getAppWidgetIds (comp);
-    RemoteViews views = new RemoteViews(mCon.getPackageName(), R.layout.togglelayout);
-    
-    Intent i = new Intent();
-	i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.Toggler");
-	PendingIntent myPI = PendingIntent.getService(mCon, 0, i, 0);
-	
-	//attach an on-click listener to the button element
-	views.setOnClickPendingIntent(R.id.toggleButton, myPI);
-    
-	int img;
-    //on = ManageMediator.bind(context);
-    if (on) img = R.drawable.widg_on_icon;
-    else img = R.drawable.widg_off_icon;
-    
-    //tell the button element what state image to show
-    views.setImageViewResource(R.id.toggleButton, img);
-    
-    mgr.updateAppWidget(comp, views);
+    ToggleWidget.makeView(mCon, on);
     
     /*
     ComponentName comp = new ComponentName(mCon.getPackageName(), ToggleWidget.class.getName());
