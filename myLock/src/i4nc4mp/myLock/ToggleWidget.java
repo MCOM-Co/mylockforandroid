@@ -4,6 +4,9 @@ package i4nc4mp.myLock;
 //we manually update the widget via manager interface when toggler executes a change
 //so we don't have to care about binding the mediator from here at all
 
+//enable/update occurs at boot/first add to set an initial state
+//toggles actually send state changes from the service itself.
+
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -26,17 +29,26 @@ public class ToggleWidget extends AppWidgetProvider {
 		mgr.updateAppWidget(comp, v);
 	}
 	
+	//implemented our own call to the broadcast with bool telling it we toggled.
 	/*
 	@Override
 	public void onReceive (Context context, Intent intent) {
 		super.onReceive(context, intent);
-		String ex = "";
-		Bundle e = intent.getExtras();
-		if (e!=null) ex = e.toString();
-		Log.v("toggle widget","Intent is " + intent.toString() + " extras - " + ex);
+		//String ex = "";
+		//Bundle e = intent.getExtras();
+		//if (e!=null) ex = e.toString();
+		//Log.v("toggle widget","Intent is " + intent.toString() + " extras - " + ex);
+		if(!intent.getBooleanExtra("i4nc4mp.myLock.toggle", false)) {
+			AppWidgetManager mgr = AppWidgetManager.getInstance(context);
+			
+			RemoteViews v = makeView(context);
+			
+			ComponentName comp = new ComponentName(context.getPackageName(), ToggleWidget.class.getName());
+			 mgr.updateAppWidget(comp, v);
+		}
 		
-	}
-	*/
+	}*/
+	
 	//some kind of extra is being sent that causes the super implementation to call on update
 	//probably the widget ID.
 	//we're safe to just change the button's image from toggler service

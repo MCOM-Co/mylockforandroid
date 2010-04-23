@@ -1,6 +1,7 @@
 package i4nc4mp.myLock;
 
 
+import android.app.PendingIntent;
 import android.app.Service;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
@@ -77,10 +78,19 @@ private void updateEnablePref(boolean on, Context mCon) {
     //int[] widgets = mgr.getAppWidgetIds (comp);
     RemoteViews views = new RemoteViews(mCon.getPackageName(), R.layout.togglelayout);
     
+    Intent i = new Intent();
+	i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.Toggler");
+	PendingIntent myPI = PendingIntent.getService(mCon, 0, i, 0);
+	
+	//attach an on-click listener to the button element
+	views.setOnClickPendingIntent(R.id.toggleButton, myPI);
+    
 	int img;
     //on = ManageMediator.bind(context);
     if (on) img = R.drawable.widg_on_icon;
     else img = R.drawable.widg_off_icon;
+    
+    //tell the button element what state image to show
     views.setImageViewResource(R.id.toggleButton, img);
     
     mgr.updateAppWidget(comp, views);
@@ -91,8 +101,10 @@ private void updateEnablePref(boolean on, Context mCon) {
     
     w.setComponent(comp);
     w.setAction("android.appwidget.action.APPWIDGET_UPDATE");
+    w.putExtra("i4nc4mp.myLock.toggle", true);//so widget knows we manually told it to update the status
     mCon.sendBroadcast(w);
     */
+    
     
 }
 	
