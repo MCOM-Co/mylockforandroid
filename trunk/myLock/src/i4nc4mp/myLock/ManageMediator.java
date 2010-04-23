@@ -38,15 +38,7 @@ public class ManageMediator {
           
           if (c==null) return;
         //Lastly, send the update to any widgets - so user will know svc is dead
-          AppWidgetManager mgr = AppWidgetManager.getInstance(c);
-          ComponentName comp = new ComponentName(c.getPackageName(), ToggleWidget.class.getName());
-          //int[] widgets = mgr.getAppWidgetIds (comp);
-          RemoteViews views = new RemoteViews(c.getPackageName(), R.layout.togglelayout);
-      	int img;
-          //on = ManageMediator.bind(context);
-         
-          views.setImageViewResource(R.id.toggleButton, R.drawable.widg_off_icon);
-          mgr.updateAppWidget(comp, views);
+          ToggleWidget.makeView(c, false);
         }
     };
 	
@@ -100,11 +92,5 @@ public class ManageMediator {
 			conn = null;
 			mediator = null;
 		} 
-	}
-	
-	public static synchronized void updateWidget(Context mCon, boolean state) {
-		
-	}
-	
-	
+	}	
 }
