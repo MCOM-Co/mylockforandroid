@@ -13,9 +13,10 @@ import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.TextView;
 
-//static helper - all we need to do is try bind with mediator
-//used by toggler & main settings to see if mediator is running
-//this works better than trying to keep track of serviceactive pref flag
+//static helper
+//what we're really doing here is a creating and holding a binding when we launch the service
+//subsequent calls to the bind method just see if the bind object exists. if yes, success/enabled
+//the idea of a client binding to the service is 
 
 public class ManageMediator {
 	private static RemoteServiceConnection conn = null;
@@ -27,6 +28,7 @@ public class ManageMediator {
 			IBinder boundService ) {
           mediator = IsActive.Stub.asInterface((IBinder)boundService);
           Log.v("service connected","bind to existent service");
+          //always occurs immediately after service is started. would be a safe point to send widget update
           
         }
 
@@ -98,6 +100,10 @@ public class ManageMediator {
 			conn = null;
 			mediator = null;
 		} 
+	}
+	
+	public static synchronized void updateWidget(Context mCon, boolean state) {
+		
 	}
 	
 	
