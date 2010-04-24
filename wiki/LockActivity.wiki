@@ -63,7 +63,6 @@ public class AutoDismissActivity extends Activity {
     
     Log.v("dismiss","creating dismiss window");
     
-    //when using the show when locked the dismiss doesn't actually happen. lol.    
     updateLayout();
     
     //register for user present so we don't have to manually check kg with the keyguard manager
@@ -115,3 +114,6 @@ public void onDestroy() {
 = How to transition from non-secure Keyguard screen to the Secure Pattern? =
 We have implemented security interaction by having permission to access system settings and set the pattern flag to 0 when we start one of the mediator services. When we receive a disable toggle, the mediator will restore the pattern flag again as it closes down. The issue here is that the system still has the non-secure keyguard screen open when that happens in the background.
 To create the Pattern Verification lockscreen, all we actually have to do is call the pre-2.0 DisableKeyguard, then wait 50 ms approx via a handler thread, then call re-enable.  There currently however isn't a better solution to move back and forth between fully having cancelled the non-secure lockscreen via the 2.0 dismiss flag and restoring it. However the same thing is true for using the Disable command just prior to doing the window-based dismiss. We can then use the re-enable command to force the Keyguard back on.
+
+= Porting Dismiss Activity to 1.5 compatibility =
+I created an activity to function exactly like the dismiss activity. It calls disable keyguard at create, then calls securely exit when it gains focus initially. then it exits per usualy at receiving user present.
