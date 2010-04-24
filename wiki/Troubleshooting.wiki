@@ -1,8 +1,8 @@
 #summary Known solutions for problems we can't fix in the code.
 #labels Featured
 
-= Updates to ver 1.3.2 =
-Some have reported an error with prefs after this. To resolve this uninstall then redownload the app and any addon packages. There is no other way to fix this.
+= Prefs reset after a reboot (updates from pre 1.3.2 caused this) =
+To resolve this uninstall then redownload the app and any addon packages. There is no other way to fix this.
 
 = MOST IMPORTANT: DOWNLOAD LOG COLLECTOR =
 If you can email me a log immediately after a problem happens, I can know exactly why the problem happened and actually roll out a fix or a message to the dev of the app that caused the issue if it was a conflict. All you have to do is open Log Collector and put in our email (mylockandroid at gmail). In the subject, put the time you think the problem happened and what the problem was (IE: Lockscreen came back and wouldn't go away, Screen Came on but flashed back off, etc). If you can, please also go to Settings => Applications => Running Services and tell me what is running, that will give me an idea if any other persistent app is going that might not be putting things in the Log.
