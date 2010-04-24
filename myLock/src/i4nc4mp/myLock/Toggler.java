@@ -1,19 +1,16 @@
 package i4nc4mp.myLock;
 
-
-import android.app.PendingIntent;
 import android.app.Service;
-import android.appwidget.AppWidgetManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.RemoteViews;
 import android.widget.Toast;
 
-//perhaps toggling duty can be made a part of the ManageMediator as a static method
+//invoked by widget and plugin commands
+//just checks state and calls through to the manage mediator class methods
+
 public class Toggler extends Service {
 	
 	private boolean target;
@@ -40,17 +37,17 @@ Log.v("Toggler","Starting");
 		
 		//start if we've been told to start and did not already exist				
 		if (target && !active) {
-			startService();
-			updateEnablePref(true, getApplicationContext());
+			ManageMediator.startService(getApplicationContext());
+			ManageMediator.updateEnablePref(true, getApplicationContext());
     		Toast.makeText(Toggler.this, "myLock is now enabled", Toast.LENGTH_SHORT).show();
     		
 		}//stop if we've been told to stop and did already exist
 		else if (active && !target) {
 				
-				stopService();
+				ManageMediator.stopService(getApplicationContext());
 				Toast.makeText(Toggler.this, "myLock is now disabled", Toast.LENGTH_SHORT).show();
 				
-				updateEnablePref(false, getApplicationContext());
+				ManageMediator.updateEnablePref(false, getApplicationContext());
 		}//log the request - locale condition may send a desired state that already exists
 		else Log.v("toggler","unhandled outcome - target was not a change");
 		
@@ -64,6 +61,21 @@ public void getPrefs() {
 	guard = settings.getBoolean("wallpaper", false);
 }
 
+/*
+ * 
+ * manual update broadcast the widget can get
+ComponentName comp = new ComponentName(mCon.getPackageName(), ToggleWidget.class.getName());
+Intent w = new Intent();
+
+w.setComponent(comp);
+w.setAction("android.appwidget.action.APPWIDGET_UPDATE");
+w.putExtra("i4nc4mp.myLock.toggle", true);//so widget knows we manually told it to update the status
+mCon.sendBroadcast(w);
+*/
+
+/*
+ * 
+ * These are handled as class methods in manage mediator now
 private void updateEnablePref(boolean on, Context mCon) {
 	SharedPreferences set = getSharedPreferences("myLock", 0);
 	SharedPreferences.Editor editor = set.edit();
@@ -72,17 +84,10 @@ private void updateEnablePref(boolean on, Context mCon) {
     // Don't forget to commit your edits!!!
     editor.commit();
     
-    ToggleWidget.makeView(mCon, on);
+    //ToggleWidget.makeView(mCon, on);
+    //moved to the manage mediator class start/stop calls
     
-    /*
-    ComponentName comp = new ComponentName(mCon.getPackageName(), ToggleWidget.class.getName());
-    Intent w = new Intent();
     
-    w.setComponent(comp);
-    w.setAction("android.appwidget.action.APPWIDGET_UPDATE");
-    w.putExtra("i4nc4mp.myLock.toggle", true);//so widget knows we manually told it to update the status
-    mCon.sendBroadcast(w);
-    */
     
     
 }
@@ -103,6 +108,6 @@ private void stopService() {
 		else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
 		stopService(i);
 		Log.d( getClass().getSimpleName(), "stopService()" );
-}
+}*/
 
 }
