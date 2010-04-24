@@ -52,61 +52,9 @@ public class SettingsActivity extends Activity {
       toggle.setOnClickListener(new OnClickListener() {
     	  public void onClick(View v){
         		enabled = toggle.isChecked();
-        		toggleService(enabled);
+        		ManageMediator.invokeToggler(getApplicationContext(), enabled);
         		}
-          });
-              
-       final CheckBox fg = (CheckBox)findViewById(R.id.fgBox);
-       
-       fg.setChecked((persistentNotif)); 
-       
-       fg.setOnClickListener(new OnClickListener() {
-
-           public void onClick(View v) {
-        	   SharedPreferences set = getSharedPreferences("myLock", 0);
-        	   SharedPreferences.Editor editor = set.edit();
-               editor.putBoolean("FG", fg.isChecked());
-
-               // Don't forget to commit your edits!!!
-               editor.commit();
-           }
-       });
-       
-       final CheckBox shake = (CheckBox)findViewById(R.id.shakeBox);
-
-       shake.setChecked((shakewake));        
-               
-       shake.setOnClickListener(new OnClickListener() {
-
-                   public void onClick(View v) {
-                	   SharedPreferences set = getSharedPreferences("myLock", 0);
-                	   SharedPreferences.Editor editor = set.edit(); 
-                	   
-                	   editor.putBoolean("shake", shake.isChecked());
-
-                       // Don't forget to commit your edits!!!
-                       editor.commit();            			                       
-                   }
-               });
-       shake.setVisibility(View.GONE);//hide it for now
-       
-       final CheckBox slideguard = (CheckBox)findViewById(R.id.slideGuard);
-       
-       slideguard.setChecked((guard));        
-       
-       slideguard.setOnClickListener(new OnClickListener() {
-
-    	   public void onClick(View v) {
-               SharedPreferences set = getSharedPreferences("myLock", 0);
-               SharedPreferences.Editor editor = set.edit(); 
-               
-               editor.putBoolean("slideGuard", slideguard.isChecked());
-
-               // Don't forget to commit your edits!!!
-               editor.commit();
-               }
-               });
-    
+          });    
     
     final CheckBox wpbox = (CheckBox)findViewById(R.id.wplock);
     
@@ -156,8 +104,10 @@ public class SettingsActivity extends Activity {
     	active = ManageMediator.bind(getApplicationContext());
         
         if (enabled && !active) {
-        	toggleService(true);
-        	active = true;
+        	//toggleService(true);
+        	//active = true;
+        	Log.e("pref getStatus","mediator bind failed");
+        	 Toast.makeText(SettingsActivity.this, "error: myLock service not found", Toast.LENGTH_LONG).show();
         }
         
         //if service is not active, force security setting based on system
@@ -179,10 +129,6 @@ public class SettingsActivity extends Activity {
     	SharedPreferences settings = getSharedPreferences("myLock", 0);
     	
         persistentNotif = settings.getBoolean("FG", false);
-        
-        shakewake = settings.getBoolean("shake", false);
-        
-        guard = settings.getBoolean("slideGuard", false);
         
         WPlockscreen = settings.getBoolean("wallpaper", false);
     }
@@ -233,14 +179,6 @@ public class SettingsActivity extends Activity {
     	toggle.setChecked(enabled);
     	secured.setChecked(security);
     }
-    
-    private void toggleService(boolean on){
-			Intent i = new Intent();
-			
-			i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.Toggler");
-			i.putExtra("i4nc4mp.myLock.TargetState", on);
-			startService(i);
-		}
     
     @Override
     public void onBackPressed() {

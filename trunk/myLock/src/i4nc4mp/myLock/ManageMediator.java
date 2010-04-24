@@ -1,22 +1,20 @@
 package i4nc4mp.myLock;
 
 
-import android.appwidget.AppWidgetManager;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.IBinder;
-import android.os.RemoteException;
 import android.util.Log;
-import android.widget.RemoteViews;
-import android.widget.TextView;
+import android.widget.Toast;
 
-//static helper
-//what we're really doing here is a creating and holding a binding when we launch the service
-//subsequent calls to the bind method just see if the bind object exists. if yes, success/enabled
-//the idea of a client binding to the service is 
+
+//static helper to give us a reliable notificaton if service dies and let us keep track of state
+//also houses method to call through to toggler service to handle a state change request
+//also can be used to call specific state change, that is used by the pref screen
 
 public class ManageMediator {
 	private static RemoteServiceConnection conn = null;
@@ -37,6 +35,16 @@ public class ManageMediator {
           Log.v("service disconnected","service death");
           
           if (c==null) return;
+          
+          Toast.makeText(c, "unexpected myLock stop", Toast.LENGTH_LONG).show();
+          
+          SharedPreferences set = c.getSharedPreferences("myLock", 0);
+      	SharedPreferences.Editor editor = set.edit();
+          editor.putBoolean("enabled", false);
+
+          // Don't forget to commit your edits!!!
+          editor.commit();
+          
         //Lastly, send the update to any widgets - so user will know svc is dead
           ToggleWidget.makeView(c, false);
         }
@@ -44,6 +52,14 @@ public class ManageMediator {
 	
 	public static synchronized boolean bind(Context mCon) {
 		boolean exists;
+		
+		//What we do here is attempt to bind, if we don't appear to have it already
+		//Always succeeds when we call it right after toggling on
+		
+		
+		//Future calls merely return the existence of mediator as true
+		//When called and there is no mediator, there is no bind and it can't be made
+		//we don't auto create.
 		
 		if (c==null) c=mCon;//store our context ref so we can use it if service dies
 		
@@ -68,10 +84,6 @@ public class ManageMediator {
 		}
 		
 		exists = (mediator !=null); 
-		//the bind is forced by toggler immediately after starting service
-		//we will never gain the bind to an active mediator other than at that point
-		
-		//however, this will still be null if no mediator exists at all.
 		
 			/*try {
 			exists = mediator.Exists();
@@ -85,12 +97,61 @@ public class ManageMediator {
 		return exists;
 	}
 
-	//called when we deliberately stop the service
+	//called when we deliberately stop the service - this way the bind is fully zeroed out
 	public static synchronized void release(Context mCon) {
 		if(conn != null) {
 			mCon.unbindService(conn);
 			conn = null;
 			mediator = null;
 		} 
-	}	
+	}
+	
+	public static synchronized void invokeToggler(Context mCon, boolean on) {
+		Intent i = new Intent();
+		
+		i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.Toggler");
+		i.putExtra("i4nc4mp.myLock.TargetState", on);
+		mCon.startService(i);
+	}
+	
+	public static synchronized void startService(Context mCon){
+		SharedPreferences settings = mCon.getSharedPreferences("myLock", 0);
+		boolean guard = settings.getBoolean("wallpaper", false);
+		
+		Intent i = new Intent();
+		if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
+		else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
+		mCon.startService(i);
+		
+		bind(mCon);//we always hold the binding while officially active
+		
+		ToggleWidget.makeView(mCon, true);
+		Log.d( "manage mediator", "start call" );
+}
+
+	public static synchronized void stopService(Context mCon) {
+		SharedPreferences settings = mCon.getSharedPreferences("myLock", 0);
+		boolean guard = settings.getBoolean("wallpaper", false);
+		
+		release(mCon);
+		Intent i = new Intent();
+		if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
+		else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
+		mCon.stopService(i);
+		
+		ToggleWidget.makeView(mCon, false);
+		Log.d( "manage mediator", "stop call" );
+}
+	//only used for external toggle requests
+	//toggler service handles requesting this methods
+	public static synchronized void updateEnablePref(boolean on, Context mCon) {
+		SharedPreferences set = mCon.getSharedPreferences("myLock", 0);
+		SharedPreferences.Editor editor = set.edit();
+	    editor.putBoolean("enabled", on);
+
+	    // Don't forget to commit your edits!!!
+	    editor.commit();
+	    
+	}
+	
 }
