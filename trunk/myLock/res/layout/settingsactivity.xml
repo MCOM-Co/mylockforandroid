@@ -7,12 +7,10 @@
     android:gravity="center_horizontal"
     >
 <!-- CheckBox android:text="@string/shakeBox" android:id="@+id/shakeBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox  -->
-<CheckBox android:text="@string/activeBox" android:id="@+id/activeBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
+<CheckBox android:text="Enabled" android:id="@+id/activeBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
 
 
-
-<CheckBox android:text="@string/wplock" android:id="@+id/wplock" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
-<CheckBox android:text="@string/secureBox" android:id="@+id/secureBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
+<CheckBox android:text="System security pattern status" android:id="@+id/secureBox" android:layout_width="wrap_content" android:layout_height="wrap_content"></CheckBox>
 
 
 </LinearLayout></ScrollView>

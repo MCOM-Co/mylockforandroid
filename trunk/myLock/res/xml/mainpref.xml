@@ -1,27 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-<CheckBoxPreference android:key="enabled" android:title="Service Status"
+<CheckBoxPreference android:title="Service Status"
+android:key="enabled"
 android:summaryOn="@string/enabled" android:summaryOff="@string/disabled"
-android:disableDependentsState="false"
- android:persistent="true"
- android:widgetLayout="@layout/preftogglebutton"
+android:disableDependentsState="true"
+android:persistent="true"
 />
-<!-- android:widgetLayout="@layout/preftogglebutton" -->
+
 <CheckBoxPreference android:key="security" android:title="Security Status"
-android:summaryOn="@string/sec_on" android:summaryOff="@string/sec_off"></CheckBoxPreference>
-<PreferenceCategory android:key="category" android:dependency="enabled" android:title="Disable dependents"
-android:summary="Mode and security settings">
-<Preference android:key="mode" android:layout="@layout/modeselect"/>
-</PreferenceCategory>
+android:summaryOn="@string/sec_on" android:summaryOff="@string/sec_off"
+android:persistent="true" android:enabled="false" android:shouldDisableView="false"
+android:widgetLayout="@layout/hiddencheckbox"></CheckBoxPreference>
+<!-- hidden checkbox is just a checkbox root with visibility set invisible
+eventually we should be able to set it to one with an image cue referring to security state -->
+
+<Preference android:key="mode" android:title="Select Mode"
+android:dependency="enabled"/>
+<!-- category does nothing, just a cosmetic divider. -->
+
 <CheckBoxPreference android:key="slideGuard" android:title="guard slider"
-	android:persistent="true" android:summaryOn="@string/guard_on" android:summaryOff="@string/guard_off"/>
+	android:summaryOn="@string/guard_on" android:summaryOff="@string/guard_off"
+	android:persistent="true"/>
 <CheckBoxPreference android:key="FG" android:title="Status Icon"
-	android:persistent="true" android:summaryOn="@string/fg_on" android:summaryOff="@string/fg_off"/>
+	android:summaryOn="@string/fg_on" android:summaryOff="@string/fg_off"
+	android:persistent="true"/>
 
         <i4nc4mp.myLock.MainDialogPreference
-                android:key="about" android:title="@string/howto_title" android:src="@drawable/icon"
+                android:key="howto" android:title="@string/howto_title" android:src="@drawable/icon"
                 android:dialogTitle="@string/howto_title" android:dialogMessage="@string/HowToFull"
-                android:dialogIcon="@drawable/icon" android:negativeButtonText="@null" />
+                android:dialogIcon="@drawable/icon" android:negativeButtonText="@null"/>
         <i4nc4mp.myLock.MainDialogPreference
                 android:key="problem" android:title="@string/ts_title" android:src="@drawable/icon"
                 android:dialogTitle="@string/ts_title" android:dialogMessage="@string/Troubleshooting"

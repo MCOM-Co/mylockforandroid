@@ -17,16 +17,10 @@ import android.widget.CheckBox;
 import android.widget.Toast;
 
 //getSharedPreferences("myLockAutoUnlockprefs", Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
+//deprecated - we now have a preference screen to make this more intuitive for end user
+
 
 public class SettingsActivity extends Activity {
-		
-	private boolean persistentNotif = false;	
-    
-    private boolean shakewake = false;
-    
-    private boolean guard = false;
-    
-    private boolean WPlockscreen = false;
     
     
     private boolean security = false;
@@ -43,9 +37,6 @@ public class SettingsActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.settingsactivity);
-            
-        getPrefs();
-        //moving Prefs into a real pref activity
         
      toggle = (CheckBox)findViewById(R.id.activeBox);
         
@@ -56,33 +47,7 @@ public class SettingsActivity extends Activity {
         		}
           });    
     
-    final CheckBox wpbox = (CheckBox)findViewById(R.id.wplock);
-    
-    wpbox.setChecked((WPlockscreen));        
-    
-    wpbox.setOnClickListener(new OnClickListener() {
-
- 	   public void onClick(View v) {
-            SharedPreferences set = getSharedPreferences("myLock", 0);
-            SharedPreferences.Editor editor = set.edit(); 
-            
-              
-            if (enabled) {
-            	Toast.makeText(SettingsActivity.this, "Please disable myLock first", Toast.LENGTH_LONG).show();
-            	wpbox.setChecked(!wpbox.isChecked());
-            }
-            //FIXME - we will have a radiogroup that hides when enabled. 
-            //user will understand when it reappears on disable that only select mode during disable
-            else {
-            editor.putBoolean("wallpaper", wpbox.isChecked());
-            //WPlockscreen = wpbox.isChecked();
-            // Don't forget to commit your edits!!!
-            editor.commit();
-            }
-
-            }
-    });
-    
+        
     secured = (CheckBox)findViewById(R.id.secureBox);       
     
     secured.setOnClickListener(new OnClickListener() {
@@ -122,15 +87,6 @@ public class SettingsActivity extends Activity {
         e.commit();
         }
         else security = settings.getBoolean("security", false);	
-    }
-    
-    //TODO about to be converted to a pref activity Menu entry
-    public void getPrefs() {
-    	SharedPreferences settings = getSharedPreferences("myLock", 0);
-    	
-        persistentNotif = settings.getBoolean("FG", false);
-        
-        WPlockscreen = settings.getBoolean("wallpaper", false);
     }
     
     public boolean getPatternSetting() {

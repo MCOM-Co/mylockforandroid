@@ -38,14 +38,8 @@ public class ManageMediator {
           
           Toast.makeText(c, "unexpected myLock stop", Toast.LENGTH_LONG).show();
           
-          SharedPreferences set = c.getSharedPreferences("myLock", 0);
-      	SharedPreferences.Editor editor = set.edit();
-          editor.putBoolean("enabled", false);
-
-          // Don't forget to commit your edits!!!
-          editor.commit();
+          //updateEnablePref(false, c);
           
-        //Lastly, send the update to any widgets - so user will know svc is dead
           ToggleWidget.makeView(c, false);
         }
     };
