@@ -6,7 +6,6 @@
       android:sharedUserId="i4nc4mp.myLockAutoUnlock"
       android:sharedUserLabel="@string/userlabel" >
       
-
       <!-- Permission Declaration (so plugin download will work) 
       now obsolete due to the declaring a sharedUserId-->
     <permission android:name="i4nc4mp.myLock.permission.toggle"
@@ -19,20 +18,9 @@
     <application android:icon="@drawable/icon" android:label="@string/app_name">
     
     
-        <activity android:name=".SettingsActivity"
-                  android:label="Setup"
-                  android:theme="@android:style/Theme.NoTitleBar"
-                  android:launchMode="singleInstance">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        
-        <activity android:name="MainPreferenceActivity"
-                  android:label="Pref"
-                  android:theme="@android:style/Theme"
-                  android:launchMode="singleInstance">
+        <activity android:name=".MainPreferenceActivity"
+                  android:label="myLock Prefs"
+                  android:theme="@android:style/Theme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -75,14 +63,7 @@
                 android:launchMode="singleTask"
                 android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen"
                 android:taskAffinity=""
-                android:screenOrientation="portrait">
-                <!-- for testing we can launch the lockdown from main
-                <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-            -->
-               
+                android:screenOrientation="portrait">               
                 </activity>
                
                 

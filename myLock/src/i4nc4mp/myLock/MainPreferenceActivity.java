@@ -3,67 +3,116 @@ package i4nc4mp.myLock;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.CheckBoxPreference;
+import android.preference.Preference;
 import android.preference.PreferenceActivity;
-import android.view.View;
-
-//Design goals for this
-//We need to have prefs that hide when the service is running (we hold the static bind)
-//Those prefs are the mode selection, mainly (for 1.4)
-
-//I want the toggle widget layout to also show as the enable element. 
-//I think we can create a layout that houses toggle button and import it in the preference
-//this may be outside the scope of preference but i think it could be done
-
-//for now, we have a separate settings screen which handles mediator mode, status, and security
-//(for user awareness of the need to have myLock disabled to make changes to those key factors)
+import android.preference.Preference.OnPreferenceClickListener;
+import android.provider.Settings.SettingNotFoundException;
+import android.util.Log;
+import android.widget.Toast;
 
 public class MainPreferenceActivity extends PreferenceActivity {
-	SharedPreferences myprefs;
+	private SharedPreferences myprefs;
+	
+    private boolean security = false;
+    
+    private boolean enabled = false;
+    
+    private boolean active = false;
+	
 	
         @Override
         protected void onCreate(Bundle savedInstanceState) {
                 super.onCreate(savedInstanceState);
-                myprefs = getSharedPreferences("myLock", 0);
-                
+                                
                 addPreferencesFromResource(R.xml.mainpref);
+                //instead of a layout we set ourselves to a pref tree
+                
                 getPreferenceManager().setSharedPreferencesName("myLock");
                 //tell the prefs persisted to go in the already existing pref file
-                //this way we aren't juggling our old file & the "default" normally used by pref activity
                 
-                //CheckBoxPreference toggle = (CheckBoxPreference) findPreference("toggle");
-                //toggle.setChecked(myprefs.getBoolean("enabled", false));
-                //CompoundButton icon = (CompoundButton) findViewById(toggle.getWidgetLayoutResource());
+                //Next, we have to set some things up just like we did in the old settings activity
+                //we use findPreference instead of findViewById
                 
-                //if (toggle.isChecked()) icon.setButtonDrawable(R.drawable.widg_on_icon);
-                //else icon.setButtonDrawable(R.drawable.widg_off_icon);
-                
-                
-                
-                //we need to set a listener
-                /*
-                toggle.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+                CheckBoxPreference toggle = (CheckBoxPreference) findPreference("enabled");
+                if (toggle == null) Log.e("pref activity","didn't find preference");
+                else {
+                	toggle.setOnPreferenceClickListener(new OnPreferenceClickListener() {
 
-					@Override
-					public boolean onPreferenceClick(Preference preference) {
-						if(preference.getKey().equals(toggle.getKey())) {
-						Toast.makeText(MainPreferenceActivity.this, "I Am Toggle", Toast.LENGTH_LONG).show();
-						return true;
-					}
-						else return false;
-                	
-					};
-                });
-                */
+    					@Override
+    					public boolean onPreferenceClick(Preference preference) {
+    						if(preference.getKey().equals("enabled")) {
+    							Context mCon = getApplicationContext();
+    						
+    							boolean state = ManageMediator.bind(mCon);
+    				        	if(!state) ManageMediator.startService(mCon);
+    				        	else ManageMediator.stopService(mCon);
+    							
+    							return true;
+    					}
+    						else return false;
+                    	
+    					};
+                    });
+                }
+                
         }
         
-        public void iAmToggle(View v) {
-        	Context mCon = getApplicationContext();
-        	//Toast.makeText(MainPreferenceActivity.this, "I Am Toggle", Toast.LENGTH_LONG).show();
-        	boolean state = ManageMediator.bind(mCon);//myprefs.getBoolean("enabled", false);
-        	if(!state) ManageMediator.startService(mCon);
-        	else ManageMediator.stopService(mCon);
-        	//ManageMediator.toggleService(getApplicationContext(), !state);
+        @Override
+        protected void onStart() {
+        	super.onStart();
+        	
+        	getPrefs();
         }
-                
+        
+        private void getPrefs() {
+        	//set all the prefs in activity to the stored values - special handling for security
+        	myprefs = getSharedPreferences("myLock", 0);
+        	
+        	((CheckBoxPreference) findPreference("FG")).setChecked(myprefs.getBoolean("FG", false));
+        	((CheckBoxPreference) findPreference("slideGuard")).setChecked(myprefs.getBoolean("slideGuard", false));
+        	
+        	
+        	getStatus();//check out how we should be displaying security
+        	
+        	((CheckBoxPreference) findPreference("enabled")).setChecked(enabled);
+        	((CheckBoxPreference) findPreference("security")).setChecked(security);
+        }
+        
+        private void getStatus() {
+        	
+        	enabled = myprefs.getBoolean("enabled", false);
+        	
+        	active = ManageMediator.bind(getApplicationContext());
+            
+            if (enabled && !active) {
+            //case of crashed service or improper setting persistence
+            	enabled = false;
+            	Log.e("pref getStatus","mediator bind failed");
+            	Toast.makeText(MainPreferenceActivity.this, "error: myLock service not found", Toast.LENGTH_LONG).show();
+            }
+            
+            //Show security state - find actual system state while not enabled                  
+            if (!enabled) security = getPatternSetting();
+            //if this is a change it's automatically persisted (thanks pref activity)
+            
+            else security = myprefs.getBoolean("security", false);
+            //necessary to show the pref state while active, since we suppress system pref
+        }
+        
+        private boolean getPatternSetting() {
+        	int patternsetting = 0;
+
+            try {
+                    patternsetting = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.LOCK_PATTERN_ENABLED);
+            } catch (SettingNotFoundException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+            }
+            
+            boolean s = (patternsetting == 1);
+            
+            return s;
+        }
        
 }
