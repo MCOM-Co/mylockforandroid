@@ -98,6 +98,13 @@ public class MainPreferenceActivity extends PreferenceActivity {
             
             else security = myprefs.getBoolean("security", false);
             //necessary to show the pref state while active, since we suppress system pref
+            
+            //Finally, determine what mode we are in and set the summary on the mode pref
+            String s = new String();
+            
+            s = "null mode";
+            
+            findPreference("mode").setSummary(s);
         }
         
         private boolean getPatternSetting() {

@@ -73,41 +73,4 @@ w.putExtra("i4nc4mp.myLock.toggle", true);//so widget knows we manually told it 
 mCon.sendBroadcast(w);
 */
 
-/*
- * 
- * These are handled as class methods in manage mediator now
-private void updateEnablePref(boolean on, Context mCon) {
-	SharedPreferences set = getSharedPreferences("myLock", 0);
-	SharedPreferences.Editor editor = set.edit();
-    editor.putBoolean("enabled", on);
-
-    // Don't forget to commit your edits!!!
-    editor.commit();
-    
-    //ToggleWidget.makeView(mCon, on);
-    //moved to the manage mediator class start/stop calls
-    
-    
-    
-    
-}
-	
-private void startService(){
-		Intent i = new Intent();
-		if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
-		else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
-		startService(i);
-		ManageMediator.bind(getApplicationContext());//we always hold the binding while officially active
-		Log.d( getClass().getSimpleName(), "startService()" );
-}
-
-private void stopService() {
-		ManageMediator.release(getApplicationContext());
-		Intent i = new Intent();
-		if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
-		else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
-		stopService(i);
-		Log.d( getClass().getSimpleName(), "stopService()" );
-}*/
-
 }

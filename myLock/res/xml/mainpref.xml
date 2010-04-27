@@ -10,12 +10,13 @@ android:persistent="true"
 <CheckBoxPreference android:key="security" android:title="Security Status"
 android:summaryOn="@string/sec_on" android:summaryOff="@string/sec_off"
 android:persistent="true" android:enabled="false" android:shouldDisableView="false"
+android:selectable="false"
 android:widgetLayout="@layout/hiddencheckbox"></CheckBoxPreference>
 <!-- hidden checkbox is just a checkbox root with visibility set invisible
 eventually we should be able to set it to one with an image cue referring to security state -->
 
 <Preference android:key="mode" android:title="Select Mode"
-android:dependency="enabled"/>
+android:dependency="enabled" android:summary="The current mode is null"/>
 <!-- category does nothing, just a cosmetic divider. -->
 
 <CheckBoxPreference android:key="slideGuard" android:title="guard slider"
