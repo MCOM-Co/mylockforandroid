@@ -89,6 +89,9 @@ public class MediatorService extends Service {
         assert(tm != null); 
         tm.listen(Detector, PhoneStateListener.LISTEN_CALL_STATE);
         
+        ManageMediator.bind(getApplicationContext());
+        //create the binding so we can keep track of status
+        
         onFirstStart();//The subclass will place init actions in an override here
     	
         exists = true;

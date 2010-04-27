@@ -14,8 +14,8 @@
 <string name="fg_on">Ongoing status notification will run</string>
 <string name="fg_off">Ongoing status notification is disabled</string>
 
-<string name="sec_on">ENABLED- Pattern is disabled while myLock is active</string>
-<string name="sec_off">DISABLED- Set up Security from system prefs</string>
+<string name="sec_on">ENABLED- The set pattern will be disabled while myLock is active</string>
+<string name="sec_off">DISABLED- Set up a security pattern from system prefs</string>
 
 <string name="unguard">Advanced mode - volume and camera (and trackball on the nexus one) will wake and unlock.</string>
 
