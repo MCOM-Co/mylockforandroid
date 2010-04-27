@@ -16,6 +16,9 @@ import android.view.WindowManager;
 //spawned at sleep cancels all keyguard mediation.
 //they use this technique in the dock app to stop keyguard from ever happening.
 
+
+//FIXME need to import advanced mode code so we can handle focus handoffs and do auto exit on user wake
+//eventually will support advanced power save to customize buttons and add slide to unlock
 public class UnguardActivity extends Activity {
 
 	protected void onCreate(Bundle icicle) {

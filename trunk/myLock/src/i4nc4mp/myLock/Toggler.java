@@ -16,8 +16,6 @@ public class Toggler extends Service {
 	private boolean target;
 	private boolean active;
 	
-	private boolean guard = false;
-	
 	@Override
 	public IBinder onBind(Intent intent) {
 		return null;
@@ -27,9 +25,11 @@ public class Toggler extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 Log.v("Toggler","Starting");
 		
-		getPrefs();
-		
 		active = ManageMediator.bind(getApplicationContext());
+		//FIXME still susceptible to the possible bug here that it thinks we are stopped
+		//however it's not a big consequence here since outcome is a duplicate start
+		//and the bind is created here
+		//the error case should never happen now that we grab the bind at mediator first start
 		
 		target = intent.getBooleanExtra("i4nc4mp.myLock.TargetState", !active);
 		
@@ -55,11 +55,6 @@ Log.v("Toggler","Starting");
 		stopSelf();//close so it won't be sitting idle in the running services window
 		return START_NOT_STICKY;//ensure it won't be restarted by the OS, we only want explicit starts
 	}
-	
-public void getPrefs() {
-	SharedPreferences settings = getSharedPreferences("myLock", 0);
-	guard = settings.getBoolean("wallpaper", false);
-}
 
 /*
  * 

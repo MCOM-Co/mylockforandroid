@@ -18,9 +18,20 @@ import android.widget.Toast;
 //also can be used to call specific state change, that is used by the pref screen
 
 public class ManageMediator {
+	//Bind handling
 	private static RemoteServiceConnection conn = null;
 	private static IsActive mediator; 
 	private static Context c;
+	
+	//Constants for mode selection
+	public static final int MODE_BASIC = 0;
+	public static final int MODE_HIDDEN = 1;
+	public static final int MODE_ADVANCED = 2;
+	
+	
+	//public static final String BASIC = "i4nc4mp.myLock.AutoDismiss";
+	//public static final String HIDDEN = "i4nc4mp.myLock.BasicGuardService";
+	//public static final String ADVANCED = "i4nc4mp.myLock.UnGuardService";
 	
 	static class RemoteServiceConnection implements ServiceConnection {
         public void onServiceConnected(ComponentName className, 
@@ -45,12 +56,42 @@ public class ManageMediator {
           //this one only comes through when something force kills the service but not entire process
         }
     };
+    
+    //Check prefs and return the explicit mediator intent
+    public static Intent getMode(Context mCon) {
+    	SharedPreferences settings = mCon.getSharedPreferences("myLock", 0);
+    	int m = Integer.parseInt(settings.getString("mode", "0"));
+    	//String name = BASIC;
+    	Class c = null;
+    	
+    	switch (m) {
+    		case (MODE_BASIC):
+    			c = AutoDismiss.class;
+    		break;
+    		case (MODE_HIDDEN):
+    			c = BasicGuardService.class;
+    		break;
+    		case (MODE_ADVANCED):
+    			c = UnguardService.class;
+    		break;
+    	}
+    	//alternate methods to explicitly define the intent
+    	
+    	//ComponentName comp = new ComponentName(mCon.getPackageName(), c.getName());
+ 	    //new Intent().setComponent(comp));
+    	    	    	
+    	//Intent i = new Intent();
+		//i.setClassName("i4nc4mp.myLock", name);
+		
+    	Intent result = new Intent(mCon, c);
+		return result;
+    }
 	
 	public static synchronized boolean bind(Context mCon) {
 		boolean success;
 		
-		//calls for the bind
-		//will just return true if we already had the bind
+		//Clients get true back if the binding is already held
+		//otherwise, they wait 100ms, then call serviceActive to verify
 		
 		if (c==null) c=mCon;//store our context ref so we can use it if service dies
 		
@@ -59,38 +100,21 @@ public class ManageMediator {
 			conn = new RemoteServiceConnection();
 		}
 		
-		if (mediator == null) {
-			//try to find the mediator
-			SharedPreferences settings = mCon.getSharedPreferences("myLock", 0);
-			boolean guard = settings.getBoolean("wallpaper", false);
-			
-			Intent i = new Intent();
-			
-			if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
-			else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
-
-			
-			success = mCon.bindService(i, conn, 0);
-		}
-		else {
+		if (mediator != null) {
 			Log.v("bind result","binding already held, returning true");
 			return true;
 		}
-		
+		else {
+			//try to find the mediator
+			//the return here doesn't give false even when I know no mediator is running
+			//inexplicable
+			//success = mCon.bindService(i, conn, 0); 
+			mCon.bindService(getMode(mCon), conn, 0);
+			return false;
+		}		
 		//Log.v("bind attempt","attempted to get mediator, and the request returned " + success);
 		//if (success) return serviceActive(mCon);
-		//if we created the bind, double check by calling through to the mediator
-		//success is always true, even when we didn't make a bind. I don't know why
-		
-		//on first create, we always get false here
-		//around 50 MS later the bind connect goes off
-		
-		
-		//Because of this, only return true if binding was already held
-		
-		return false;
-
-	}
+		}
 
 	//called when we deliberately stop the service - this way the bind is fully zeroed out
 	public static synchronized void release(Context mCon) {
@@ -105,11 +129,13 @@ public class ManageMediator {
 		boolean exists = false;
 		//for extra redundancy, call through to method in the mediator
 		
-		if (mediator==null) {
-			Log.e("verify bind","failed because we don't have mediator stub");
-		}
-
-		else {
+		//this could be changed into a thread that tries bind, waits 100ms, then checks again
+		//if mediator is still null, return false.
+		//this would be a reliable verify
+		//but i need to learn how to make the thread synchronize like this
+		
+		if (mediator!=null)
+		{
 			try {
 			exists = mediator.Exists();
 		} catch (RemoteException re) {
@@ -122,32 +148,22 @@ public class ManageMediator {
 	}
 	
 	public static synchronized void startService(Context mCon){
-		SharedPreferences settings = mCon.getSharedPreferences("myLock", 0);
-		boolean guard = settings.getBoolean("wallpaper", false);
-		
-		Intent i = new Intent();
-		if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
-		else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
+		Intent i = getMode(mCon);
 		mCon.startService(i);
 		
 		ToggleWidget.makeView(mCon, true);
-		Log.d( "manage mediator", "start call" );
+		Log.d( "manage mediator", "start call " + i );
 }
 
 	public static synchronized void stopService(Context mCon) {
-		SharedPreferences settings = mCon.getSharedPreferences("myLock", 0);
-		boolean guard = settings.getBoolean("wallpaper", false);
-		
 		release(mCon);
 		//kill the binding
+		Intent i = getMode(mCon);
 		
-		Intent i = new Intent();
-		if (guard) i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.BasicGuardService");
-		else i.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.AutoDismiss");
 		mCon.stopService(i);
 		
 		ToggleWidget.makeView(mCon, false);
-		Log.d( "manage mediator", "stop call" );
+		Log.d( "manage mediator", "stop call " + i);
 }
 	
 	public static synchronized void invokeToggler(Context mCon, boolean on) {

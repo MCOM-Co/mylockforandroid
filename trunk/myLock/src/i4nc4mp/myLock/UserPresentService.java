@@ -1,5 +1,7 @@
 package i4nc4mp.myLock;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -43,6 +45,34 @@ public class UserPresentService extends Service {
 		serviceHandler = null;
 				
 		}
+	
+	@Override
+	public void onCreate() {
+		super.onCreate();
+		Log.d(getClass().getSimpleName(),"User Present - setting foreground");
+		           
+            int icon = R.drawable.icon;
+            CharSequence tickerText = "myLock";
+            
+            long when = System.currentTimeMillis();
+
+            Notification notification = new Notification(icon, tickerText, when);
+            
+            Context context = getApplicationContext();
+            CharSequence contentTitle = "myLock";
+            CharSequence contentText = "initializing";
+
+            Intent notificationIntent = new Intent(this, SettingsActivity.class);
+            PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+
+            notification.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+            
+            final int SVC_ID = 1;
+            
+            
+            startForeground(SVC_ID, notification);
+    
+	}
 	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -109,6 +139,7 @@ public class UserPresentService extends Service {
 			i.putExtra("i4nc4mp.myLock.TargetState", true);
 			startService(i);
 			
+			stopForeground(true);
 			stopSelf();
 	    	return;
 	    
