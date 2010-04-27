@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-<CheckBoxPreference android:title="Service Status"
+<PreferenceCategory android:title="Status" android:key="statusinfo">
+<CheckBoxPreference
 android:key="enabled"
 android:summaryOn="@string/enabled" android:summaryOff="@string/disabled"
 android:disableDependentsState="true"
 android:persistent="true"
 />
 
-<CheckBoxPreference android:key="security" android:title="Security Status"
+<CheckBoxPreference android:key="security" android:title="Security"
 android:summaryOn="@string/sec_on" android:summaryOff="@string/sec_off"
 android:persistent="true" android:enabled="false" android:shouldDisableView="false"
 android:selectable="false"
@@ -15,17 +16,24 @@ android:widgetLayout="@layout/hiddencheckbox"></CheckBoxPreference>
 <!-- hidden checkbox is just a checkbox root with visibility set invisible
 eventually we should be able to set it to one with an image cue referring to security state -->
 
-<Preference android:key="mode" android:title="Select Mode"
-android:dependency="enabled" android:summary="The current mode is null"/>
+<ListPreference android:key="mode" android:title="Mode"
+                android:entries="@array/mode"  android:entryValues="@array/mode_values"
+				android:dependency="enabled" android:summary="null"
+				android:dialogTitle="Choose mode"
+				android:defaultValue="0"
+				android:persistent="true"/>
 <!-- category does nothing, just a cosmetic divider. -->
+</PreferenceCategory>
 
-<CheckBoxPreference android:key="slideGuard" android:title="guard slider"
+<PreferenceCategory android:title="Options" android:key="options">
+<CheckBoxPreference android:key="slideGuard" android:title="Lock Slider Wake"
 	android:summaryOn="@string/guard_on" android:summaryOff="@string/guard_off"
 	android:persistent="true"/>
 <CheckBoxPreference android:key="FG" android:title="Status Icon"
 	android:summaryOn="@string/fg_on" android:summaryOff="@string/fg_off"
 	android:persistent="true"/>
-
+	</PreferenceCategory>
+<PreferenceCategory android:title="Info" android:key="helpinfo">
         <i4nc4mp.myLock.MainDialogPreference
                 android:key="howto" android:title="@string/howto_title" android:src="@drawable/icon"
                 android:dialogTitle="@string/howto_title" android:dialogMessage="@string/HowToFull"
@@ -34,4 +42,5 @@ android:dependency="enabled" android:summary="The current mode is null"/>
                 android:key="problem" android:title="@string/ts_title" android:src="@drawable/icon"
                 android:dialogTitle="@string/ts_title" android:dialogMessage="@string/Troubleshooting"
                 android:dialogIcon="@drawable/icon" android:negativeButtonText="@null" />
+                </PreferenceCategory>
 </PreferenceScreen>

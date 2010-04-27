@@ -41,7 +41,6 @@ public class UnguardService extends MediatorService {
     	super.onDestroy();
             
         SharedPreferences settings = getSharedPreferences("myLock", 0);
-        SharedPreferences.Editor editor = settings.edit();
             
         //toggle security back on
         	if (security) {
@@ -55,10 +54,6 @@ public class UnguardService extends MediatorService {
                 unregisterReceiver(lockStopped);
                 
                 settings.unregisterOnSharedPreferenceChangeListener(prefslisten);
-                
-                
-                editor.putBoolean("serviceactive", false);
-                editor.commit();
                 
                 ManageWakeLock.releasePartial();
                 
@@ -75,7 +70,6 @@ public class UnguardService extends MediatorService {
     @Override
     public void onFirstStart() {
             SharedPreferences settings = getSharedPreferences("myLock", 0);
-            SharedPreferences.Editor editor = settings.edit();
             
             persistent = settings.getBoolean("FG", false);
             security = settings.getBoolean("security", false);
@@ -108,9 +102,6 @@ public class UnguardService extends MediatorService {
             
             IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED");
             registerReceiver(lockStopped, lockStop);            
-            
-            editor.putBoolean("serviceactive", true);
-            editor.commit();
     }
     
     @Override

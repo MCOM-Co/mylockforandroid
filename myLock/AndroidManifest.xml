@@ -16,10 +16,10 @@
         this needs to be set for test compile. signature won't work in emu env-->
       
     <application android:icon="@drawable/icon" android:label="@string/app_name">
-    
-    
+        
         <activity android:name=".MainPreferenceActivity"
                   android:label="myLock Prefs"
+                  android:launchMode="singleInstance"
                   android:theme="@android:style/Theme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -74,20 +74,15 @@
                 android:taskAffinity=""
                 android:screenOrientation="portrait">
                 </activity>
-        <!-- for testing we can launch from main       
+        
        <activity android:name="UnguardActivity"
                 android:excludeFromRecents="true"
                 android:launchMode="singleTask"
                 android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen"
                 android:taskAffinity=""
                 android:screenOrientation="portrait">
-                
-                <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
                </activity>
-               -->
+
 
         <receiver android:name=".myLockBootReceiver" 
         android:enabled="true" 
@@ -120,8 +115,10 @@
         <service android:name=".Toggler"
         android:permission="i4nc4mp.myLock.permission.toggle"
         android:exported="true"></service>
-        <service android:name=".BasicGuardService"></service>
         <service android:name=".AutoDismiss"></service>
+        <service android:name=".BasicGuardService"></service>
+        <service android:name=".UnguardService"></service>
+
         <service android:name=".BootHandler"></service>
         <service android:name=".UserPresentService"></service>
     </application>
