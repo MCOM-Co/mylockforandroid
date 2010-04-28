@@ -24,6 +24,15 @@
                 android:screenOrientation="portrait">
                </activity>
                
+        <activity android:name="DummyPrompt"
+				android:label="null"
+                android:excludeFromRecents="true"
+                android:launchMode="standard"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                android:taskAffinity=""
+                android:screenOrientation="portrait">
+               </activity>
+               
         <activity android:name="TouchGuard"
         		android:label="Touchscreen Guard"
                 android:excludeFromRecents="true"
