@@ -40,6 +40,9 @@ public class CallPrompt extends Activity {
 		
 		//I would actually like to have the power key reject
 		//can't figure out if we can "cause" reject
+		//In emulator the back key causes reject.
+		//So, we might try passing back along as false, manually in the key handle method
+		//this would pass it to the system so if droid software is normally stopping handling, we could ignore
 		
 	}
 	
@@ -56,10 +59,38 @@ public class CallPrompt extends Activity {
   		finish();
 	}
 	
+	//doesn't work
+	void reject() {
+		Intent reject = new  Intent(Intent.ACTION_MEDIA_BUTTON);
+		
+		//reject.putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENDCALL));
+		reject.putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK));
+		
+		sendOrderedBroadcast(reject, null);
+	}
+	
 	//let's allow the camera press to accept this call
 	@Override
     public boolean dispatchKeyEvent(KeyEvent event) {
 		switch (event.getKeyCode()) {
+		/*case KeyEvent.KEYCODE_BACK:
+			//moveTaskToBack(true);
+	  		//finish();
+			reject();
+			return false;*/
+		
+			//Drop the back key through to the system - this does not cause reject as expected
+			//it's possible the phone screen is checking if it has focus as a condition
+			
+			/*
+			 * 04-28 17:48:28.034: INFO/ActivityManager(53): Starting activity:
+			 * 		Intent { act=android.intent.action.MAIN flg=0x10840000 cmp=com.android.phone/.InCallScreen }
+			 *
+			 * 
+			 * 04-28 17:43:39.985: DEBUG/InCallScreen(200): onBackPressed()...
+			 * 04-28 17:43:39.995: DEBUG/InCallScreen(200): BACK key while ringing: reject the call
+			 */
+			
 		case KeyEvent.KEYCODE_FOCUS:
 			return true;
 			//this event occurs - if passed on, phone retakes focus

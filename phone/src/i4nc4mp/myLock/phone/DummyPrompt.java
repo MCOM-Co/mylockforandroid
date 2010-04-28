@@ -7,11 +7,13 @@ import android.util.Log;
 public class DummyPrompt extends Activity {
 	//Launched with no history flag. But we're going to try to catch it's on pause or on stop
 	
+	private boolean done = false;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		setContentView(R.layout.callguard);
+		setContentView(R.layout.dummy);
 		
 		Log.v("dummy prompt","on create");		
 	}
@@ -30,12 +32,24 @@ public class DummyPrompt extends Activity {
 		Log.v("dummy prompt","pause");
 	}
 	
-	//We never gain focus, as we get resumed, then paused, then stopped when phone is fully ready
+	//Expected to start, resume, pause, get focus, pause, lose focus, then stop
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
 		
 		Log.v("dummy prompt","Focus is now " + hasFocus);
+		
+		//Problem case, create is delayed
+		//What we get is create, start, resume, then focus
+		//means phone started too fast and we are over it
+		//pressing back completes (stops us)
+		
+		/*
+		if (hasFocus && !done) {
+			done = true;
+			CallPrompt.launch(getApplicationContext());
+			moveTaskToBack(true);
+		}*/
 	}
 	
 	@Override
@@ -51,7 +65,11 @@ public class DummyPrompt extends Activity {
 		
 		Log.v("dummy prompt","stop - launching real Prompt");
 		
-		CallPrompt.launch(getApplicationContext());
+		if (!done) {
+			done = true;
+			CallPrompt.launch(getApplicationContext());
+			moveTaskToBack(true);
+		}
 	}
 	
 	@Override
