@@ -15,13 +15,13 @@ import android.util.Log;
 
 public class ScreenMediator extends Service {
     
-	private SharedPreferences prefs;
+	//private SharedPreferences prefs;
 	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		super.onStartCommand(intent, flags, startId);
 		
-	prefs = getSharedPreferences("myLockphone", 0);
+	//prefs = getSharedPreferences("myLockphone", 0);
 		
 	//register the receivers
 	IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
