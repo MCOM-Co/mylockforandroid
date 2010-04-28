@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 
 //here is a receiver that will put the Call Prompt up just when calls start ringing
@@ -20,17 +21,34 @@ public class PhoneReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
 		mCon = context;
 
-            SharedPreferences p = context.getSharedPreferences("myLock", 0);
+            SharedPreferences p = context.getSharedPreferences("myLockphone",0);
             
-            boolean on = true;//p.getBoolean("CallPrompt", false)
-
+            boolean prompt = p.getBoolean("callPrompt", false);
+            boolean lock = p.getBoolean("touchLock", false);
             // Check phone state
-            String phone_state = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
+            String state = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
             //String number = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER);
 
-            if (phone_state.equals(TelephonyManager.EXTRA_STATE_RINGING) && on) {
+            if (state.equals(TelephonyManager.EXTRA_STATE_RINGING) && prompt) {
             	serviceHandler = new Handler();
-            	serviceHandler.postDelayed(myTask, 1000L);                    
+            	serviceHandler.postDelayed(myTask, 2000L);                    
+            }
+            
+            if (lock) {            
+            	if (state.equals(TelephonyManager.EXTRA_STATE_OFFHOOK)) {
+            	//SharedPreferences.Editor e = p.edit();
+            	//e.putBoolean("callActive", true);
+            	
+              	Intent m = new Intent(context, ScreenMediator.class);
+            	context.startService(m);
+                }
+            	else if (state.equals(TelephonyManager.EXTRA_STATE_IDLE)) {
+            	//SharedPreferences.Editor e = p.edit();
+            	//e.putBoolean("callActive", false);
+            	           	
+                Intent m = new Intent(context, ScreenMediator.class);
+                context.stopService(m);
+            	}
             }
     }
 	

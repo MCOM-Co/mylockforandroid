@@ -15,8 +15,11 @@
     android:id="@+id/mid"
     android:text="Accept Call"
     android:layout_centerInParent="true"
-
     />
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" 
+        android:paddingTop="25px" android:layout_below="@id/mid" android:layout_centerHorizontal="true"
+		android:text="press back to enable ignore slider"
+		android:textColor="@color/droid" android:textSize="18sp"></TextView>
 	<!-- Extra buttons, can't get them to work right now
 	<Button  
     android:layout_width="wrap_content" 
@@ -36,4 +39,5 @@
     />
      -->
 </RelativeLayout>
+
 </RelativeLayout>

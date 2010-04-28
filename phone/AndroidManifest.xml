@@ -5,11 +5,29 @@
       android:versionName="1.0">
     <application android:icon="@drawable/icon" android:label="@string/app_name">
 
+		<activity android:name=".PrefActivity" 
+				android:label="Phone Tools"
+                android:launchMode="singleInstance"
+                android:theme="@android:style/Theme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
 		<activity android:name="CallPrompt"
-				android:exported="true"
-				android:label="myLock"
+				android:label="Call Prompt"
                 android:excludeFromRecents="true"
                 android:launchMode="standard"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                android:taskAffinity=""
+                android:screenOrientation="portrait">
+               </activity>
+               
+        <activity android:name="TouchGuard"
+        		android:label="Touchscreen Guard"
+                android:excludeFromRecents="true"
+                android:launchMode="singleInstance"
                 android:theme="@android:style/Theme.Translucent.NoTitleBar"
                 android:taskAffinity=""
                 android:screenOrientation="portrait">
@@ -21,13 +39,14 @@
                         <action android:name="android.intent.action.PHONE_STATE" />
                 </intent-filter>
         </receiver>
-	
+        
+        	<service android:name=".ScreenMediator" android:enabled="true"/>
 
     </application>
     
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     
-    <uses-sdk android:minSdkVersion="5" />
+    <uses-sdk android:minSdkVersion="3" />
     <uses-sdk android:targetSdkVersion="7" />
 
 </manifest> 
