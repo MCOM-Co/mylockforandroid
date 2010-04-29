@@ -4,20 +4,21 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 
 public class CallPrompt extends Activity {
-	
+
 	public static void launch(Context mCon) {
 		
 		Intent prompt = new Intent(mCon,CallPrompt.class);
 
     	prompt.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-    			| Intent.FLAG_ACTIVITY_NO_USER_ACTION);
-    	//otherwise it would immediately stop vibration & sound
+    			| Intent.FLAG_ACTIVITY_NO_USER_ACTION
+    			| Intent.FLAG_ACTIVITY_NO_HISTORY);
     	
     	mCon.startActivity(prompt);
 	}
@@ -46,6 +47,11 @@ public class CallPrompt extends Activity {
 		
 	}
 	
+	@Override
+	protected void onStart() {
+		super.onStart();
+		Log.v("call prompt","starting");
+	}
 	
 	void answer() {
 		Intent answer = new Intent(Intent.ACTION_MEDIA_BUTTON);

@@ -18,13 +18,13 @@
 		<activity android:name="CallPrompt"
 				android:label="Call Prompt"
                 android:excludeFromRecents="true"
-                android:launchMode="standard"
+                android:launchMode="singleInstance"
                 android:theme="@android:style/Theme.Translucent.NoTitleBar"
                 android:taskAffinity=""
                 android:screenOrientation="portrait">
                </activity>
                
-        <activity android:name="DummyPrompt"
+        <activity android:name="PromptMediator$Dummy"
 				android:label="dummy"
                 android:excludeFromRecents="true"
                 android:launchMode="standard"
@@ -49,6 +49,7 @@
                 </intent-filter>
         </receiver>
         
+        	<service android:name=".PromptMediator" android:enabled="true"/>
         	<service android:name=".ScreenMediator" android:enabled="true"/>
 
     </application>

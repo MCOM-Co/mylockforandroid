@@ -1,11 +1,15 @@
 package i4nc4mp.myLock.phone;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 
 public class DummyPrompt extends Activity {
-	//Launched with no history flag. But we're going to try to catch it's on pause or on stop
+	//When the phone app stops us, it means it is time to launch the call prompt
+	//sometimes phone launches quicker, so it gives us focus on top instead of stopping us
+	//that case fixes itself when user hits back to close the dummy	
 	
 	private boolean done = false;
 	
@@ -13,7 +17,7 @@ public class DummyPrompt extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		setContentView(R.layout.dummy);
+		//setContentView(R.layout.dummy);
 		
 		Log.v("dummy prompt","on create");		
 	}
@@ -25,6 +29,14 @@ public class DummyPrompt extends Activity {
 		Log.v("dummy prompt","start");
 	}
 	
+	public void iAmDone() {
+		if (!done) {
+			done = true;
+			CallPrompt.launch(getApplicationContext());
+			moveTaskToBack(true);
+		}
+	}
+	
 	@Override
 	protected void onPause() {
 		super.onPause();
@@ -32,25 +44,21 @@ public class DummyPrompt extends Activity {
 		Log.v("dummy prompt","pause");
 	}
 	
-	//Expected to start, resume, pause, get focus, pause, lose focus, then stop
+	//Expected to start, resume, pause, then stop
+	//sometimes we get focus then pause and lose it before stop
+	//other times pause is immediate after start/resume
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
 		
-		Log.v("dummy prompt","Focus is now " + hasFocus);
+		//Log.v("dummy prompt","Focus is now " + hasFocus);
 		
-		//Problem case, create is delayed
-		//What we get is create, start, resume, then focus
-		//means phone started too fast and we are over it
-		//pressing back completes (stops us)
-		
-		/*
-		if (hasFocus && !done) {
-			done = true;
-			CallPrompt.launch(getApplicationContext());
-			moveTaskToBack(true);
-		}*/
+		if (hasFocus) Log.v("dummy prompt","gained focus");
 	}
+	
+	
+	
+	
 	
 	@Override
 	protected void onResume() {
@@ -65,11 +73,7 @@ public class DummyPrompt extends Activity {
 		
 		Log.v("dummy prompt","stop - launching real Prompt");
 		
-		if (!done) {
-			done = true;
-			CallPrompt.launch(getApplicationContext());
-			moveTaskToBack(true);
-		}
+		iAmDone();
 	}
 	
 	@Override
