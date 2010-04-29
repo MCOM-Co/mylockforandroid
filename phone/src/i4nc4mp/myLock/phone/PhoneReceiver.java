@@ -25,20 +25,25 @@ public class PhoneReceiver extends BroadcastReceiver {
             //String number = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER);
 
             if (state.equals(TelephonyManager.EXTRA_STATE_RINGING) && prompt) {
-                	Intent pm = new Intent(context, PromptMediator.class);
-                	context.startService(pm);
+                	//Intent pm = new Intent(context, PromptMediator.class);
+                	//context.startService(pm);
                 	//stopping is handled after 2 seconds in the service itself
-                	
-                	Intent dummy = new Intent(mCon, Dummy.class);
+                
+            	//in the real device operating environment, immediately launching the prompt should work
+            	//what we need to do is have the prompt relaunch itself if it gets stopped
+            	//it would be catching the case it starts faster than the phone all on its own
+            	
+                	Intent dummy = new Intent(mCon, CallPrompt.class);
                 	
                 	dummy.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                			| Intent.FLAG_ACTIVITY_NO_USER_ACTION
-                			| Intent.FLAG_ACTIVITY_NO_HISTORY);
+                			| Intent.FLAG_ACTIVITY_NO_USER_ACTION);
                 	            	
                 	mCon.startActivity(dummy);
-                	//more precise handoff to phone screen
-                	//as long as it starts before phone
-                	//I'm only seeing this happen when the call comes in from sleep, on emulator
+                	
+                	//try to start immediately.
+                	//the only time we manage to start visible phase before phone
+                	//is call coming from sleep
+                	//prompt handles this itself in onStop
                 }
                 /*else if (state.equals(TelephonyManager.EXTRA_STATE_OFFHOOK) || state.equals(TelephonyManager.EXTRA_STATE_IDLE)) {
                 	Intent pm = new Intent(context, PhoneMediator.class);

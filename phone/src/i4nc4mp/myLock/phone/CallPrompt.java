@@ -10,15 +10,18 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 
+//I aint no dummy (prompt)
+
 public class CallPrompt extends Activity {
 
+	private boolean success = false;
+	
 	public static void launch(Context mCon) {
 		
 		Intent prompt = new Intent(mCon,CallPrompt.class);
 
     	prompt.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-    			| Intent.FLAG_ACTIVITY_NO_USER_ACTION
-    			| Intent.FLAG_ACTIVITY_NO_HISTORY);
+    			| Intent.FLAG_ACTIVITY_NO_USER_ACTION);
     	
     	mCon.startActivity(prompt);
 	}
@@ -53,7 +56,18 @@ public class CallPrompt extends Activity {
 		Log.v("call prompt","starting");
 	}
 	
+	@Override
+	protected void onStop() {
+		super.onStop();
+		
+		Log.v("prompt onStop","verifying success");
+		
+		if (!success) launch(getApplicationContext());
+	}
+	
 	void answer() {
+		success = true;
+		
 		Intent answer = new Intent(Intent.ACTION_MEDIA_BUTTON);
 
   		//most certainly does work
@@ -73,6 +87,12 @@ public class CallPrompt extends Activity {
 		reject.putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK));
 		
 		sendOrderedBroadcast(reject, null);
+	}
+	
+	@Override
+	public void onBackPressed() {
+		super.onBackPressed();
+		success = true;
 	}
 	
 	//let's allow the camera press to accept this call
