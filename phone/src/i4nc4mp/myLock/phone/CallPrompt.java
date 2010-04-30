@@ -1,9 +1,12 @@
 package i4nc4mp.myLock.phone;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -51,9 +54,20 @@ public class CallPrompt extends Activity {
 	}
 	
 	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		
+		unregisterReceiver(PhoneState);
+	}
+	
+	@Override
 	protected void onStart() {
 		super.onStart();
 		Log.v("call prompt","starting");
+		
+		IntentFilter ph = new IntentFilter (TelephonyManager.ACTION_PHONE_STATE_CHANGED);
+		
+		registerReceiver(PhoneState, ph);
 	}
 	
 	@Override
@@ -94,6 +108,28 @@ public class CallPrompt extends Activity {
 		super.onBackPressed();
 		success = true;
 	}
+	
+	//we don't want to exist after phone changes to active state or goes back to idle
+	BroadcastReceiver PhoneState = new BroadcastReceiver() {
+		
+		
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (!intent.getAction().equals("android.intent.action.PHONE_STATE")) return;
+			String state = intent.getStringExtra(TelephonyManager.EXTRA_STATE);
+			if (state.equals(TelephonyManager.EXTRA_STATE_OFFHOOK) || state.equals(TelephonyManager.EXTRA_STATE_IDLE)) {
+				if (!success && !isFinishing()) {
+					//no known intentional dismissal and not already finishing
+					//need to finish to avoid handing out after missed calls
+					Log.v("call start or return to idle","no user input success - closing the prompt");
+					success = true;//so re-start won't fire
+					finish();
+				}
+			}
+
+			return;
+	    		
+		}};
 	
 	//let's allow the camera press to accept this call
 	@Override
