@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen
   xmlns:android="http://schemas.android.com/apk/res/android">
-  <CheckBoxPreference android:title="Call Prompt" android:summary="Show Accept Call dialog for incoming calls"
-  android:key="callPrompt" android:disableDependentsState="false"
+  <CheckBoxPreference android:title="Onscreen Button" android:summary="Accept via touchscreen button"
+  android:key="callPrompt"
   android:persistent="true"/>
-  <CheckBoxPreference android:title="Camera Key Accept" android:summary="Allow Camera button to accept call"
-  android:key="cameraAccept" android:dependency="callPrompt" 
+  <CheckBoxPreference android:title="Camera Button" android:summary="Accept via Camera side key"
+  android:key="cameraAccept" 
   android:persistent="true"/>
-  <CheckBoxPreference android:title="Touchscreen Lock" android:summary="Lock touchscreen during calls to prevent face dialing"
+  <CheckBoxPreference android:title="Touchscreen Lock" android:summary="Lock touchscreen when screen goes off during calls"
   android:key="touchLock" android:persistent="true"/>
 </PreferenceScreen>

@@ -1,6 +1,7 @@
 package i4nc4mp.myLock.phone;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -19,6 +20,8 @@ public class CallPrompt extends Activity {
 
 	private boolean success = false;
 	
+	private ActivityManager am;
+	
 	public static void launch(Context mCon) {
 		
 		Intent prompt = new Intent(mCon,CallPrompt.class);
@@ -32,12 +35,35 @@ public class CallPrompt extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-				
 		
-		setContentView(R.layout.main);
+		if (!getSharedPreferences("myLockphone", 0).getBoolean("callPrompt", true)) {
+			
+			setContentView(R.layout.cancelhint);
+			//just the hint to user for camera accept and back to get to sliders
+			//only camera can answer in this case
+			
+			//it's a workaround
+			//I don't know how to make a window that doesn't block the sliders
+			//such that it can still get key events
+		}
+		else {
+		
+			
+			setContentView(R.layout.answerprompt);
+			
+			Button answer = (Button) findViewById(R.id.answer);
+			
+			answer.setOnClickListener(new OnClickListener() {
+	          	public void onClick(View v){
+	          		answer();
+	          	}
+			});
+			
+			//setContentView(R.layout.main);
 			
 		
-		Button answer = (Button) findViewById(R.id.mid);
+			/*
+		Button answer = (Button) findViewById(R.id.answerbutton);
 		
 		answer.setOnClickListener(new OnClickListener() {
           	public void onClick(View v){
@@ -45,14 +71,17 @@ public class CallPrompt extends Activity {
           	}
 		});
 		
-		//I would actually like to have the power key reject
-		//can't figure out if we can "cause" reject
-		//In emulator the back key causes reject.
-		//So, we might try passing back along as false, manually in the key handle method
-		//this would pass it to the system so if droid software is normally stopping handling, we could ignore
+		Button reject = (Button) findViewById(R.id.rejectbutton);
 		
-	}
-	
+		reject.setOnClickListener(new OnClickListener() {
+          	public void onClick(View v){
+          		reject();
+          	}
+		});*/
+			}
+		
+		}
+			
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
@@ -75,7 +104,8 @@ public class CallPrompt extends Activity {
 		super.onStop();
 		
 		Log.v("prompt onStop","verifying success");
-		
+		//We are sneaky.
+		//We can relaunch if phone lagged in starting, so then tries to cancel our visible lifecycle
 		if (!success) launch(getApplicationContext());
 	}
 	
@@ -93,16 +123,22 @@ public class CallPrompt extends Activity {
   		finish();
 	}
 	
-	//doesn't work
+	//Mr. Tedd's discovered workaround.
+	//Not a surgical strike but essentially effective
 	void reject() {
-		Intent reject = new  Intent(Intent.ACTION_MEDIA_BUTTON);
+		success = true;
 		
-		//reject.putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENDCALL));
-		reject.putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK));
-		
-		sendOrderedBroadcast(reject, null);
+		am = (ActivityManager)getSystemService(ACTIVITY_SERVICE);
+		am.restartPackage("com.android.providers.telephony");
+        am.restartPackage("com.android.phone");
+        
+        //requires permission to restart packages
+        
+        moveTaskToBack(true);
+  		finish();
 	}
 	
+	//i think this isn't in 1.5
 	@Override
 	public void onBackPressed() {
 		super.onBackPressed();
@@ -110,6 +146,7 @@ public class CallPrompt extends Activity {
 	}
 	
 	//we don't want to exist after phone changes to active state or goes back to idle
+	//we also don't want to rely on this receiver to close us after success
 	BroadcastReceiver PhoneState = new BroadcastReceiver() {
 		
 		
@@ -134,25 +171,7 @@ public class CallPrompt extends Activity {
 	//let's allow the camera press to accept this call
 	@Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-		switch (event.getKeyCode()) {
-		/*case KeyEvent.KEYCODE_BACK:
-			//moveTaskToBack(true);
-	  		//finish();
-			reject();
-			return false;*/
-		
-			//Drop the back key through to the system - this does not cause reject as expected
-			//it's possible the phone screen is checking if it has focus as a condition
-			
-			/*
-			 * 04-28 17:48:28.034: INFO/ActivityManager(53): Starting activity:
-			 * 		Intent { act=android.intent.action.MAIN flg=0x10840000 cmp=com.android.phone/.InCallScreen }
-			 *
-			 * 
-			 * 04-28 17:43:39.985: DEBUG/InCallScreen(200): onBackPressed()...
-			 * 04-28 17:43:39.995: DEBUG/InCallScreen(200): BACK key while ringing: reject the call
-			 */
-			
+		switch (event.getKeyCode()) {			
 		case KeyEvent.KEYCODE_FOCUS:
 			return true;
 			//this event occurs - if passed on, phone retakes focus
