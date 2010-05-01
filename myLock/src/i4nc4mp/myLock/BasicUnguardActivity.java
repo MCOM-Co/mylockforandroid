@@ -19,7 +19,10 @@ import android.view.WindowManager;
 
 //FIXME need to import advanced mode code so we can handle focus handoffs and do auto exit on user wake
 //eventually will support advanced power save to customize buttons and add slide to unlock
-public class UnguardActivity extends Activity {
+
+//the cool thing about this is that we can let user customize which buttons would cause auto unlock.
+//i like waking the incredible with the nav key then pressing back to clear the myLock screen
+public class BasicUnguardActivity extends Activity {
 
 	protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
