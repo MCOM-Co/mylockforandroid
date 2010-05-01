@@ -45,6 +45,7 @@
     </application>
     
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.RESTART_PACKAGES" />
     
     <uses-sdk android:minSdkVersion="3" />
     <uses-sdk android:targetSdkVersion="7" />

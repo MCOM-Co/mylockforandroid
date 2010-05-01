@@ -3,41 +3,39 @@
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:id="@+id/callprompt"
     >
-    <RelativeLayout
-    	android:layout_width="fill_parent"
-    	android:layout_height="wrap_content"
-    	android:layout_centerInParent="true"
-    	>
-    <Button  
+
+    <TextView 
     android:layout_width="wrap_content" 
     android:layout_height="wrap_content"
     android:id="@+id/mid"
-    android:text="Accept Call"
-    android:layout_centerInParent="true"
-    />
-    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" 
-        android:paddingTop="25px" android:layout_below="@id/mid" android:layout_centerHorizontal="true"
-		android:text="press back to enable ignore slider"
-		android:textColor="@color/droid" android:textSize="18sp"></TextView>
-	<!-- Extra buttons, can't get them to work right now
-	<Button  
-    android:layout_width="wrap_content" 
-    android:layout_height="wrap_content"
-    android:id="@+id/answerbutton"
-    android:text="yes"
-    android:layout_toLeftOf="@id/mid"
-    android:layout_centerVertical="true"
+        android:layout_alignParentBottom="true"
+      android:layout_marginBottom="80dip"
+    android:text="call"
+    android:textColor="@color/droid" android:textSize="10sp"
+    android:layout_centerHorizontal="true"
     />
     <Button  
-    android:layout_width="wrap_content" 
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content"
+    android:id="@+id/answerbutton"
+    android:text="&#8734;"
+    android:textColor="@color/white" android:textSize="65sp"
+    android:background="@color/droid"
+    android:layout_toLeftOf="@id/mid"
+        android:layout_alignParentBottom="true"
+      android:layout_marginBottom="80dip"
+    />
+    <Button  
+    android:layout_width="fill_parent" 
     android:layout_height="wrap_content"
     android:id="@+id/rejectbutton"
-    android:text="no"
+    android:text="&#8709;"
+    android:textColor="@color/white" android:textSize="65sp"
+    android:background="@color/red"
     android:layout_toRightOf="@id/mid"
-    android:layout_centerVertical="true"
+        android:layout_alignParentBottom="true"
+      android:layout_marginBottom="80dip"
     />
-     -->
-</RelativeLayout>
-
 </RelativeLayout>

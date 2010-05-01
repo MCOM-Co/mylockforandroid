@@ -33,6 +33,10 @@ import android.util.Log;
  *Phone launches slow in emulator but usually fast in the device
  */
 
+
+//Not in use --- no longer necessary
+//but great example of a way to streamline the other Mediator/Activity pairings
+//the inner class activity is a perfect setup because we gain simple access to static members of the mediator
 public class PromptMediator extends Service {
 
 	private static Handler serviceHandler; 
@@ -87,9 +91,6 @@ public class PromptMediator extends Service {
     	//what this does is allows dummy to realize the instance of the service is gone
     	//the handler only exists while service is running.
 
-    	//could this be handled with a simple static helper class?
-    	//at the end of the timing, the dummy could enable the views of the prompt
-    	//this would make more sense than juggling both activities
     }
     
     protected void initHandler() {
