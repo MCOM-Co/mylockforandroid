@@ -32,22 +32,25 @@ public class CallPrompt extends Activity {
     	mCon.startActivity(prompt);
 	}
 	
+	//instead of having subclasses with an overridden layout definition
+	//i just set the layout based on pref
+	//in the android source they usually subclass to set a different layout/functionality
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
 		if (!getSharedPreferences("myLockphone", 0).getBoolean("callPrompt", true)) {
+		//just the hint to user for camera accept and back to get to sliders
+		//only camera can answer in this case
 			
 			setContentView(R.layout.cancelhint);
-			//just the hint to user for camera accept and back to get to sliders
-			//only camera can answer in this case
 			
 			//it's a workaround
 			//I don't know how to make a window that doesn't block the sliders
 			//such that it can still get key events
 		}
-		else {
-		
+		else if (!getSharedPreferences("myLockphone", 0).getBoolean("rejectEnabled", false)) {
+		//regular answer only button
 			
 			setContentView(R.layout.answerprompt);
 			
@@ -58,29 +61,30 @@ public class CallPrompt extends Activity {
 	          		answer();
 	          	}
 			});
-			
-			//setContentView(R.layout.main);
-			
+		}
+		else {
+		//2 button prompt
+			setContentView(R.layout.main);
+						
+			Button answer = (Button) findViewById(R.id.answerbutton);
 		
-			/*
-		Button answer = (Button) findViewById(R.id.answerbutton);
+			answer.setOnClickListener(new OnClickListener() {
+				public void onClick(View v){
+					answer();
+				}
+			});
 		
-		answer.setOnClickListener(new OnClickListener() {
-          	public void onClick(View v){
-          		answer();
-          	}
-		});
+			Button reject = (Button) findViewById(R.id.rejectbutton);
 		
-		Button reject = (Button) findViewById(R.id.rejectbutton);
-		
-		reject.setOnClickListener(new OnClickListener() {
-          	public void onClick(View v){
-          		reject();
-          	}
-		});*/
-			}
+			reject.setOnClickListener(new OnClickListener() {
+				public void onClick(View v){
+					reject();
+				}
+			});
 		
 		}
+		
+	}
 			
 	@Override
 	protected void onDestroy() {
@@ -107,6 +111,11 @@ public class CallPrompt extends Activity {
 		//We are sneaky.
 		//We can relaunch if phone lagged in starting, so then tries to cancel our visible lifecycle
 		if (!success) launch(getApplicationContext());
+		
+		//there is a bug where if you test this too fast after going home, it blocks the activity start
+		//so far it only seems to affect service and receiver based activity starting
+		//We have the issue reported on the android issue tracker
+		//in the log it will be orange: "activity start request from (pid) stopped."
 	}
 	
 	void answer() {
@@ -133,6 +142,9 @@ public class CallPrompt extends Activity {
         am.restartPackage("com.android.phone");
         
         //requires permission to restart packages
+
+        //if used to ignore call waiting 2nd call.
+        //it would end first call too
         
         moveTaskToBack(true);
   		finish();
