@@ -1,40 +1,61 @@
 package i4nc4mp.myLock;
 
+import android.app.Activity;
 import android.app.Notification;
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.WindowManager;
 
 //simple dismiss activity that will exit self at wakeup
 //this mode is for users who wish for all buttons to wake and unlock
 //they want no guarding... probably those belt clip holster touting jerks
 
 public class UnguardService extends MediatorService {
-	public boolean persistent = false;
-    public boolean timeoutenabled = false;
+	private boolean persistent = false;
+    private boolean timeoutenabled = false;
     
-    public boolean security = false;
+    private boolean security = false;
     
 /* Life-Cycle Flags */
-    public boolean shouldLock = true;
+    private boolean shouldLock = true;
     //Flagged true upon Lock Activity exit callback, remains true until StartLock intent is fired.
             
-    public boolean PendingLock = false;
+    private boolean PendingLock = false;
     //Flagged true upon sleep, remains true until StartLock sends first callback indicating Create success.
     
     
-    Handler serviceHandler;
-    Task myTask = new Task();
-    public int waited = 0;
+    private static Handler myHandler;
+    private int waited = 0;
+    
+    //The mediator service INSTANCE sets up the shared handler
+    protected void initHandler() {
+    	myHandler = new Handler() {
+			public void handleMessage(Message msg) {
+				super.handleMessage(msg);
+				
+				switch (msg.what) {
+					case 0:
+						handleLockEvent(true);
+						break;
+					case 1:
+						handleLockEvent(false);
+						break;
+					default:
+						break;
+					}
+				}
+		};
+    }
     
     @Override
     public void onDestroy() {
@@ -47,11 +68,9 @@ public class UnguardService extends MediatorService {
         		android.provider.Settings.System.putInt(getContentResolver(), 
         				android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
         	}
-                serviceHandler.removeCallbacks(myTask);
-                serviceHandler = null;
+                myHandler = null;
                 
-                unregisterReceiver(lockStarted);
-                unregisterReceiver(lockStopped);
+               
                 
                 settings.unregisterOnSharedPreferenceChangeListener(prefslisten);
                 
@@ -89,19 +108,12 @@ public class UnguardService extends MediatorService {
             }
             
                             
-            serviceHandler = new Handler();
+           initHandler();
             
             
             ManageWakeLock.acquirePartial(getApplicationContext());
             //if not always holding partial we would only acquire at Lock activity exit callback
-            //we found we always need it to ensure key events will not occasionally drop on the floor from idle state wakeup
-            
-            
-            IntentFilter lockStart = new IntentFilter ("i4nc4mp.myLock.lifecycle.LOCKSCREEN_PRIMED");
-            registerReceiver(lockStarted, lockStart);
-            
-            IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED");
-            registerReceiver(lockStopped, lockStop);            
+            //we found we always need it to ensure key events will not occasionally drop on the floor from idle state wakeup        
     }
     
     @Override
@@ -125,75 +137,73 @@ public class UnguardService extends MediatorService {
     		}
     	};
     
-    BroadcastReceiver lockStarted = new BroadcastReceiver() {
-            @Override
-        public void onReceive(Context context, Intent intent) {
-                    
-            if (!intent.getAction().equals("i4nc4mp.myLock.lifecycle.LOCKSCREEN_PRIMED")) return;
-
-            if (!PendingLock) Log.v("lock start callback","did not expect this call");
-            else PendingLock = false;
-            
-            Log.v("lock start callback","Lock Activity is primed");                
-                                
-            if (timeoutenabled) {
-            	Log.v("idle lock","starting timer");
-            	IdleTimer.start(getApplicationContext());
-            }
-                                    
-    }};
-    
-    BroadcastReceiver lockStopped = new BroadcastReceiver() {
-            @Override
-        public void onReceive(Context context, Intent intent) {
-            if (!intent.getAction().equals("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED")) return;
-
-            if (shouldLock) Log.v("lock exit callback","did not expect this call"); 
+    private void handleLockEvent(boolean newstate) {
+    	if (newstate) {
+    		if (!PendingLock) Log.v("lock start callback","did not expect this call");
+    		else PendingLock = false;
+        
+    		Log.v("lock start callback","Lock Activity is primed");                
+                            
+    		if (timeoutenabled) {
+    			Log.v("idle lock","starting timer");
+    			IdleTimer.start(getApplicationContext());
+        		}
+    		}
+    	else {
+    		if (shouldLock) Log.v("lock exit callback","did not expect this call"); 
             else shouldLock = true;
                             
                             
             Log.v("lock exit callback","Lock Activity is finished");
                                                                             
             if (timeoutenabled) IdleTimer.cancel(getApplicationContext());
-                          
-    }};
+    	}
+    }
     
-    class Task implements Runnable {
-    public void run() {
-            Context mCon = getApplicationContext();
-            if (waited == 0) Log.v("startLock task","beginning KG check cycle");
-            if (!PendingLock) {
-            	Log.v("startLock user abort","detected wakeup before lock started");
-            	waited = 0;
-            	return;
-            	//ensures break the attempt cycle if user has aborted the lock
-            }
-            
-            if (waited == 20) {
-            	Log.v("startLock abort","system or app seems to be suppressing lockdown");
-            	waited = 0;
-            	PendingLock = false;
-            	return;
-            }
-            
-            
-            //see if any keyguard exists yet
-                    ManageKeyguard.initialize(mCon);
-                    if (ManageKeyguard.inKeyguardRestrictedInputMode()) {
-                            
-                            //the keyguard exists here on first try if this isn't a timeout lock
-                            shouldLock = false;
-                            waited = 0;
-                            StartLock(mCon);//take over the lock
-                    }
-                    else {
-                    	waited++;
-                    	serviceHandler.postDelayed(myTask, 500L);
+    protected void tryLock() {
+       	
+    	//our thread will essentially wait for the start of lock activity
+    	//there is a chance the KG is never detected due to sleep within dock app
+    	//so we wait 10 seconds before assuming that is the case
+    	new Thread() {
+
+    	public void run() {
+    		Context mCon = getApplicationContext();
+    		do {	
+    		try {
+        			Thread.sleep(500);} catch (InterruptedException e) {
+        			}
+        			if (waited == 0) Log.v("tryLock thread","beginning KG check cycle");
+                    if (!PendingLock) {
+                    	Log.v("startLock user abort","detected wakeup before lock started");
+                    	waited = 0;
+                    	return;
+                    //ensures break the attempt cycle if user has aborted the lock
+                    //on incredible there is no grace period on timeout sleep, this case doesn't occur
                     }
                     
+                    if (waited == 20) {
+                    	Log.v("startLock abort","system or app seems to be suppressing lockdown");
+                    	waited = 0;
+                    	PendingLock = false;
+                    	return;
+                    }
+                                        
+                    //see if any keyguard exists yet
+                            ManageKeyguard.initialize(mCon);
+                            if (ManageKeyguard.inKeyguardRestrictedInputMode()) {                            	
+                                    shouldLock = false;//set the state of waiting for lock start success
+                                    waited = 0;
+                                    StartLock(mCon);//take over the lock
+                            }
+                            else waited++;
+                            	
                             
-            }               
-    }
+        		//myHandler.sendMessage(Message.obtain(myHandler, 2));
+    		} while (shouldLock && PendingLock);
+    	}
+    	       }.start();
+    	    }
     
     @Override
     public void onScreenWakeup() {
@@ -250,7 +260,8 @@ public class UnguardService extends MediatorService {
                                    
             Log.v("mediator screen off","sleep - starting check for keyguard");
 
-            serviceHandler.postDelayed(myTask, 500L);
+            //serviceHandler.postDelayed(myTask, 500L);
+            tryLock();
             }
     
             
@@ -264,18 +275,12 @@ public class UnguardService extends MediatorService {
             
                     
             //if (timeoutenabled) ManageKeyguard.disableKeyguard(getApplicationContext());
-            //not necessary in guarded mode since we dont cancel kg till user wakes device
-
-                    Class w = UnguardActivity.class;
-                    
-                    //for user pref whether to use wallpaper, need to have a subclass
-                    //since i can only define the wallpaper vs Theme standard in the activity def
-                    //inside the manifest.
+ 
                    
 
             /* launch UI, explicitly stating that this is not due to user action
                      * so that the current app's notification management is not disturbed */
-                    Intent lockscreen = new Intent(context, w);
+                    Intent lockscreen = new Intent(context, UnguardActivity.class);
                     
                     
                   //new task required for our service activity start to succeed. exception otherwise
@@ -328,6 +333,7 @@ public class UnguardService extends MediatorService {
             
             Intent intent = new Intent("i4nc4mp.myLock.lifecycle.CALL_START");
             getApplicationContext().sendBroadcast(intent);
+            //FIXME is there a way to do this with a class method now with inner class activity?
             }
             else shouldLock = false;
     }
@@ -422,5 +428,38 @@ public class UnguardService extends MediatorService {
             persistent = true;
             
             startForeground(SVC_ID, notification);
+    }
+    
+    //The activity is wrapped by the mediator so we can interact with a static handler instance
+    //The activity can be dismissed via back button
+    //User configures what keys if any will fully auto unlock
+    public static class UnguardActivity extends Activity {
+
+    	protected void onCreate(Bundle icicle) {
+            super.onCreate(icicle);
+            
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+                    
+            setContentView(R.layout.lockdownlayout);
+            //cool translucent overlay that shows what's behind
+            
+           
+            
+        
+            }
+    	
+    	//first focus gain after first onStart is the official point of being initialized
+    	//that's when we callback the mediator service
+    	
+    	//resume after that if have focus still means user wake
+    	//loss of focus or getting stopped after that means events waking phone
+    	
+    	@Override
+        public void onDestroy() {
+            super.onDestroy();
+        	
+            Log.v("destroyWelcome","Destroying");
+        }
+    	
     }
 }

@@ -75,7 +75,7 @@
                 android:screenOrientation="portrait">
                 </activity>
         
-       <activity android:name="UnguardActivity"
+       <activity android:name="UnguardService$UnguardActivity"
                 android:excludeFromRecents="true"
                 android:launchMode="singleTask"
                 android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen"
