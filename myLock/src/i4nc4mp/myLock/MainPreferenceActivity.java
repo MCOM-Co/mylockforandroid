@@ -54,8 +54,14 @@ public class MainPreferenceActivity extends PreferenceActivity {
     							Context mCon = getApplicationContext();
     						
     							//Check the state that is verified during onStart
-    							if(!enabled) ManageMediator.startService(mCon);
-    				        	else ManageMediator.stopService(mCon);
+    							if(!enabled) {
+    								ManageMediator.startService(mCon);
+    								findPreference("enabled").setTitle(R.string.enabled);
+    							}
+    				        	else {
+    				        		ManageMediator.stopService(mCon);
+    				        		findPreference("enabled").setTitle(R.string.disabled);
+    				        	}
     							
     							return true;
     					}
@@ -63,6 +69,26 @@ public class MainPreferenceActivity extends PreferenceActivity {
                     	
     					};
                     });
+                	
+                	/*
+                	toggle.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+
+    					@Override
+    					public boolean onPreferenceChange(Preference preference,
+    							Object newValue) {
+    						Boolean v = (Boolean) newValue;
+    						Log.v("changed status","pref is now " + v);
+    						
+    						CharSequence s = "myLock ";
+    						if (v) s = s + "Enabled";
+    						else s = s + "Disabled";
+    						
+    						
+    						preference.setTitle(s);
+    						return true;
+    					}
+                    });*/
+                	
                 }
                 
                 
@@ -160,6 +186,10 @@ public class MainPreferenceActivity extends PreferenceActivity {
                 //if this is a change it's automatically persisted
         	}
         	((CheckBoxPreference) findPreference("enabled")).setChecked(enabled);
+        	
+        	if (enabled) findPreference("enabled").setTitle(R.string.enabled);
+        	else findPreference("enabled").setTitle(R.string.disabled);
+        	
         	((CheckBoxPreference) findPreference("security")).setChecked(security);
         }
         

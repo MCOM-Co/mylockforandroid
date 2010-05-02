@@ -3,7 +3,7 @@
 <PreferenceCategory android:title="Status" android:key="statusinfo">
 <CheckBoxPreference
 android:key="enabled"
-android:summaryOn="@string/enabled" android:summaryOff="@string/disabled"
+android:summary="you can also view status and toggle via the homescreen widget"
 android:disableDependentsState="true"
 android:persistent="true"
 />
