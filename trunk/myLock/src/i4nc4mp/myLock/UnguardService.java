@@ -1,12 +1,16 @@
 package i4nc4mp.myLock;
 
+import i4nc4mp.myLock.ManageKeyguard.LaunchOnKeyguardExit;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -14,6 +18,9 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.view.WindowManager;
 
 //simple dismiss activity that will exit self at wakeup
@@ -299,9 +306,9 @@ public class UnguardService extends MediatorService {
                     context.startActivity(lockscreen);
             }
     
-    public void StartDismiss(Context context) {
+    public static void StartDismiss(Context context) {
             
-    	PowerManager myPM = (PowerManager) getSystemService(Context.POWER_SERVICE);
+    	PowerManager myPM = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         myPM.userActivity(SystemClock.uptimeMillis(), false);
     	
     Class w = DismissActivity.class; 
@@ -435,6 +442,32 @@ public class UnguardService extends MediatorService {
     //User configures what keys if any will fully auto unlock
     public static class UnguardActivity extends Activity {
 
+    	/* Lifecycle flags */
+    	public boolean starting = true;//flag off after we successfully gain focus. flag on when we send task to back
+    	public boolean finishing = false;//flag on when an event causes unlock, back off when onStart comes in again (relocked)
+
+    	public boolean paused = false;
+
+    	public boolean dormant = false;
+    	//special lifecycle phase- we are waiting in the background for outside event to return focus to us
+    	//an example of this is while a call is ringing. we have to force the state
+    	//because the call prompt acts like a user notification panel nav
+
+    	public boolean pendingExit = false;
+    	//special lifecycle phase- when we lose focus and aren't paused, we launch a KG pause
+    	//two outcomes, either we securely exit if a pause comes in meaning user is navigating out
+    	//or else we are going to get focus back and re-enable keyguard
+
+    	public boolean slideWakeup = false;
+    	//we will set this when we detect slideopen, only used with instant unlock (replacement for 2c ver)
+
+    	public boolean slideGuard = false;
+    	//user pref whether to have the slide wake show lockscreen. default is still auto exit
+
+    	public boolean resurrected = false;
+    	//just to handle return from dormant, avoid treating it same as a user initiated wake
+
+    	    
     	protected void onCreate(Bundle icicle) {
             super.onCreate(icicle);
             
@@ -443,23 +476,355 @@ public class UnguardService extends MediatorService {
             setContentView(R.layout.lockdownlayout);
             //cool translucent overlay that shows what's behind
             
+            IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
+            registerReceiver(screenon, onfilter);
+    
+    IntentFilter callbegin = new IntentFilter ("i4nc4mp.myLock.lifecycle.CALL_START");
+    registerReceiver(callStarted, callbegin);  
+    
+    IntentFilter callpend = new IntentFilter ("i4nc4mp.myLock.lifecycle.CALL_PENDING");
+    registerReceiver(callPending, callpend);
+    
+    SharedPreferences settings = getSharedPreferences("myLock", 0);
+    slideGuard = settings.getBoolean("slideGuard", false);
            
             
         
-            }
-    	
-    	//first focus gain after first onStart is the official point of being initialized
-    	//that's when we callback the mediator service
-    	
-    	//resume after that if have focus still means user wake
-    	//loss of focus or getting stopped after that means events waking phone
-    	
+            }    
+
+    	BroadcastReceiver screenon = new BroadcastReceiver() {
+    	            
+    	    public static final String Screenon = "android.intent.action.SCREEN_ON";
+
+    	    @Override
+    	    public void onReceive(Context context, Intent intent) {
+    	            if (!intent.getAction().equals(Screenon) || finishing) return;
+    	            Log.v("guard is handling wakeup","deciding whether to dismiss");
+    	            
+    	            if (resurrected) {
+	                	//ignore this wake as we do not actually want instant exit
+	                	resurrected = false;
+	                	Log.v("guard resurrected","ignoring invalid screen on");
+	                }
+    	            else if (hasWindowFocus()) {             	
+    	            	
+    	            	if (slideWakeup && slideGuard){
+    	            		//HERE is where we need to call re-enable.. but should do it after exiting
+    	            		Log.v("slide wake lockdown", "re enabling kg");
+    	            	    //exit on its own just leads to unlocked state
+    	            	}
+    	            	//TODO add a haptic notif so user might know if this pocket wake happened
+    	            	
+    	            	//we don't call finish via wake like the show when locked moed
+    	            	//we use the key events and other events to decide if unlock or lockdown should occur
+    	            	
+    	            	if (slideWakeup && !slideGuard) {
+    	            		
+	            	           Log.v("slide wake exit", "closing the guard window");
+	            	           
+	            	           finishing = true;
+	            	           finish();
+	            	        	}
+    	            }
+    	            
+    	    return;//avoid unresponsive receiver error outcome
+    	         
+    	}};
+
+    	BroadcastReceiver callStarted = new BroadcastReceiver() {
+    	    @Override
+    	    public void onReceive(Context context, Intent intent) {
+    	    if (!intent.getAction().equals("i4nc4mp.myLock.lifecycle.CALL_START")) return;
+    	    
+    	    //we are going to be dormant while this happens, therefore we need to force finish
+    	    Log.v("guard received broadcast","completing callback and finish");
+    	    
+    	    StopCallback();
+    	    finish();
+    	    
+    	    return;
+    	    }};
+    	    
+    	BroadcastReceiver callPending = new BroadcastReceiver() {
+    	    @Override
+    	       public void onReceive(Context context, Intent intent) {
+    	    if (!intent.getAction().equals("i4nc4mp.myLock.lifecycle.CALL_PENDING")) return;
+    	            //incoming call does not steal focus till user grabs a tab
+    	            //lifecycle treats this like a home key exit
+    	            //forcing dormant state here will allow us to only exit if call is answered
+    	            dormant = true;
+    	            return;                 
+    	    }};
+    	    
+    	    
+    	    @Override
+    	public void onConfigurationChanged(Configuration newConfig) {
+    	    super.onConfigurationChanged(newConfig);
+    	    if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO) {
+    	            //this means that a config change happened and the keyboard is open.
+    	            if (starting) Log.v("slide-open lock","aborting handling, slide was opened before this lock");
+    	            else {
+    	            	Log.v("slide-open wake","setting state flag");
+    	            	slideWakeup = true;    	            	
+    	            }           
+    	    }
+    	    else if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES) {
+    	    	Log.v("slide closed","lockscreen activity got the config change from background");
+    	    }
+    	                  
+    	}
+
+    	    @Override
+    	protected void onStop() {
+    	    super.onStop();
+    	    
+    	    if (finishing) {
+    	    	//deliberate user action exit not caused by handoffs to other events
+    	            Log.v("lock stop","we have been unlocked by a user exit request");
+    	    }
+    	    else if (paused) {
+    	            if (hasWindowFocus()) {
+    	    
+    	            //stop is called, we were already paused, and still have focus
+    	            //this means something is about to take focus, we should go dormant
+    	            dormant = true;
+    	            Log.v("lock stop","detected external event about to take focus, setting dormant");
+    	            }
+    	        else {
+    	            //we got paused, lost focus, then finally stopped
+    	            //this only happens if user is navigating out via notif, popup, or home key shortcuts
+    	            Log.v("lock stop","onStop is telling mediator we have been unlocked by user navigation");
+    	            finishing = true;
+    	        }
+    	    }
+    	    else Log.v("unexpected onStop","lockscreen was stopped for unknown reason");
+    	    
+    	    if (finishing) {
+    	            StopCallback();
+    	            finish();
+    	    }
+    	    
+    	}
+
     	@Override
-        public void onDestroy() {
-            super.onDestroy();
-        	
-            Log.v("destroyWelcome","Destroying");
-        }
+    	protected void onPause() {
+    	    super.onPause();
+    	    
+    	    paused = true;
+    	    
+    	    if (!starting && !hasWindowFocus()) {
+    	            //case: we yielded focus to something but didn't pause. Example: notif panel
+    	            //pause in this instance means something else is launching, that is about to try to stop us
+    	            //so we need to exit now, as it is a user nav, not a dormancy event
+    	            Log.v("navigation exit","got paused without focus, starting dismiss sequence");
+    	            
+    	               StopCallback();
+    	               finish();
+    	                  	            
+    	    }
+    	    else {
+    	    	if (hasWindowFocus()) Log.v("lock paused","normal pause - we still have focus");
+    	      	else Log.v("lock paused","exit pause - don't have focus");
+    	      	
+    	      	if (slideWakeup) {
+    	      		Log.v("returning to sleep","toggling slide wakeup false");
+    	      		slideWakeup = false;
+    	      	}
+    	      	if (resurrected) {
+    	      		Log.v("returning to sleep","toggling resurrected false");
+    	      		resurrected = false;
+    	      		//sometimes the invalid screen on doesn't happen
+    	      		//in that case we just turn off the flag at next pause
+    	      		//FIXME need to ignore this in the autodismiss also
+    	      		//without it the phone is unlocking after missed call
+    	      	}
+    	      }
+    	    }
+
+    	@Override
+    	protected void onResume() {
+    	    super.onResume();
+    	    Log.v("lock resume","resuming, focus is " + hasWindowFocus());
+    	   
+
+    	    paused = false;
+    	    
+    	    
+    	    //updateClock();
+    	}
+
+    	@Override
+    	public void onDestroy() {
+    	    super.onDestroy();
+    	                	   
+    	   unregisterReceiver(screenon);
+    	   unregisterReceiver(callStarted);
+    	   unregisterReceiver(callPending);
+    	    
+    	   Log.v("destroy Guard","Destroying");
+    	}
+
+    	@Override
+    	public void onWindowFocusChanged (boolean hasFocus) {
+    	    if (hasFocus) {
+    	            Log.v("focus change","we have gained focus");
+    	            //Catch first focus gain after onStart here.
+    	            //this allows us to know if we actually got as far as having focus (expected but bug sometimes prevents
+    	            if (starting) {
+    	                    starting = false;
+    	                    //set our own lifecycle reference now that we know we started and got focus properly
+    	                    
+    	                    //tell mediator it is no longer waiting for us to start up
+    	                    StartCallback();
+    	            }
+    	            else if (dormant) {
+    	                    Log.v("regained","we are no longer dormant");
+    	                    dormant = false;
+    	                    resurrected = true;
+    	            }
+    	            else if (pendingExit) {
+    	                    Log.v("regained","we are no longer pending nav exit");
+    	                    pendingExit = false;
+    	            }
+    	    }
+    	    else if (!finishing && paused) {
+    	//Handcent popup issue-- we haven't gotten resume & screen on yet
+    	//Handcent is taking focus first thing
+    	//So it is now behaving like an open of notif panel where we aren't stopped and aren't even getting paused
+    	      	  
+    	     //we really need to know we were just resumed and had screen come on to do this handoff
+    	                        
+    	                        if (dormant) Log.v("dormant handoff complete","the external event now has focus");
+    	                        else if (checkScreen()) {
+    	                      		  //Here's the handcent case
+    	                      		  //if you then exit via a link on pop,
+    	                      		  //we do get the user nav handling on onStop
+    	                      		  Log.v("popup event","focus handoff before screen on, nav exit possible");
+    	                      		  dormant = true;                            
+    	                      		  //we need to be dormant so we realize once the popup goes away
+    	                      	  }
+    	                        
+    	        	}
+    	            else if (!paused) {
+    	                    //not paused, losing focus
+    	                    Log.v("focus yielded while active","about to exit through notif nav");
+    	                    pendingExit = true;
+    	            }
+    	    
+    	    
+    	}
+
+    	protected void onStart() {
+    	    super.onStart();
+    	    Log.v("lockscreen start success","setting flags");
+    	    
+    	    if (finishing) {
+    	            finishing = false;
+    	            Log.v("re-start","we got restarted while in Finishing phase, wtf");
+    	            //since we are sometimes being brought back, safe to ensure flags are like at creation
+    	    }
+    	}
+
+    	public void StartCallback() {
+    		myHandler.sendMessage(Message.obtain(myHandler, 0));
+    	}
+
+    	public void StopCallback() {
+    		myHandler.sendMessage(Message.obtain(myHandler, 1));
+    	}
+
+    	public boolean checkScreen() {
+    		//Allows us to tap into the 2.1 screen check if available
+    		
+    		boolean on = false;
+    		
+    		if(Integer.parseInt(Build.VERSION.SDK) < 7) { 
+    			//we will bind to mediator and ask for the isAwake, if on pre 2.1
+    			//for now we will just use a pref since we only need it during life cycle
+    			//so we don't have to also get a possibly unreliable screen on broadcast within activity
+    			Log.v("pre 2.1 screen check","grabbing screen state from prefs");
+    			SharedPreferences settings = getSharedPreferences("myLock", 0);
+    		   	on = settings.getBoolean("screen", false);
+    			
+    		}
+    		else {
+    			PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+    			on = myPM.isScreenOn();
+    		}
+    		
+    		return on;
+    	}	
     	
+    
+    
+  //here's where most of the magic happens
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+
+        boolean up = event.getAction() == KeyEvent.ACTION_UP;
+        //flags to true if the event we are getting is the up (release)
+        //when we are coming from sleep, the pwr down gets taken by power manager to cause wakeup
+        //if we are awake already the power up might also get taken.
+        
+        //however even from sleep we get a down and an up for focus & cam keys with a full press
+        
+        int code = event.getKeyCode();
+        Log.v("dispatching a key event","Is this the up? -" + up);
+        
+       //TODO implement pref-checking method to see if any advanced power saved keys are set
+        //and also let user define what keys auto unlock
+        
+               
+      //if (code == KeyEvent.KEYCODE_FOCUS) reaction = 0; else//locked (advanced power save)
+
+        int reaction = 0;//wakeup, the preferred behavior in advanced mode
+        if (code == KeyEvent.KEYCODE_POWER || code == KeyEvent.KEYCODE_BACK) reaction = 1;
+
+        boolean unlock = (reaction == 1);
+        //this is replaced by a switch for other reactions once advanced features are implemented
+        
+    	   if (unlock && up && !finishing) {
+    		   Log.v("unlock key","closing");
+    		   finishing = true;
+    	  	  	
+    		   //setBright((float) 0.1);
+    		       		       		  
+    		   moveTaskToBack(true);
+    		  return true;
+    	   }
+    	   else return false;
+    /* * advanced power save handling 
+     * 
+     *      * -- decide whether a regular wake or locked/screen off wake should happen
+     * switch (reaction) {
+        	case 2:
+    	   if (up && !screenwake) {
+                   //waking = true;
+                  	Log.v("key event","wake key");
+               	//wakeup();
+                  	screenwake = true;
+    	   }
+    	   return true;
+    	   //ensures that a wakeup will be handled properly if sleep occurs again
+       
+        * advanced power save handling
+        case 0:    	   
+    	   if (!screenwake && up) {
+         	   timeleft=10;
+         	//so that countdown is refreshed
+            //countdown won't be running in screenwakes
+         	if (!waking) {
+            //start up the quiet wake timer    
+             Log.v("key event","locked key timer starting");
+
+             	waking = true;
+             	serviceHandler.postDelayed(myTask, 500L);
+             		}
+            }
+             
+             
+    	   return true;*/
+       
     }
+}
 }
