@@ -22,12 +22,13 @@
   
   <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" 
   android:id="@+id/hinttext1"
- android:layout_centerInParent="true"
+ android:layout_alignParentBottom="true"
+ android:layout_centerHorizontal="true"
                 android:text="&#8709; myLock &#8734;"
                 android:textColor="@color/droid" android:textSize="18sp"></TextView>
   <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" 
   android:id="@+id/hinttext2"
-android:layout_below="@id/hinttext1"
+android:layout_above="@id/hidetabs"
 android:layout_centerHorizontal="true"
                 android:text="press back to enable sliders"
                 android:textColor="@color/droid" android:textSize="18sp"></TextView>

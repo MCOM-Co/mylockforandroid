@@ -49,7 +49,7 @@ public class CallPrompt extends Activity {
 			//I don't know how to make a window that doesn't block the sliders
 			//such that it can still get key events
 		}
-		else if (!getSharedPreferences("myLockphone", 0).getBoolean("rejectEnabled", false)) {
+		else {//if (!getSharedPreferences("myLockphone", 0).getBoolean("rejectEnabled", false)) {
 		//regular answer only button
 			
 			setContentView(R.layout.answerprompt);
@@ -61,7 +61,7 @@ public class CallPrompt extends Activity {
 	          		answer();
 	          	}
 			});
-		}
+		}/*
 		else {
 		//2 button prompt
 			setContentView(R.layout.main);
@@ -82,7 +82,7 @@ public class CallPrompt extends Activity {
 				}
 			});
 		
-		}
+		}*/
 		
 	}
 			
@@ -120,6 +120,7 @@ public class CallPrompt extends Activity {
 	
 	void answer() {
 		success = true;
+		Log.v("answer method","about to send fake media button intent");
 		
 		Intent answer = new Intent(Intent.ACTION_MEDIA_BUTTON);
 
