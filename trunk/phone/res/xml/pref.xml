@@ -4,9 +4,11 @@
   <CheckBoxPreference android:title="Onscreen Button" android:summary="Accept via touchscreen button"
   android:key="callPrompt" android:disableDependentsState="false"
   android:persistent="true"/>
-  <CheckBoxPreference android:title="Enable Reject" android:summary="EXPERIMENTAL - Reject via onscreen button. Causes hangup of all calls"
+ <!--  at the moment this is buggy. disrupts the phone listener in main myLock package  
+ <CheckBoxPreference android:title="Enable Reject" android:summary="EXPERIMENTAL - Reject via onscreen button. Causes hangup of all calls"
   android:key="rejectEnabled" android:dependency="callPrompt"
   android:persistent="true" />
+  -->
   <CheckBoxPreference android:title="Camera Button" android:summary="Accept via Camera side key"
   android:key="cameraAccept" 
   android:persistent="true"/>
