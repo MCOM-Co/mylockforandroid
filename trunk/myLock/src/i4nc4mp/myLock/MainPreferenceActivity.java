@@ -43,7 +43,7 @@ public class MainPreferenceActivity extends PreferenceActivity {
                 //Next, we have to set some things up just like we did in the old settings activity
                 //we use findPreference instead of findViewById
                 
-                CheckBoxPreference toggle = (CheckBoxPreference) findPreference("enabled");
+                final CheckBoxPreference toggle = (CheckBoxPreference) findPreference("enabled");
                 if (toggle == null) Log.e("pref activity","didn't find toggle item");
                 else {
                 	toggle.setOnPreferenceClickListener(new OnPreferenceClickListener() {
@@ -53,8 +53,10 @@ public class MainPreferenceActivity extends PreferenceActivity {
     						if(preference.getKey().equals("enabled")) {
     							Context mCon = getApplicationContext();
     						
-    							//Check the state that is verified during onStart
-    							if(!enabled) {
+    							//using enabled flag here caused a failure when turning off then back on
+    							//within the same visible lifecycle of the pref screen
+    							//this is because we never update enabled except at start
+    							if(toggle.isChecked()) {
     								ManageMediator.startService(mCon);
     								findPreference("enabled").setTitle(R.string.enabled);
     							}
@@ -194,25 +196,35 @@ public class MainPreferenceActivity extends PreferenceActivity {
         }
         
         private void updateMode(int m) {
-            String s = new String();
+            String t = new String();
+        	String s = new String();
             
             switch (m) {
             	case ManageMediator.MODE_BASIC:
-            		s = "Basic Auto-Unlock";
+            		t = getResources().getString(R.string.basictitle);
+            		s = getResources().getString(R.string.basicsummary);
             		break;
             	case ManageMediator.MODE_HIDDEN:
-            		s = "Hide Lockscreen & Auto-Unlock";
+            		t = getResources().getString(R.string.hiddentitle);
+            		s = getResources().getString(R.string.hiddensummary);
             		break;
             	case ManageMediator.MODE_ADVANCED:
-            		s = "Advanced Full Disable";
+            		t = getResources().getString(R.string.unguardtitle);
+            		s = getResources().getString(R.string.unguardsummary);
             		break;
             }
-            
+            findPreference("mode").setTitle(t);
             findPreference("mode").setSummary(s);
         }
         
         class Task implements Runnable {
             public void run() {
+            	//doesn't handle fallout at all of incorrect enabled flag
+            	//the expected outcome here is that user will check the box, causing start
+            	//that will correct the pref, but there is no hint given to user
+            	//widget should show correct state unless it is a newly added widget
+            	//that might be best place to handle incorrect enabled flag
+            	
             	updateStatus(ManageMediator.serviceActive(getApplicationContext()));
             	}
     	}

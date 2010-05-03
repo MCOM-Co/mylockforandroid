@@ -17,7 +17,12 @@
 <string name="sec_on">ENABLED- The set pattern will be disabled while myLock is active</string>
 <string name="sec_off">DISABLED- Set up a security pattern from system prefs</string>
 
-<string name="unguard">Advanced mode - volume and camera (and trackball on the nexus one) will wake and unlock.</string>
+<string name="basictitle">Auto Unlock</string>
+<string name="basicsummary">You may see the lockscreen visuals when a slower app is restoring.</string>
+<string name="hiddentitle">Hide lockscreen visuals</string>
+<string name="hiddensummary">When a slower app is restoring, a progress message will be displayed.</string>
+<string name="unguardtitle">Advanced</string>
+<string name="unguardsummary">Allows vol and cam/trackball/nav button to wake.</string>
 
 <string name="howto_title">How to use myLock</string>
 <string name="HowToFull">myLock automatically minimizes the lockscreen. Side buttons remain locked down, but waking the phone with the slider, keypad buttons, or power key will auto unlock.
