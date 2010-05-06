@@ -44,3 +44,6 @@ Idle timeout security - with any lesser security method allow a time period (or 
 Coming from non-secure, if the device is awake and in use and we want to force lockdown, we first change system lock pref from above to 1 (on), then we launch an activity with the flag keep screen on, and use window manager to set its brightness to 0.0. This forces screen off, and the user will try to wake back up, but when they press power, it is the real system sleep on first press. Then the secure lockscreen occurs. The 2nd press wakes up to the secure lockscreen.
 
 With this activity I also intercept key events to return true, basically enforcing a no-input lockdown. This was first implemented in v1.3.4a to help enforce security after a reboot.
+
+This isn't working on the HTC device (incredible, eris if ever updated to 2.0). The set bright doesn't cause the screen to go off, so instead we should make a black screen appear that hints the user to press power to continue. Hopefully they will fall for it.
+Home key protection is something we just can't circumvent at all... 
