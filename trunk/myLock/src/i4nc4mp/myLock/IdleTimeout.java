@@ -12,6 +12,8 @@ public class IdleTimeout extends BroadcastReceiver {
 	//advanced mode has to maintain a Disable call before every StartLock
 	//then cause a wake + exit and re-enable call at timeout
 	
+	//so this is only invoked for the basic modes
+	
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		// TODO Auto-generated method stub

@@ -6,9 +6,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 
-public class IdleTimer {
-    private static final int REQUEST_ID = 0;
-    private static final String myIntent = "i4nc4mp.myLock.IDLE_TIMEOUT";
+public class AdvancedIdleTimer {
+	private static final String myIntent = "i4nc4mp.myLock.KILL_ADVANCED";
+	private static final int REQUEST_ID = 0;
+
 
     private static PendingIntent buildIntent(Context ctx) {
         Intent intent = new Intent(myIntent);
@@ -35,6 +36,5 @@ public class IdleTimer {
         AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
 
         am.cancel(buildIntent(ctx));
-    }
-
+    }    
 }

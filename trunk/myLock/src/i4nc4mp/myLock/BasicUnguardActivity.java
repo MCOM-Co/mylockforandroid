@@ -29,7 +29,7 @@ public class BasicUnguardActivity extends Activity {
         
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
                 
-        setContentView(R.layout.lockdownlayout);//cool green overlay that shows what's behind
+        setContentView(R.layout.unguard);//cool green overlay that shows what's behind
         
         //setBright((float) 0.0);
         

@@ -33,7 +33,7 @@ public class Lockdown extends Activity {
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         
-        setContentView(R.layout.lockdownlayout);
+        setContentView(R.layout.lockdown);
         
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
       		  | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
