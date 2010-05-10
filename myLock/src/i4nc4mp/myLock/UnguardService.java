@@ -42,6 +42,8 @@ public class UnguardService extends MediatorService {
     
     
     private static Handler myHandler;
+    private boolean closing = false;
+    
     private int waited = 0;
     
     //The mediator service INSTANCE sets up the shared handler
@@ -64,6 +66,12 @@ public class UnguardService extends MediatorService {
 		};
     }
     
+    //to be used in the case of a lockdown
+    public static void closeLockscreen(Context c) {
+    	Intent intent = new Intent("i4nc4mp.myLock.lifecycle.CALL_START");
+        c.sendBroadcast(intent);
+    }
+    
     @Override
     public void onDestroy() {
     	super.onDestroy();
@@ -71,26 +79,20 @@ public class UnguardService extends MediatorService {
         SharedPreferences settings = getSharedPreferences("myLock", 0);
             
         //toggle security back on
-        	if (security) {
-        		android.provider.Settings.System.putInt(getContentResolver(), 
-        				android.provider.Settings.System.LOCK_PATTERN_ENABLED, 1);
-        	}
+        	if (security) ManageSecurity.enableSecurity(getApplicationContext());
+        	        	
                 myHandler = null;
                 
-               
+                unregisterReceiver(goidle);
                 
                 settings.unregisterOnSharedPreferenceChangeListener(prefslisten);
                 
                 ManageWakeLock.releasePartial();
                 
                 
-              //when we get closed, it might be due to locale or idle lock
-            	if (!shouldLock) {
-                    //if our lock activity is alive, send broadcast to close it
-                    
-                    Intent intent = new Intent("i4nc4mp.myLock.lifecycle.CALL_START");
-                    getApplicationContext().sendBroadcast(intent);
-                    }
+              //when we get closed, it might be due to locale toggle
+              //if our lock activity is alive, send broadcast to close it
+            	if (!shouldLock) closeLockscreen(getApplicationContext());
 }
     
     @Override
@@ -109,18 +111,21 @@ public class UnguardService extends MediatorService {
             
             
             //toggle out of security
-            if (security) {
-            	android.provider.Settings.System.putInt(getContentResolver(), 
-                    android.provider.Settings.System.LOCK_PATTERN_ENABLED, 0);
-            }
+            if (security) ManageSecurity.disableSecurity(getApplicationContext());
             
                             
            initHandler();
             
+           
+           IntentFilter kill = new IntentFilter("i4nc4mp.myLock.KILL_ADVANCED");
+           registerReceiver (goidle, kill);
+           
             
             ManageWakeLock.acquirePartial(getApplicationContext());
             //if not always holding partial we would only acquire at Lock activity exit callback
-            //we found we always need it to ensure key events will not occasionally drop on the floor from idle state wakeup        
+            //we found we always need it to ensure key events will not occasionally drop on the floor from idle state wakeup
+            
+            
     }
     
     @Override
@@ -143,6 +148,20 @@ public class UnguardService extends MediatorService {
       		}
     		}
     	};
+    	
+    BroadcastReceiver goidle = new BroadcastReceiver() {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			// TODO Auto-generated method stub
+			if (!intent.getAction().equals("i4nc4mp.myLock.KILL_ADVANCED")) return;
+			//custom handling of the idle close
+			//we would also need to execute exactly this if being closed by toggler plugin interface
+			closing = true;
+			closeLockscreen(context);
+		}
+    	
+    };
     
     private void handleLockEvent(boolean newstate) {
     	if (newstate) {
@@ -153,17 +172,38 @@ public class UnguardService extends MediatorService {
                             
     		if (timeoutenabled) {
     			Log.v("idle lock","starting timer");
-    			IdleTimer.start(getApplicationContext());
+    			AdvancedIdleTimer.start(getApplicationContext());
         		}
     		}
     	else {
     		if (shouldLock) Log.v("lock exit callback","did not expect this call"); 
             else shouldLock = true;
                             
-                            
             Log.v("lock exit callback","Lock Activity is finished");
                                                                             
-            if (timeoutenabled) IdleTimer.cancel(getApplicationContext());
+            if (timeoutenabled) {
+            	AdvancedIdleTimer.cancel(getApplicationContext());
+            	
+            	if (closing) {
+            		//this also needs to be used to toggle off via background condition
+            		//FIXME
+            		//TODO
+            		ManageSecurity.enableSecurity(getApplicationContext());
+            		ManageKeyguard.reenableKeyguard();
+            		stopSelf();
+            		UserPresentService.launch(getApplicationContext()); 
+            		
+            	}
+            	else {
+
+            		ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
+          		  
+        	        public void LaunchOnKeyguardExitSuccess() {
+        	           ManageKeyguard.reenableKeyguard();
+        	        	}
+        			});
+            	}
+            }
     	}
     }
     
@@ -281,7 +321,7 @@ public class UnguardService extends MediatorService {
                     context.sendBroadcast(closeDialogs);
             
                     
-            //if (timeoutenabled) ManageKeyguard.disableKeyguard(getApplicationContext());
+            if (timeoutenabled) ManageKeyguard.disableKeyguard(getApplicationContext());
  
                    
 
@@ -473,7 +513,7 @@ public class UnguardService extends MediatorService {
             
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
                     
-            setContentView(R.layout.lockdownlayout);
+            setContentView(R.layout.unguard);
             //cool translucent overlay that shows what's behind
             
             IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
@@ -726,11 +766,15 @@ public class UnguardService extends MediatorService {
     	}
 
     	public void StartCallback() {
-    		myHandler.sendMessage(Message.obtain(myHandler, 0));
+    		if (myHandler != null) myHandler.sendMessage(Message.obtain(myHandler, 0));
     	}
 
     	public void StopCallback() {
-    		myHandler.sendMessage(Message.obtain(myHandler, 1));
+    		if (myHandler != null) myHandler.sendMessage(Message.obtain(myHandler, 1));
+    		else {
+    			Log.v("lock stop","no handler, assuming idle shutdown");
+    			//ManageKeyguard.reenableKeyguard();
+    		}
     	}
 
     	public boolean checkScreen() {
@@ -760,8 +804,16 @@ public class UnguardService extends MediatorService {
   //here's where most of the magic happens
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-
-        boolean up = event.getAction() == KeyEvent.ACTION_UP;
+   	
+        
+    	//boolean mult = event.getAction() == KeyEvent.ACTION_MULTIPLE;
+        //int repeat = event.getRepeatCount();
+        //Log.v("key event", "repeat is " + repeat);
+        //if (!mult && repeat != 0) mult = true;
+        
+        //multiple is not actually a double press, it is when a key is held
+        
+        //boolean up = event.getAction() == KeyEvent.ACTION_UP;
         //flags to true if the event we are getting is the up (release)
         //when we are coming from sleep, the pwr down gets taken by power manager to cause wakeup
         //if we are awake already the power up might also get taken.
@@ -769,21 +821,31 @@ public class UnguardService extends MediatorService {
         //however even from sleep we get a down and an up for focus & cam keys with a full press
         
         int code = event.getKeyCode();
-        Log.v("dispatching a key event","Is this the up? -" + up);
+        //Log.v("dispatching a key event","Is this the up? -" + up);
         
        //TODO implement pref-checking method to see if any advanced power saved keys are set
         //and also let user define what keys auto unlock
         
                
       //if (code == KeyEvent.KEYCODE_FOCUS) reaction = 0; else//locked (advanced power save)
+        //locked method we want doesn't work on OLED/ htc incredible/nexus
 
         int reaction = 0;//wakeup, the preferred behavior in advanced mode
-        if (code == KeyEvent.KEYCODE_POWER || code == KeyEvent.KEYCODE_BACK) reaction = 1;
-
+        if (code == KeyEvent.KEYCODE_POWER || code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_MENU) reaction = 1;
+        //event.getFlags()==KeyEvent.FLAG_VIRTUAL_HARD_KEY
+        //hard keys - these only come through while "Awake" since touchscreen is disabled otherwise
+        //this isn't working on device.. i don't know why.
+        //will have to actually specify the menu, back, and search codes
+        
+        if (event.getFlags()==KeyEvent.FLAG_WOKE_HERE) return true;
+        //we don't want to handle the wake as that always comes from down
+        //all we do is consume that press
+        
         boolean unlock = (reaction == 1);
+        //so that power will instant unlock, or any double press
         //this is replaced by a switch for other reactions once advanced features are implemented
         
-    	   if (unlock && up && !finishing) {
+    	   if (unlock && !finishing) {
     		   Log.v("unlock key","closing");
     		   finishing = true;
     	  	  	

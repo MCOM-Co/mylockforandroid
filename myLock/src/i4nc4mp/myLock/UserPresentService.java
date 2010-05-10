@@ -1,13 +1,14 @@
 package i4nc4mp.myLock;
 
+import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.app.KeyguardManager.KeyguardLock;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
@@ -25,6 +26,12 @@ public class UserPresentService extends Service {
 	
 	Handler serviceHandler;
     Task myTask = new Task();
+    
+    public static void launch(Context c) {
+    	Intent u = new Intent();
+	    u.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.UserPresentService");
+	    c.startService(u);
+    }
 	
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -111,6 +118,13 @@ public class UserPresentService extends Service {
 			
 			Intent slap = new Intent("i4nc4mp.myLock.FORCE_LOCK");
 		    getApplicationContext().sendBroadcast(slap);
+		    
+			//KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+			//KeyguardLock kl = km.newKeyguardLock("myLock");
+			//kl.disableKeyguard();
+			//kl.reenableKeyguard();
+			//try to make the keyguard appear.
+		    
 	    	secured = true;
 		}
 		

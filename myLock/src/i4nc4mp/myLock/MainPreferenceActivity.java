@@ -12,6 +12,7 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
+import android.widget.Toast;
 
 //what we need is when this is launched, a short handler is spawned, and the checkbox for service status
 //is replaced by a little "refreshing" spin-wheel until the status of mediator is determined
@@ -185,8 +186,23 @@ public class MainPreferenceActivity extends PreferenceActivity {
         		enabled = false;
         		security = getPatternSetting();
         		//find actual system state while not enabled so we can store to pref
-                //if this is a change it's automatically persisted
+                
+        		//The pref element only does persistent changes on user click
+        		//we're just using this pref to display, we set it ourselves here.
+        		if (security != myprefs.getBoolean("security", false)) {
+        			SharedPreferences.Editor e = myprefs.edit();
+        			e.putBoolean("security", security);
+        			e.commit();
+        			
+        			String hint = new String();
+        			
+        			if (security) hint = "Security detected";
+        			else hint = "Security disabled";
+        			
+        			Toast.makeText(MainPreferenceActivity.this, hint, Toast.LENGTH_SHORT).show();        				
+        		}
         	}
+        	
         	((CheckBoxPreference) findPreference("enabled")).setChecked(enabled);
         	
         	if (enabled) findPreference("enabled").setTitle(R.string.enabled);

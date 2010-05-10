@@ -10,7 +10,7 @@ android:persistent="true"
 
 <CheckBoxPreference android:key="security" android:title="Security"
 android:summaryOn="@string/sec_on" android:summaryOff="@string/sec_off"
-android:persistent="true" android:enabled="false" android:shouldDisableView="false"
+android:enabled="false" android:shouldDisableView="false"
 android:selectable="false"
 android:widgetLayout="@layout/hiddencheckbox"></CheckBoxPreference>
 <!-- hidden checkbox is just a checkbox root with visibility set invisible
