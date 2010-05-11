@@ -107,20 +107,15 @@ public class CallPrompt extends Activity {
 		
 	}
 	
-	/** 
-     * Track ball press event handler that will answer a call
+	/**  For motion  based nav hardware -----
      * The optical nav handles as a trackball also (Incredible/ADR6300)
+     * the motion is locked by this override, to stop conversion to dpad directional events
+     * we allow the click to pass through, it comes to key event dispatch as dpad center
      */
-    @Override public boolean onTrackballEvent(MotionEvent event) {
-    	if (!getSharedPreferences("myLockphone", 0).getBoolean("cameraAccept", false))
-    		return false;
-    	
-            switch(event.getAction())
-            {
-            case MotionEvent.ACTION_MOVE: return true;
-            case MotionEvent.ACTION_DOWN: answer(); return true;
-            default: Log.v("call prompt","trackball event: "+event);
-            }
+    @Override public boolean dispatchTrackballEvent(MotionEvent event) {
+
+            if (event.getAction() == MotionEvent.ACTION_MOVE) return true;
+            
             return super.dispatchTrackballEvent(event);
     }
     
@@ -272,6 +267,7 @@ public class CallPrompt extends Activity {
 			//this event occurs - if passed on, phone retakes focus
 			//so let's consume it to avoid that outcome
 		case KeyEvent.KEYCODE_CAMERA:
+		case KeyEvent.KEYCODE_DPAD_CENTER://sent by trackball and optical nav click
 			if (getSharedPreferences("myLockphone", 0).getBoolean("cameraAccept", false))
 					answer();
 			return true;
