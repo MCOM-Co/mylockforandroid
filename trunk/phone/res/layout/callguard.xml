@@ -7,11 +7,20 @@
   <!-- Translucent activity so call screen will be visible but with droid colored overlay -->
   
   <TextView
+  	android:id="@+id/unlockhint"
   	android:layout_width="wrap_content"
   	android:layout_height="wrap_content"
-  	android:text="myLock - Press CAMERA to Unlock"
+  	android:text="Press Cam or Nav to Unlock"
   	android:textColor="@color/white"
   	android:textSize="18sp"
   	android:layout_alignParentBottom="true"
+  	android:layout_centerHorizontal="true" />
+ <TextView
+  	android:layout_width="wrap_content"
+  	android:layout_height="wrap_content"
+  	android:text="myLock"
+  	android:textColor="@color/white"
+  	android:textSize="18sp"
+  	android:layout_above="@id/unlockhint"
   	android:layout_centerHorizontal="true" />
 </RelativeLayout>

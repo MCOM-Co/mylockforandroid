@@ -2,7 +2,9 @@ package i4nc4mp.myLock.phone;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 
 public class TouchGuard extends Activity {
 	
@@ -21,6 +23,24 @@ public class TouchGuard extends Activity {
 	public void onBackPressed() {
 		return;
 	}
+	
+	//Some devices don't have a cam button.
+	//Big ones now are nexus and incredible
+	//so we have option unlock via trackball which works for these
+	@Override
+	public boolean onTrackballEvent(MotionEvent event) {
+    	
+            switch(event.getAction())
+            {
+            case MotionEvent.ACTION_MOVE: return true;
+            case MotionEvent.ACTION_DOWN:
+            							moveTaskToBack(true);
+										finish();
+										return true;
+            default: Log.v("trackball - touchguard"," " + event);
+            }
+            return super.dispatchTrackballEvent(event);
+    }
 	
 	//camera key is used to clear the touchscreen guard
 	@Override

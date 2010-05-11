@@ -1,5 +1,7 @@
 package i4nc4mp.myLock.phone;
 
+import java.lang.reflect.Method;
+
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
@@ -7,20 +9,33 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 
+import com.android.internal.telephony.ITelephony;
+
 //I aint no dummy (prompt)
+
 
 public class CallPrompt extends Activity {
 
 	private boolean success = false;
 	
-	private ActivityManager am;
+	/**
+     * TelephonyManager instance used by this activity
+     */
+    private TelephonyManager tm;
+    
+    /**
+     * AIDL access to the telephony service process
+     */
+    private ITelephony telephonyService;
 	
 	public static void launch(Context mCon) {
 		
@@ -39,6 +54,12 @@ public class CallPrompt extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
+		// grab an instance of telephony manager
+        tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+        
+        // connect to the underlying Android telephony system
+        connectToTelephonyService();
+		
 		if (!getSharedPreferences("myLockphone", 0).getBoolean("callPrompt", true)) {
 		//just the hint to user for camera accept and back to get to sliders
 		//only camera can answer in this case
@@ -49,7 +70,7 @@ public class CallPrompt extends Activity {
 			//I don't know how to make a window that doesn't block the sliders
 			//such that it can still get key events
 		}
-		else {//if (!getSharedPreferences("myLockphone", 0).getBoolean("rejectEnabled", false)) {
+		else if (!getSharedPreferences("myLockphone", 0).getBoolean("rejectEnabled", false)) {
 		//regular answer only button
 			
 			setContentView(R.layout.answerprompt);
@@ -61,7 +82,7 @@ public class CallPrompt extends Activity {
 	          		answer();
 	          	}
 			});
-		}/*
+		}
 		else {
 		//2 button prompt
 			setContentView(R.layout.main);
@@ -82,9 +103,78 @@ public class CallPrompt extends Activity {
 				}
 			});
 		
-		}*/
+		}
 		
 	}
+	
+	/** 
+     * Track ball press event handler that will answer a call
+     * The optical nav handles as a trackball also (Incredible/ADR6300)
+     */
+    @Override public boolean onTrackballEvent(MotionEvent event) {
+    	if (!getSharedPreferences("myLockphone", 0).getBoolean("cameraAccept", false))
+    		return false;
+    	
+            switch(event.getAction())
+            {
+            case MotionEvent.ACTION_MOVE: return true;
+            case MotionEvent.ACTION_DOWN: answer(); return true;
+            default: Log.v("call prompt","trackball event: "+event);
+            }
+            return super.dispatchTrackballEvent(event);
+    }
+    
+    /** From Tedd's source 
+     * http://code.google.com/p/teddsdroidtools/source/browse/
+     * get an instance of ITelephony to talk handle calls with 
+     */
+    @SuppressWarnings("unchecked") private void connectToTelephonyService() {
+            try 
+            {
+                    // "cheat" with Java reflection to gain access to TelephonyManager's ITelephony getter
+                    Class c = Class.forName(tm.getClass().getName());
+                    Method m = c.getDeclaredMethod("getITelephony");
+                    m.setAccessible(true);
+                    telephonyService = (ITelephony)m.invoke(tm);
+
+            } catch (Exception e) {
+                    e.printStackTrace();
+                    Log.e("call prompt","FATAL ERROR: could not connect to telephony subsystem");
+                    Log.e("call prompt","Exception object: "+e);
+                    finish();
+            }               
+    }
+    
+    /**
+     * AIDL/ITelephony technique for answering the phone
+     */
+    private void answerCallAidl() {
+            try {
+                    telephonyService.silenceRinger();
+                    telephonyService.answerRingingCall();
+            } catch (RemoteException e) {
+                    e.printStackTrace();
+                    Log.e("call prompt","FATAL ERROR: call to service method answerRiningCall failed.");
+                    Log.e("call prompt","Exception object: "+e);
+            }               
+    }
+    
+    /** 
+     * AIDL/ITelephony technique for ignoring calls
+     */
+    private void ignoreCallAidl() {
+            try 
+            {
+                    telephonyService.silenceRinger();
+                    telephonyService.endCall();
+            } 
+            catch (RemoteException e) 
+            {
+                    e.printStackTrace();
+                    Log.e("call prompt","FATAL ERROR: call to service method endCall failed.");
+                    Log.e("call prompt","Exception object: "+e);
+            }
+    }
 			
 	@Override
 	protected void onDestroy() {
@@ -120,38 +210,30 @@ public class CallPrompt extends Activity {
 	
 	void answer() {
 		success = true;
-		Log.v("answer method","about to send fake media button intent");
 		
-		Intent answer = new Intent(Intent.ACTION_MEDIA_BUTTON);
-
-  		//most certainly does work
-		//special thanks the auto answer open source app
-		//which demonstrated this answering functionality
-  		answer.putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_HEADSETHOOK));
-  		sendOrderedBroadcast(answer, null);
+	//special thanks the auto answer open source app
+	//which demonstrated this answering functionality
+		//Intent answer = new Intent(Intent.ACTION_MEDIA_BUTTON);
+  		//answer.putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_HEADSETHOOK));
+  		//sendOrderedBroadcast(answer, null);
+		
+		//due to inconsistency, replaced with more reliable cheat method Tedd discovered
+		answerCallAidl();
+		
   		moveTaskToBack(true);
   		finish();
 	}
 	
-	//Mr. Tedd's discovered workaround.
-	//Not a surgical strike but essentially effective
 	void reject() {
 		success = true;
 		
-		am = (ActivityManager)getSystemService(ACTIVITY_SERVICE);
-		am.restartPackage("com.android.providers.telephony");
-        am.restartPackage("com.android.phone");
-        
-        //requires permission to restart packages
-
-        //if used to ignore call waiting 2nd call.
-        //it would end first call too
+		ignoreCallAidl();
         
         moveTaskToBack(true);
   		finish();
 	}
 	
-	//i think this isn't in 1.5
+	//i think this isn't in 1.5, we're also using 2.0 service methods
 	@Override
 	public void onBackPressed() {
 		super.onBackPressed();
