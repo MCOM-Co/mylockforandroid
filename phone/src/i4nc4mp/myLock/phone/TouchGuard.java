@@ -26,19 +26,15 @@ public class TouchGuard extends Activity {
 	
 	//Some devices don't have a cam button.
 	//Big ones now are nexus and incredible
-	//so we have option unlock via trackball which works for these
-	@Override
-	public boolean onTrackballEvent(MotionEvent event) {
-    	
-            switch(event.getAction())
-            {
-            case MotionEvent.ACTION_MOVE: return true;
-            case MotionEvent.ACTION_DOWN:
-            							moveTaskToBack(true);
-										finish();
-										return true;
-            default: Log.v("trackball - touchguard"," " + event);
-            }
+	/**  For motion  based nav hardware -----
+     * The optical nav handles as a trackball also (Incredible/ADR6300)
+     * the motion is locked by this override, to stop conversion to dpad directional events
+     * we allow the click to pass through, it comes to key event dispatch as dpad center
+     */
+    @Override public boolean dispatchTrackballEvent(MotionEvent event) {
+
+            if (event.getAction() == MotionEvent.ACTION_MOVE) return true;
+            
             return super.dispatchTrackballEvent(event);
     }
 	
@@ -50,6 +46,7 @@ public class TouchGuard extends Activity {
 			return true;
 			//consume since we want to get the 2nd stage press
 		case KeyEvent.KEYCODE_CAMERA:
+		case KeyEvent.KEYCODE_DPAD_CENTER:
 		case KeyEvent.KEYCODE_DEL://just for emulator testing
 			moveTaskToBack(true);
 			finish();
