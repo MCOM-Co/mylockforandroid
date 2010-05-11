@@ -28,7 +28,7 @@ public class PrefActivity extends PreferenceActivity {
     	SharedPreferences myprefs = getSharedPreferences("myLockphone", 0);
     	
     	((CheckBoxPreference) findPreference("callPrompt")).setChecked(myprefs.getBoolean("callPrompt", false));
-    	//((CheckBoxPreference) findPreference("rejectEnabled")).setChecked(myprefs.getBoolean("rejectEnabled", false));
+    	((CheckBoxPreference) findPreference("rejectEnabled")).setChecked(myprefs.getBoolean("rejectEnabled", false));
     	((CheckBoxPreference) findPreference("cameraAccept")).setChecked(myprefs.getBoolean("cameraAccept", false));
     	
     	((CheckBoxPreference) findPreference("touchLock")).setChecked(myprefs.getBoolean("touchLock", false));

@@ -13,8 +13,8 @@
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
       android:layout_marginBottom="80dip"
-      android:gravity="right"
-    android:text="&#9742;&#187;"
+      android:gravity="center"
+    android:text="myLock"
     android:textColor="@color/white" android:textSize="65sp"
     android:background="@color/droid"
 
@@ -24,13 +24,13 @@
   android:id="@+id/hinttext1"
  android:layout_alignParentBottom="true"
  android:layout_centerHorizontal="true"
-                android:text="&#8709; myLock &#8734;"
+                android:text="press back to enable sliders"
                 android:textColor="@color/droid" android:textSize="18sp"></TextView>
   <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" 
   android:id="@+id/hinttext2"
 android:layout_above="@id/hidetabs"
 android:layout_centerHorizontal="true"
-                android:text="press back to enable sliders"
+                android:text="press Cam or Nav to Answer"
                 android:textColor="@color/droid" android:textSize="18sp"></TextView>
 
 </RelativeLayout>
