@@ -13,11 +13,8 @@ Task killers cause the phone to run slower and cause massive problems for many a
 = MAKE SURE YOU HAVE THE CORRECT KERNELS FOR SETCPU OVERCLOCK =
 I've had tons of reports of problems from setCPU users. It appears the fix is to install the latest version of the recommended custom kernel into your rom to support the setCPU app. Most often the problems come during underclocking in sleep mode. Your results may vary drastically when reunning setCPU. I haven't tried it, but I may soon. 
 
-= Why isn't there an option to get rid of the status icon =
-There is. We've tried, but there is no way to work around having the icon in place. You might experience a sudden loss of functionality and have to go back into settings & re-toggle the app if you operate without the persistent icon. In my testing this seems quite rare but every user's setup will be different depending on everything they regularly use on the device. For more about this, check out the official android development post that explains- http://android-developers.blogspot.com/2010/02/service-api-changes-starting-with.html
-
-= why can't you unlock the phone with any key =
-Screenmodewidget & keyguard disabler can do this for you. We will implement button customization in the advanced custom lockscreen version.
+= What is the point of the status icon =
+We've tried, but there is no way to work around the benefits of the status icon. Without it, you might experience a sudden loss of functionality and have to go back into settings & re-toggle the app. In my testing this seems quite rare, but I have posted a log with comments of a scenario I observed the error under while using browser. For more about this, check out the official android development post that explains- http://android-developers.blogspot.com/2010/02/service-api-changes-starting-with.html
 
 = Why do the volume or camera buttons wake it back up sometimes? =
 This is one of the rules of the lockscreen. When a timeout sleep occurs you have a short grace period in which the lockscreen isn't yet engaged, thus allowing any action at all to awaken it again quickly. That means any button, as well as even sliding the slider closed which normally doesn't trigger a wakeup.
