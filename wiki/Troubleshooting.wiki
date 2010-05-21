@@ -10,6 +10,9 @@ If you can email me a log immediately after a problem happens, I can know exactl
 = UNINSTALL YOUR TASK KILLER =
 Task killers cause the phone to run slower and cause massive problems for many apps. There is no benefit or upside.
 
+= Advanced mode =
+Has only been tested on incredible. Currently some devices are instant unlocking with certain buttons instead of waiting for the 2nd press. I am hoping this impacts 2.2 less with the increased CPU speed.
+
 = MAKE SURE YOU HAVE THE CORRECT KERNELS FOR SETCPU OVERCLOCK =
 I've had tons of reports of problems from setCPU users. It appears the fix is to install the latest version of the recommended custom kernel into your rom to support the setCPU app. Most often the problems come during underclocking in sleep mode. Your results may vary drastically when reunning setCPU. I haven't tried it, but I may soon. 
 
