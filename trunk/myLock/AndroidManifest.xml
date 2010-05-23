@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="i4nc4mp.myLock"
-      android:versionCode="21"
       android:versionName="1.4"
       android:sharedUserId="i4nc4mp.myLockAutoUnlock"
-      android:sharedUserLabel="@string/userlabel" >
+      android:sharedUserLabel="@string/userlabel" android:versionCode="23">
       
       <!-- Permission Declaration (so plugin download will work) 
       now obsolete due to the declaring a sharedUserId-->
@@ -44,14 +43,14 @@
        <activity android:name="DismissActivity"
                 android:excludeFromRecents="true"
                 android:launchMode="standard"
-                android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                android:theme="@android:style/Theme.Wallpaper.NoTitleBar"
                 android:taskAffinity=""
                 android:screenOrientation="nosensor"
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>
        <activity android:name="AutoDismissActivity"
                 android:excludeFromRecents="true"
                 android:launchMode="standard"
-                android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                android:theme="@android:style/Theme.Wallpaper.NoTitleBar"
                 android:taskAffinity=""
                 android:screenOrientation="nosensor"
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>      
@@ -76,7 +75,7 @@
        <activity android:name="UnguardService$UnguardActivity"
                 android:excludeFromRecents="true"
                 android:launchMode="singleTask"
-                android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen"
+                android:theme="@android:style/Theme.Wallpaper.NoTitleBar.Fullscreen"
                 android:taskAffinity=""
                 android:screenOrientation="portrait">
                </activity>
