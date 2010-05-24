@@ -22,10 +22,10 @@
 <string name="hiddentitle">Hide lockscreen visuals</string>
 <string name="hiddensummary">When a slower app is restoring, a progress message will be displayed.</string>
 <string name="unguardtitle">Advanced</string>
-<string name="unguardsummary">Allows vol and cam/trackball/nav button to wake.</string>
+<string name="unguardsummary">All keys wake- double press any key to unlock</string>
 
 <string name="howto_title">How to use myLock</string>
-<string name="HowToFull">myLock automatically minimizes the lockscreen. Side buttons remain locked down, but waking the phone with the slider, keypad buttons, or power key will auto unlock.
+<string name="HowToFull">myLock automatically minimizes the lockscreen. By default, the side buttons remain locked down, but waking the phone with the slider, keypad buttons, or power key will auto unlock. Advanced mode enables all keys to wake and any double press to unlock.
 If the phone reboots while myLock is running, it will start back up automatically with your preferred settings. Do not attempt to change the security pattern or create one while myLock is enabled. Always uncheck enabled first. </string>
 
 <string name="ts_title">Problem Help</string>

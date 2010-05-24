@@ -507,6 +507,7 @@ public class UnguardService extends MediatorService {
     	public boolean resurrected = false;
     	//just to handle return from dormant, avoid treating it same as a user initiated wake
 
+    	private int lastkeycode = 0;
     	    
     	protected void onCreate(Bundle icicle) {
             super.onCreate(icicle);
@@ -678,6 +679,9 @@ public class UnguardService extends MediatorService {
     	      		//FIXME need to ignore this in the autodismiss also
     	      		//without it the phone is unlocking after missed call
     	      	}
+    	      	lastkeycode = 0;
+    	      	//don't remember the last key through sleep
+    	      	//we only care from resume to pause
     	      }
     	    }
 
@@ -810,14 +814,12 @@ public class UnguardService extends MediatorService {
         //int repeat = event.getRepeatCount();
         //Log.v("key event", "repeat is " + repeat);
         //if (!mult && repeat != 0) mult = true;
-        
         //multiple is not actually a double press, it is when a key is held
         
-        //boolean up = event.getAction() == KeyEvent.ACTION_UP;
+        boolean up = event.getAction() == KeyEvent.ACTION_UP;
         //flags to true if the event we are getting is the up (release)
         //when we are coming from sleep, the pwr down gets taken by power manager to cause wakeup
         //if we are awake already the power up might also get taken.
-        
         //however even from sleep we get a down and an up for focus & cam keys with a full press
         
         int code = event.getKeyCode();
@@ -831,19 +833,25 @@ public class UnguardService extends MediatorService {
         //locked method we want doesn't work on OLED/ htc incredible/nexus
 
         int reaction = 0;//wakeup, the preferred behavior in advanced mode
-        if (code == KeyEvent.KEYCODE_POWER || code == KeyEvent.KEYCODE_BACK || code == KeyEvent.KEYCODE_MENU) reaction = 1;
+        if (code == KeyEvent.KEYCODE_POWER
+        		|| code == KeyEvent.KEYCODE_BACK
+        		|| code == KeyEvent.KEYCODE_MENU
+        		|| code == KeyEvent.KEYCODE_SEARCH
+        		|| code == lastkeycode)//basic detection of 2nd press of same key
+        	reaction = 1;
         //event.getFlags()==KeyEvent.FLAG_VIRTUAL_HARD_KEY
         //hard keys - these only come through while "Awake" since touchscreen is disabled otherwise
         //this isn't working on device.. i don't know why.
         //will have to actually specify the menu, back, and search codes
         
-        if (event.getFlags()==KeyEvent.FLAG_WOKE_HERE) return true;
+        //if (event.getFlags()==KeyEvent.FLAG_WOKE_HERE) return true;
         //we don't want to handle the wake as that always comes from down
-        //all we do is consume that press
+        //doesn't seem to work as expected
         
         boolean unlock = (reaction == 1);
-        //so that power will instant unlock, or any double press
-        //this is replaced by a switch for other reactions once advanced features are implemented
+        if (up) lastkeycode = code;//at up take note of what key it is
+        
+        //following is replaced by a switch for other reactions once advanced features are implemented
         
     	   if (unlock && !finishing) {
     		   Log.v("unlock key","closing");
@@ -854,7 +862,11 @@ public class UnguardService extends MediatorService {
     		   moveTaskToBack(true);
     		  return true;
     	   }
-    	   else return false;
+    	   
+    	   return true;
+    	   //we don't pass any keys along
+    	   //we do not perform any action except unlock
+    	   
     /* * advanced power save handling 
      * 
      *      * -- decide whether a regular wake or locked/screen off wake should happen

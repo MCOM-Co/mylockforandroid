@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 <string-array name="mode">
-        <item>Basic- Side keys locked</item>
-        <item>Basic with wallpaper display</item>
-        <item>Advanced- Side keys wake</item>
+        <item>Basic</item>
+        <item>Hide lockscreen</item>
+        <item>Advanced</item>
 </string-array>
 <string-array name="mode_values">
         <item>0</item>
