@@ -7,6 +7,9 @@ To resolve this uninstall then redownload the app and any addon packages. There 
 = HTC security lockscreen and alarm clock=
 HTC has chosen to place their lockscreen on top of the pattern verify screen, and has chosen to have their alarm exist in the lockscreen itself instead of a new window like the stock android one. myLock cannot disable to HTC slider that is required before the pattern, nor can I detect the HTC alarm. If you plan to use the alarm, toggle myLock off first. That's why there is a toggle widget. HTC has simply made the idea of not having the lockscreen more difficult by attaching important functionality like the alarm to their lockscreen.
 
+= HTC standby time / battery usage =
+We don't use any extra battery to run myLock. All we are doing is skipping lockscreen at wakeup, or replacing it at sleep. We aren't stopping your phone from sleeping and mining your data to send off to the mothership, I'm afraid. My theory is that HTC has made the mistake of tying standby tracking to their customized lockscreen, thus as we are disabling it in advanced mode, you would no longer see standby time counted correctly.
+
 = Make it so Nav Button can unlock and keep the others locked =
 I'm looking in to the possibility under rooted conditions, however the SDK does not allow us to do this.
 
