@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="i4nc4mp.myLock"
-      android:versionCode="24"
-      android:versionName="1.4c"
+      android:versionCode="25"
+      android:versionName="1.4b"
       android:sharedUserId="i4nc4mp.myLockAutoUnlock"
       android:sharedUserLabel="@string/userlabel">
       
@@ -44,14 +44,14 @@
        <activity android:name="DismissActivity"
                 android:excludeFromRecents="true"
                 android:launchMode="standard"
-                android:theme="@android:style/Theme.Wallpaper.NoTitleBar"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar"
                 android:taskAffinity=""
                 android:screenOrientation="nosensor"
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>
        <activity android:name="AutoDismissActivity"
                 android:excludeFromRecents="true"
                 android:launchMode="standard"
-                android:theme="@android:style/Theme.Wallpaper.NoTitleBar"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar"
                 android:taskAffinity=""
                 android:screenOrientation="nosensor"
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>      
@@ -133,5 +133,5 @@
     <uses-permission android:name="i4nc4mp.myLock.permission.toggle"></uses-permission>
     
     <uses-sdk android:minSdkVersion="5" />
-    <uses-sdk android:targetSdkVersion="8" />
+    <uses-sdk android:targetSdkVersion="7" />
 </manifest> 
