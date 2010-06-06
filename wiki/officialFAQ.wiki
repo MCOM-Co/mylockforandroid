@@ -13,7 +13,7 @@ We want to use the device on the first interaction, and not require a redundant 
 Yes we can. Every version except the secure custom lockscreen automatically suppresses pattern mode when myLock starts. It will automatically retain your pattern in the system settings and restart lockdown mode when you stop myLock. We are also going to provide an idle timeout option where myLock will disable itself and restore the pattern lock after a number of minutes left idle.
 
 = Froyo adds pin/password based lockscreen options, can myLock interact with these? =
-Not yet. I imagine we can use the same method but will need to locate the settings that control the existence of the pin/password lock.
+Actually the case here is opposite. Froyo appears to be closing the security hole which let the setting of requiring security be accessed from apps that had permission to change settings. myLock will have no security control in Froyo.
 
 = Make a locale plugin =
 Ok. But I don't have locale. My app is free, but locale is 10 bucks. So I need to get it first so I can test the plugin.
