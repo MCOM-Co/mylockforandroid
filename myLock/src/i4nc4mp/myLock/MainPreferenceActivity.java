@@ -1,6 +1,8 @@
 package i4nc4mp.myLock;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,6 +14,9 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.widget.Toast;
 
 //what we need is when this is launched, a short handler is spawned, and the checkbox for service status
@@ -231,6 +236,29 @@ public class MainPreferenceActivity extends PreferenceActivity {
             }
             findPreference("mode").setTitle(t);
             findPreference("mode").setSummary(s);
+        }
+        
+        public boolean onCreateOptionsMenu(Menu menu) {
+            MenuInflater inflater = getMenuInflater();
+            inflater.inflate(R.menu.options_menu, menu);
+            return true;
+        }
+        
+        public boolean onOptionsItemSelected(MenuItem item) {
+            switch (item.getItemId()) {
+            case R.id.idlesetup:
+            	Intent setup = new Intent();
+            	setup.setClassName("i4nc4mp.myLock", "i4nc4mp.myLock.IdleSetup");
+            	try {
+            		startActivity(setup);
+            	}
+            	catch (ActivityNotFoundException e) {
+            		//Toast.makeText(SettingsActivity.this, "Please download Idle Lock addon", Toast.LENGTH_LONG).show();
+            		//we don't care anymore - idle setup now included in the final pre-froyo package
+            	}
+                return true;
+            }
+            return false;
         }
         
         class Task implements Runnable {
