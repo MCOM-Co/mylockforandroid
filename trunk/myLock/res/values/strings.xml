@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 <string name="app_name">myLock Auto Unlock</string>
+<string name="idlelabel">Idle Setup</string>
 
 <string name="enabled">myLock is enabled</string>
 <string name="disabled">myLock is disabled</string>
@@ -27,6 +28,8 @@
 <string name="howto_title">How to use myLock</string>
 <string name="HowToFull">myLock automatically minimizes the lockscreen. By default, the side buttons remain locked down, but waking the phone with the slider, keypad buttons, or power key will auto unlock. Advanced mode enables all keys to wake and any double press to unlock.
 If the phone reboots while myLock is running, it will start back up automatically with your preferred settings. Do not attempt to change the security pattern or create one while myLock is enabled. Always uncheck enabled first. </string>
+
+<string name="idlehowto">Each time the phone sleeps, the timer begins. If left asleep for the amount of time set, pattern security is restored, disabling myLock. When you unlock the pattern, myLock restarts itself. You must have a pattern enabled and set myLock to secure mode before turning on idle lock.</string>
 
 <string name="ts_title">Problem Help</string>
 <string name="Troubleshooting">Please see our faq and troubleshooting pages linked on our site (http://mylockandroid.blogspot.com) first. If you notice an issue that happens consistently, download Log Collector (free from the market) to email us at myLockandroid@gmail.com. Be sure to list the problem symptoms and what other services are running in the Settings->Applications->Running Services screen. I will research the cause of the trouble and code a fix when possible.</string>
