@@ -6,19 +6,18 @@
 <string name="disabled">Quick unlock is disabled</string>
 
 <string name="guard_on">Lockscreen shown on slider wake</string>
-<string name="guard_off">Always Auto Unlock</string>
+<string name="guard_off">Always quick unlock</string>
 
-<string name="auto_on">Always Auto Unlock</string>
-<string name="auto_off">Auto unlock ONLY on slider wake</string>
+<string name="auto_on">Always quick unlock</string>
+<string name="auto_off">Quick unlock ONLY on slider wake</string>
 
 <string name="fg_on">Notification will be displayed</string>
 <string name="fg_off">Ongoing notification is disabled</string>
 
-<string name="howto_title">How to use myLock</string>
-<string name="HowToFull">Quick unlock removes the need to slide to unlock. The lockscreen still exists but it will be automatically quick unlocked. This allows the side buttons to remain protected against pocket dialing and removes the redundant slide to unlock step.
-</string>
+<string name="howto_title">About quick unlock</string>
+<string name="HowToFull">Quick unlock removes the need to slide to unlock. The lockscreen still exists but it will be automatically quick unlocked. This allows the side buttons to remain protected against pocket dialing and removes the redundant slide to unlock step.</string>
 
 <string name="ts_title">Problem Help</string>
-<string name="Troubleshooting">Please see our faq and troubleshooting pages linked on our site (http://mylockandroid.blogspot.com) first. If you notice an issue that happens consistently, email me at myLockandroid@gmail.com. Be sure to list the problem symptoms and what other services are running in the Settings->Applications->Running Services screen. I am not responsible for issues that occur because of task killer apps. These are not recommended for android 2.0 and newer because android now has automatic task management.</string>
+<string name="Troubleshooting">Faq and troubleshooting pages available on the myLock blog - http://mylockandroid.blogspot.com -- I am not responsible for issues that occur because of task killer apps. These are not recommended for android 2.0 and newer because android now has automatic task management.</string>
 
 </resources>

@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="i4nc4mp.myLock"
-      android:versionCode="1"
-      android:versionName="1.0">
+      android:versionCode="25"
+      android:versionName="42">
     <uses-sdk android:minSdkVersion="8" />
 
 <application android:icon="@drawable/icon" android:label="@string/app_name">
         
         <activity android:name=".MainPreferenceActivity"
-                  android:label="myLock utilities Prefs"
+                  android:label="myLock utilities"
                   android:launchMode="singleInstance"
                   android:theme="@android:style/Theme">
             <intent-filter>
@@ -36,6 +36,24 @@
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>
 
 
+		<activity android:name="CallPrompt"
+				android:label="Call Prompt"
+                android:excludeFromRecents="true"
+                android:launchMode="singleInstance"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                android:taskAffinity=""
+                android:screenOrientation="portrait">
+               </activity>
+               
+        <activity android:name="TouchGuard"
+        		android:label="Touchscreen Guard"
+                android:excludeFromRecents="true"
+                android:launchMode="singleInstance"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar"
+                android:taskAffinity=""
+                android:screenOrientation="portrait">
+               </activity>
+
         <receiver android:name=".myLockBootReceiver" 
         android:enabled="true" 
         android:exported="false"
@@ -43,11 +61,19 @@
         <intent-filter>
         	<action android:name="android.intent.action.BOOT_COMPLETED" />
         </intent-filter>
-        </receiver>        
+        </receiver>
+        
+        <receiver android:name=".PhoneReceiver"
+               				android:enabled="true">
+                <intent-filter>
+                        <action android:name="android.intent.action.PHONE_STATE" />
+                </intent-filter>
+        </receiver>
         
         <service android:name=".Toggler"></service>
         <service android:name=".AutoDismiss"></service>
         <service android:name=".BootHandler"></service>
+        <service android:name=".ScreenMediator" android:enabled="true"/>
     </application>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission
@@ -58,4 +84,6 @@
     android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission
     android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.MODIFY_PHONE_STATE" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
 </manifest> 
