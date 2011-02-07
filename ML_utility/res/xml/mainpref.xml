@@ -13,7 +13,7 @@ android:persistent="true"
 useful in this case since I want users to know it is the Mode and that they can change it
 but i need all the text in the pref itself to explain the mode-->
 
-<PreferenceCategory android:title="Options" android:key="options">
+<PreferenceCategory android:title="Quick unlock options" android:key="options">
 <CheckBoxPreference android:key="slideGuard" android:title="Lock Slider Wake"
 	android:summaryOn="@string/guard_on" android:summaryOff="@string/guard_off"
 	android:persistent="true"/>
@@ -21,6 +21,22 @@ but i need all the text in the pref itself to explain the mode-->
 	android:summaryOn="@string/fg_on" android:summaryOff="@string/fg_off"
 	android:persistent="true"/>
 	</PreferenceCategory>
+<PreferenceCategory android:title="In-Call Touch Lock" android:key="incallLock">
+<CheckBoxPreference android:title="Touchscreen Lock" android:summary="Lock touchscreen when screen goes off during calls"
+  android:key="touchLock" android:persistent="true"/>
+  </PreferenceCategory>
+  <PreferenceCategory android:title="Incoming call options" android:key="incomingoptions">
+<CheckBoxPreference android:title="Onscreen Accept" android:summary="Accept via touchscreen button"
+  android:key="callPrompt" android:disableDependentsState="false"
+  android:persistent="true"/>
+ <CheckBoxPreference android:title="Onscreen Reject" android:summary="Reject via touchscreen button"
+  android:key="rejectEnabled" android:dependency="callPrompt"
+  android:persistent="true" />
+  <CheckBoxPreference android:title="Hardware Accept" android:summary="Nav/trackball/cam button to answer"
+  android:key="cameraAccept" 
+  android:persistent="true"/>
+</PreferenceCategory>  	
+	
 <PreferenceCategory android:title="Info" android:key="helpinfo">
         <i4nc4mp.myLock.MainDialogPreference
                 android:key="howto" android:title="@string/howto_title" android:src="@drawable/icon"
