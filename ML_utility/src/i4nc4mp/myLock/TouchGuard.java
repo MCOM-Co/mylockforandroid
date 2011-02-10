@@ -5,17 +5,27 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.WindowManager;
 
 public class TouchGuard extends Activity {
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+
+		if (Integer.parseInt(Build.VERSION.SDK) > 8) 
+			getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+		//gingerbread issues.. prompt doesnt seem to want to display without this.
+		//they must have finally tightened up what the phone app is doing to interact with the keyguard
+		//show when locked makes us lose access to input such as camera key so I use dismiss keyguard
+		//need to test for any unexpected interaction.. but i don't have a nexus s or cm 7 yet
 		
 		setContentView(R.layout.callguard);
 		
@@ -32,7 +42,7 @@ public class TouchGuard extends Activity {
 	}
 	
 	//ensure the normal behavior of finishing is ignored on back button
-	//this ensures it can only be dismissed by camera key.
+	//this ensures it can only be dismissed by camera/trackball presses or back long press when enabled by user pref
 	@Override
 	public void onBackPressed() {
 		return;
@@ -92,4 +102,34 @@ public class TouchGuard extends Activity {
 		}
 		return super.dispatchKeyEvent(event);
 	}
+	
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event)  {
+	    if (keyCode == KeyEvent.KEYCODE_BACK) {
+	        // this tells the framework to start tracking for
+	        // a long press and eventual key up.  it will only
+	        // do so if this is the first down (not a repeat).
+	        event.startTracking();
+	        return true;
+	    }
+	    return super.onKeyDown(keyCode, event);
+	}
+	
+	@Override
+	public boolean onKeyLongPress(int keyCode, KeyEvent event) {
+	    if (keyCode == KeyEvent.KEYCODE_BACK) {
+	        // a long press of the BACK key.
+	        // do our work, returning true to consume it.  by
+	        // returning true, the framework knows an action has
+	        // been performed on the long press, so will set the
+	        // canceled flag for the following up event.
+	    	if (getSharedPreferences("myLock", 0).getBoolean("backUnlock", false)) {
+	    	moveTaskToBack(true);
+			finish();
+	        return true;
+	    	}
+	    }
+	    	return false;
+	    }
+	
 }

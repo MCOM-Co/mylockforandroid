@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.telephony.TelephonyManager;
@@ -55,11 +56,6 @@ public class CallPrompt extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		//getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
-		//gingerbread issues.. prompt doesnt seem to want to display without this.
-		//but doing this makes us lose access to input such as camera key
-		//furthermore in gingerbread the reflection cheat here to accept or reject causes a crash
-		
 		// grab an instance of telephony manager
         tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
         
@@ -72,9 +68,6 @@ public class CallPrompt extends Activity {
 			
 			setContentView(R.layout.cancelhint);
 			
-			//it's a workaround
-			//I don't know how to make a window that doesn't block the sliders
-			//such that it can still get key events
 		}
 		else if (!getSharedPreferences("myLock", 0).getBoolean("rejectEnabled", false)) {
 		//regular answer only button

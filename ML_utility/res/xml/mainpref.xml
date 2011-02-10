@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-<PreferenceCategory android:title="Status" android:key="statusinfo">
+<PreferenceCategory android:title="Quick Unlock options" android:key="quickunlockoptions">
 <CheckBoxPreference
 android:key="enabled"
-android:summary="you can also view status and toggle via the homescreen widget"
-android:disableDependentsState="true"
+android:title="Enable"
+android:summary="Skip slide to unlock. Add widget to home for quick toggle"
 android:persistent="true"
 />
 
-</PreferenceCategory>
 <!-- category does nothing, just a cosmetic divider. 
 useful in this case since I want users to know it is the Mode and that they can change it
 but i need all the text in the pref itself to explain the mode-->
 
-<PreferenceCategory android:title="Quick unlock options" android:key="options">
-<CheckBoxPreference android:key="slideGuard" android:title="Lock Slider Wake"
+<CheckBoxPreference android:key="slideGuard" android:title="Lock on slider wake"
 	android:summaryOn="@string/guard_on" android:summaryOff="@string/guard_off"
 	android:persistent="true"/>
-<CheckBoxPreference android:key="FG" android:title="Status Icon"
+<CheckBoxPreference android:key="FG" android:title="Show Status Notification"
 	android:summaryOn="@string/fg_on" android:summaryOff="@string/fg_off"
 	android:persistent="true"/>
 	</PreferenceCategory>
-<PreferenceCategory android:title="In-Call Touch Lock" android:key="incallLock">
-<CheckBoxPreference android:title="Touchscreen Lock" android:summary="Lock touchscreen when screen goes off during calls"
+<PreferenceCategory android:title="In-Call Touch Lock" android:key="incallLock" android:enabled="true">
+<CheckBoxPreference android:title="Enable" android:summary="Activate touchscreen lock overlay at screen off"
   android:key="touchLock" android:persistent="true"/>
+<CheckBoxPreference android:title="Back long-press unlock" android:summary="Allow back key long-press to clear lock overlay"
+  android:key="backUnlock" android:persistent="true"/>
   </PreferenceCategory>
-  <PreferenceCategory android:title="Incoming call options" android:key="incomingoptions">
+  <PreferenceCategory android:title="Incoming call options (android 2.2 or earlier)" android:key="incomingoptions" android:enabled="true" android:shouldDisableView="true">
 <CheckBoxPreference android:title="Onscreen Accept" android:summary="Accept via touchscreen button"
   android:key="callPrompt" android:disableDependentsState="false"
   android:persistent="true"/>
