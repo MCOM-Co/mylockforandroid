@@ -2,16 +2,19 @@ package i4nc4mp.myLock;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
+import android.preference.PreferenceGroup;
 import android.preference.PreferenceActivity;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 //what we need is when this is launched, a short handler is spawned, and the checkbox for service status
@@ -58,11 +61,11 @@ public class MainPreferenceActivity extends PreferenceActivity {
     							//this is because we never update enabled except at start
     							if(toggle.isChecked()) {
     								ManageMediator.startService(mCon);
-    								findPreference("enabled").setTitle(R.string.enabled);
+    								//findPreference("enabled").setTitle(R.string.enabled);
     							}
     				        	else {
     				        		ManageMediator.stopService(mCon);
-    				        		findPreference("enabled").setTitle(R.string.disabled);
+    				        		//findPreference("enabled").setTitle(R.string.disabled);
     				        	}
     							
     							return true;
@@ -71,9 +74,13 @@ public class MainPreferenceActivity extends PreferenceActivity {
                     	
     					};
                     });
-                	
+                }
                 
-                	
+              //incoming call settings only used in pre 2.3 before the interaction was locked to system permission
+                if (Integer.parseInt(Build.VERSION.SDK) > 8) {
+                	((PreferenceGroup) findPreference("incomingoptions")).removeAll();
+                	//setVisibility(View.GONE);
+                	//setEnabled(false);
                 }
                 
                 
@@ -110,11 +117,15 @@ public class MainPreferenceActivity extends PreferenceActivity {
         	}
         	else updateStatus(false);
         	
+        	//incoming call settings only used in pre 2.3 before the interaction was locked to system permission
+        	if (Integer.parseInt(Build.VERSION.SDK) < 9) {
         	((CheckBoxPreference) findPreference("callPrompt")).setChecked(myprefs.getBoolean("callPrompt", false));
         	((CheckBoxPreference) findPreference("rejectEnabled")).setChecked(myprefs.getBoolean("rejectEnabled", false));
         	((CheckBoxPreference) findPreference("cameraAccept")).setChecked(myprefs.getBoolean("cameraAccept", false));
+        	}
         	
         	((CheckBoxPreference) findPreference("touchLock")).setChecked(myprefs.getBoolean("touchLock", false));
+        	((CheckBoxPreference) findPreference("backUnlock")).setChecked(myprefs.getBoolean("backUnlock", false));
         }
         
        
@@ -128,8 +139,8 @@ public class MainPreferenceActivity extends PreferenceActivity {
         	
         	((CheckBoxPreference) findPreference("enabled")).setChecked(enabled);
         	
-        	if (enabled) findPreference("enabled").setTitle(R.string.enabled);
-        	else findPreference("enabled").setTitle(R.string.disabled);
+        	//if (enabled) findPreference("enabled").setTitle(R.string.enabled);
+        	//else findPreference("enabled").setTitle(R.string.disabled);
         	
         }
         
