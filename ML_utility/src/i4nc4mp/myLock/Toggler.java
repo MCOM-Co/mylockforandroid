@@ -37,8 +37,8 @@ Log.v("Toggler","Starting");
 		
 		//start if we've been told to start and did not already exist				
 		if (target && !active) {
-			ManageMediator.startService(getApplicationContext());
 			ManageMediator.updateEnablePref(true, getApplicationContext());
+			ManageMediator.startService(getApplicationContext());
     		Toast.makeText(Toggler.this, "myLock is now enabled", Toast.LENGTH_SHORT).show();
     		
 		}//stop if we've been told to stop and did already exist

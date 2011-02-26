@@ -50,11 +50,11 @@ public class MediatorService extends Service {
 		return ExistStub;
 	}
 	
-	@Override
+	/*@Override
 	public void onCreate() {
 		super.onCreate();
 		Log.d(getClass().getSimpleName(),"onCreate()");
-	}
+	}*/
 	
 	@Override
 	public void onDestroy() {

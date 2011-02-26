@@ -27,6 +27,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 
 //we mediate wakeup & call end, to fire dismiss activity if the lockscreen is detected
@@ -72,10 +73,24 @@ public class AutoDismiss extends MediatorService {
 }
     
     @Override
+    public void onCreate() {
+    	super.onCreate();
+    	if (!getSharedPreferences("myLock",0).getBoolean("startingUp", false)) {
+    		Log.v("system restart","apparent low mem system restart, toggling back on");
+    		ManageMediator.updateEnablePref(true, getApplicationContext());
+			ManageMediator.startService(getApplicationContext());
+    		Toast.makeText(AutoDismiss.this, "myLock restarted after system low mem shutdown", Toast.LENGTH_SHORT).show();	
+    	}
+    	else Log.v("normal oncreate","commencing first start call");
+    	
+    }
+    
+    @Override
     public void onFirstStart() {
     	
     	//first acquire the prefs that need to be initialized
             SharedPreferences settings = getSharedPreferences("myLock", 0);
+            SharedPreferences.Editor editor = settings.edit();
             
             persistent = settings.getBoolean("FG", false);
             
@@ -92,6 +107,9 @@ public class AutoDismiss extends MediatorService {
             
             IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLock.lifecycle.LOCKSCREEN_EXITED");
             registerReceiver(lockStopped, lockStop);
+            
+            editor.putBoolean("startingUp",false);
+            editor.commit();
     }
     
     
