@@ -21,13 +21,11 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
-//This one is the dismiss activity method but runs no guard activity
-//guard activity is actually just cosmetic, some users like seeing their wallpaper during unlock
-//makes sense because we don't like slide to unlock
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
+import i4nc4mp.myLock.ManageKeyguard.LaunchOnKeyguardExit;
 
 
 //we mediate wakeup & call end, to fire dismiss activity if the lockscreen is detected
@@ -35,7 +33,7 @@ import android.widget.Toast;
 public class AutoDismiss extends MediatorService {
 	private boolean persistent = false;
     
-	private boolean shakemode = false;
+	private boolean oldmode = false;
 	private boolean slideGuarded = false;
     
     private boolean slideWakeup = false;
@@ -96,6 +94,7 @@ public class AutoDismiss extends MediatorService {
             
             slideGuarded = settings.getBoolean("slideGuard", false);
                        
+            oldmode = settings.getBoolean("oldmode", false);
             
             if (persistent) doFGstart();
             
@@ -128,6 +127,7 @@ public class AutoDismiss extends MediatorService {
       		}
       		
     		if ("slideGuard".equals(key)) slideGuarded = sharedPreference.getBoolean(key, false);
+    		if ("oldmode".equals(key)) oldmode = sharedPreference.getBoolean(key, false);
     		}
     	};
     
@@ -142,7 +142,10 @@ public class AutoDismiss extends MediatorService {
         
         if (!slideWakeup) {
         	dismissed = true;
+        	//gingerbread test, we are not using wake lock
+        	//if (Integer.parseInt(Build.VERSION.SDK) < 9)
         	ManageWakeLock.releaseFull();
+            	
         }
         else Log.v("dismiss callback","waiting for 5 sec to finalize due to slide wake");
         
@@ -173,11 +176,19 @@ public class AutoDismiss extends MediatorService {
             public void run() {
             	//when the slide wake is set to dismiss, we will keep the wakelock for 5 sec
             	//to avoid the bug of screen falling out when the CPU gets through the process too fast
-            	if (!dismissed) {
+            	if (!oldmode && !dismissed) {
             		ManageWakeLock.releaseFull();
             		dismissed = true;
             	}
-            }               
+            	if (oldmode) {
+            		//finalize the kg exit
+            		ManageKeyguard.exitKeyguardSecurely(new LaunchOnKeyguardExit() {
+                        public void LaunchOnKeyguardExitSuccess() {
+                           Log.v("start", "This is the exit callback");
+                            }});
+                            }
+            	}
+                           
         }
     
         public boolean isScreenOn() {
@@ -218,7 +229,13 @@ public class AutoDismiss extends MediatorService {
     	ManageKeyguard.initialize(getApplicationContext());
     	boolean KG = ManageKeyguard.inKeyguardRestrictedInputMode();
     	
-    	if (KG) StartDismiss(getApplicationContext());                
+    	if (KG) {
+    		if (!oldmode) StartDismiss(getApplicationContext());
+    		else {
+    			ManageKeyguard.disableKeyguard(getApplicationContext());
+                serviceHandler.postDelayed(myTask, 50L);
+    		}
+    	}
         
     	return;
     }
@@ -242,9 +259,16 @@ public class AutoDismiss extends MediatorService {
             
     	//PowerManager myPM = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
         //myPM.userActivity(SystemClock.uptimeMillis(), true);
+    	
+    	//try not using wakelock on gingerbread to see if issue with the lock handoff is fixed
+    	//if (Integer.parseInt(Build.VERSION.SDK) < 9) {
     	ManageWakeLock.acquireFull(getApplicationContext());
+    	
+    	
     	if (slideWakeup) serviceHandler.postDelayed(myTask, 5000L);
     	//when dismissing from slide wake we set a 5 sec wait for release of the wake lock
+    	
+    //}
     	
     	//what we should do here is launch a 5 sec wait that releases it also
     	//sometimes dismiss doesn't stop/destroy right away if no user action (ie pocket wake)
@@ -255,8 +279,8 @@ public class AutoDismiss extends MediatorService {
     Intent dismiss = new Intent(context, w);
     dismiss.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK//required for a service to launch activity
                     | Intent.FLAG_ACTIVITY_NO_USER_ACTION//Just helps avoid conflicting with other important notifications
-                    | Intent.FLAG_ACTIVITY_NO_HISTORY);//Ensures the activity WILL be finished after the one time use
-                    //| Intent.FLAG_ACTIVITY_NO_ANIMATION);
+                    | Intent.FLAG_ACTIVITY_NO_HISTORY//Ensures the activity WILL be finished after the one time use
+                    | Intent.FLAG_ACTIVITY_NO_ANIMATION);
                     
     context.startActivity(dismiss);
 }
@@ -345,8 +369,8 @@ public class AutoDismiss extends MediatorService {
             Notification notification = new Notification(icon, tickerText, when);
             
             Context context = getApplicationContext();
-            CharSequence contentTitle = "myLock - click to open settings";
-            CharSequence contentText = "lockscreen is disabled";
+            CharSequence contentTitle = "quick unlock mode active";
+            CharSequence contentText = "click to open settings";
 
             Intent notificationIntent = new Intent(this, MainPreferenceActivity.class);
             PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
@@ -409,6 +433,7 @@ public class AutoDismiss extends MediatorService {
     	            getApplicationContext().sendBroadcast(i);
     	    	   	moveTaskToBack(true);
     	    	   	finish();
+    	    	   	overridePendingTransition(0, 0);//supposed to avoid trying to animate
     	    	}
     	    }
     };
