@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnLongClickListener;
 import android.view.WindowManager;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -75,7 +76,16 @@ public class CallPrompt extends Activity {
 			setContentView(R.layout.answerprompt);
 			
 			Button answer = (Button) findViewById(R.id.answer);
-			
+			/*
+			answer.setOnLongClickListener(new OnLongClickListener(){
+
+				public boolean onLongClick(View arg0) {
+					// TODO Auto-generated method stub
+					answer();
+					return false;
+				}
+        });*/
+        
 			answer.setOnClickListener(new OnClickListener() {
 	          	public void onClick(View v){
 	          		answer();

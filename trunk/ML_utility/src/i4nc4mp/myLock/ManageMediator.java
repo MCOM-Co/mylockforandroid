@@ -154,6 +154,14 @@ public class ManageMediator {
 	}
 	
 	public static synchronized void startService(Context mCon){
+		SharedPreferences set = mCon.getSharedPreferences("myLock", 0);
+		SharedPreferences.Editor editor = set.edit();
+		
+		editor.putBoolean("startingUp", true);
+		editor.commit();
+		//onCreate checks this to know that user is explicitly clicking start
+		//when false we know system is restarting after a low mem purge
+		
 		Intent i = getMode(mCon);
 		mCon.startService(i);
 		
@@ -186,7 +194,7 @@ public class ManageMediator {
 		SharedPreferences set = mCon.getSharedPreferences("myLock", 0);
 		SharedPreferences.Editor editor = set.edit();
 	    editor.putBoolean("enabled", on);
-
+	    
 	    // Don't forget to commit your edits!!!
 	    editor.commit();
 	    
