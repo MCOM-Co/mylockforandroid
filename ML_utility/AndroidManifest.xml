@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="i4nc4mp.myLock"
-      android:versionCode="27"
+      android:versionCode="28"
       android:versionName="42">
     <uses-sdk android:minSdkVersion="8" />
 
@@ -30,7 +30,7 @@
        <activity android:name="AutoDismiss$AutoDismissActivity"
                 android:excludeFromRecents="true"
                 android:launchMode="standard"
-                android:theme="@android:style/Theme.Wallpaper.NoTitleBar"
+                android:theme="@android:style/Theme.NoTitleBar"
                 android:taskAffinity=""
                 android:screenOrientation="nosensor"
                 android:configChanges="orientation|keyboardHidden|keyboard|navigation"/>

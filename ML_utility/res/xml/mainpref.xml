@@ -8,6 +8,13 @@ android:summary="Skip slide to unlock. Add widget to home for quick toggle"
 android:persistent="true"
 />
 
+<CheckBoxPreference
+android:key="oldmode"
+android:title="Try quicker mode"
+android:summary="Uses android 1.x Disable Keyguard API instead of 2.x lock dismiss window"
+android:persistent="true"
+/>
+
 <!-- category does nothing, just a cosmetic divider. 
 useful in this case since I want users to know it is the Mode and that they can change it
 but i need all the text in the pref itself to explain the mode-->

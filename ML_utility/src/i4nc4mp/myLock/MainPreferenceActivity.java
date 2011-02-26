@@ -101,7 +101,7 @@ public class MainPreferenceActivity extends PreferenceActivity {
         	//These 2 and the mode will go by strict pref reading
         	((CheckBoxPreference) findPreference("FG")).setChecked(myprefs.getBoolean("FG", false));
         	((CheckBoxPreference) findPreference("slideGuard")).setChecked(myprefs.getBoolean("slideGuard", false));
-        	
+        	((CheckBoxPreference) findPreference("oldmode")).setChecked(myprefs.getBoolean("oldmode", false));
         	
         	enabled = myprefs.getBoolean("enabled", false);
         	
