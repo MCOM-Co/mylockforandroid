@@ -1,4 +1,4 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 //Starting point from AdamK smspopup
 
 import android.content.Context; 

@@ -1,4 +1,4 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 
 //the call screen is used as an optional feature so that we can replace the call prompt lockscreen
 

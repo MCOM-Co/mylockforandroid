@@ -1,4 +1,4 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 
 import android.app.Service;
 import android.content.Context;
@@ -31,7 +31,7 @@ Log.v("Toggler","Starting");
 		//and the bind is created here
 		//the error case should never happen now that we grab the bind at mediator first start
 		
-		target = intent.getBooleanExtra("i4nc4mp.myLock.froyo.TargetState", !active);
+		target = intent.getBooleanExtra("i4nc4mp.myLock.plus.TargetState", !active);
 		
 		Log.v("toggling","target is " + target + " and current state is " + active);
 		
@@ -64,7 +64,7 @@ Intent w = new Intent();
 
 w.setComponent(comp);
 w.setAction("android.appwidget.action.APPWIDGET_UPDATE");
-w.putExtra("i4nc4mp.myLock.froyo.toggle", true);//so widget knows we manually told it to update the status
+w.putExtra("i4nc4mp.myLock.plus.toggle", true);//so widget knows we manually told it to update the status
 mCon.sendBroadcast(w);
 */
 

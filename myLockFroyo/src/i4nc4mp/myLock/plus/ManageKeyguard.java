@@ -1,4 +1,4 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 //Thanks for this code from the open source SMSPopup project
 //Nice wrapped up tool that gets us cleanly in and out of keyguard management
 //I added some documentation to certain parts to help explain the keyguardmanager facet of android.

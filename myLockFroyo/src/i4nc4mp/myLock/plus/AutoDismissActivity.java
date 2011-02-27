@@ -1,4 +1,4 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 
 import android.app.Activity;
 
@@ -60,7 +60,7 @@ BroadcastReceiver unlockdone = new BroadcastReceiver() {
 	    		Log.v("dismiss user present","sending to back");
 	    		done = true;
 	    		//callback mediator for final handling of the stupid wake lock
-	            Intent i = new Intent("i4nc4mp.myLock.froyo.lifecycle.LOCKSCREEN_EXITED");
+	            Intent i = new Intent("i4nc4mp.myLock.plus.lifecycle.LOCKSCREEN_EXITED");
 	            getApplicationContext().sendBroadcast(i);
 	    	   	moveTaskToBack(true);
 	    	   	finish();

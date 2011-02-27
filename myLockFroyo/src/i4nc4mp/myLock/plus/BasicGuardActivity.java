@@ -1,6 +1,6 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 
-import i4nc4mp.myLock.froyo.ManageKeyguard.LaunchOnKeyguardExit;
+import i4nc4mp.myLock.plus.ManageKeyguard.LaunchOnKeyguardExit;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -77,10 +77,10 @@ protected void onCreate(Bundle icicle) {
     IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
             registerReceiver(screenon, onfilter);
     
-    IntentFilter callbegin = new IntentFilter ("i4nc4mp.myLock.froyo.lifecycle.CALL_START");
+    IntentFilter callbegin = new IntentFilter ("i4nc4mp.myLock.plus.lifecycle.CALL_START");
     registerReceiver(callStarted, callbegin);  
     
-    IntentFilter callpend = new IntentFilter ("i4nc4mp.myLock.froyo.lifecycle.CALL_PENDING");
+    IntentFilter callpend = new IntentFilter ("i4nc4mp.myLock.plus.lifecycle.CALL_PENDING");
     registerReceiver(callPending, callpend);
     
   
@@ -170,7 +170,7 @@ BroadcastReceiver screenon = new BroadcastReceiver() {
 BroadcastReceiver callStarted = new BroadcastReceiver() {
     @Override
     public void onReceive(Context context, Intent intent) {
-    if (!intent.getAction().equals("i4nc4mp.myLock.froyo.lifecycle.CALL_START")) return;
+    if (!intent.getAction().equals("i4nc4mp.myLock.plus.lifecycle.CALL_START")) return;
     
     //we are going to be dormant while this happens, therefore we need to force finish
     Log.v("guard received broadcast","completing callback and finish");
@@ -184,7 +184,7 @@ BroadcastReceiver callStarted = new BroadcastReceiver() {
 BroadcastReceiver callPending = new BroadcastReceiver() {
     @Override
        public void onReceive(Context context, Intent intent) {
-    if (!intent.getAction().equals("i4nc4mp.myLock.froyo.lifecycle.CALL_PENDING")) return;
+    if (!intent.getAction().equals("i4nc4mp.myLock.plus.lifecycle.CALL_PENDING")) return;
             //incoming call does not steal focus till user grabs a tab
             //lifecycle treats this like a home key exit
             //forcing dormant state here will allow us to only exit if call is answered
@@ -434,12 +434,12 @@ protected void onStart() {
 }
 
 public void StartCallback() {
-    Intent i = new Intent("i4nc4mp.myLock.froyo.lifecycle.LOCKSCREEN_PRIMED");
+    Intent i = new Intent("i4nc4mp.myLock.plus.lifecycle.LOCKSCREEN_PRIMED");
     getApplicationContext().sendBroadcast(i);
 }
 
 public void StopCallback() {
-    Intent i = new Intent("i4nc4mp.myLock.froyo.lifecycle.LOCKSCREEN_EXITED");
+    Intent i = new Intent("i4nc4mp.myLock.plus.lifecycle.LOCKSCREEN_EXITED");
     getApplicationContext().sendBroadcast(i);
 }
 

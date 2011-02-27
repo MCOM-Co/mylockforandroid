@@ -1,6 +1,5 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 
-import i4nc4mp.myLock.froyo.ManageKeyguard.LaunchOnKeyguardExit;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -65,7 +64,7 @@ public class UnguardService extends MediatorService {
     
     //to be used in the case of a lockdown
     public static void closeLockscreen(Context c) {
-    	Intent intent = new Intent("i4nc4mp.myLock.froyo.lifecycle.CALL_START");
+    	Intent intent = new Intent("i4nc4mp.myLock.plus.lifecycle.CALL_START");
         c.sendBroadcast(intent);
     }
     
@@ -309,7 +308,7 @@ public class UnguardService extends MediatorService {
             //this case we will also flag to restart lock at call end
             //callWake = true;
             
-            Intent intent = new Intent("i4nc4mp.myLock.froyo.lifecycle.CALL_START");
+            Intent intent = new Intent("i4nc4mp.myLock.plus.lifecycle.CALL_START");
             getApplicationContext().sendBroadcast(intent);
             //FIXME is there a way to do this with a class method now with inner class activity?
             }
@@ -352,7 +351,7 @@ public class UnguardService extends MediatorService {
     
     @Override
     public void onCallRing() {  	
-    	Intent intent = new Intent("i4nc4mp.myLock.froyo.lifecycle.CALL_PENDING");
+    	Intent intent = new Intent("i4nc4mp.myLock.plus.lifecycle.CALL_PENDING");
         getApplicationContext().sendBroadcast(intent);
         //lets the activity know it should not treat focus loss as a navigation exit
         //this will keep activity alive, only stopping it at call start
@@ -451,10 +450,10 @@ public class UnguardService extends MediatorService {
             IntentFilter onfilter = new IntentFilter (Intent.ACTION_SCREEN_ON);
             registerReceiver(screenon, onfilter);
     
-    IntentFilter callbegin = new IntentFilter ("i4nc4mp.myLock.froyo.lifecycle.CALL_START");
+    IntentFilter callbegin = new IntentFilter ("i4nc4mp.myLock.plus.lifecycle.CALL_START");
     registerReceiver(callStarted, callbegin);  
     
-    IntentFilter callpend = new IntentFilter ("i4nc4mp.myLock.froyo.lifecycle.CALL_PENDING");
+    IntentFilter callpend = new IntentFilter ("i4nc4mp.myLock.plus.lifecycle.CALL_PENDING");
     registerReceiver(callPending, callpend);
     
     SharedPreferences settings = getSharedPreferences("myLock", 0);
@@ -506,7 +505,7 @@ public class UnguardService extends MediatorService {
     	BroadcastReceiver callStarted = new BroadcastReceiver() {
     	    @Override
     	    public void onReceive(Context context, Intent intent) {
-    	    if (!intent.getAction().equals("i4nc4mp.myLock.froyo.lifecycle.CALL_START")) return;
+    	    if (!intent.getAction().equals("i4nc4mp.myLock.plus.lifecycle.CALL_START")) return;
     	    
     	    //we are going to be dormant while this happens, therefore we need to force finish
     	    Log.v("guard received broadcast","completing callback and finish");
@@ -520,7 +519,7 @@ public class UnguardService extends MediatorService {
     	BroadcastReceiver callPending = new BroadcastReceiver() {
     	    @Override
     	       public void onReceive(Context context, Intent intent) {
-    	    if (!intent.getAction().equals("i4nc4mp.myLock.froyo.lifecycle.CALL_PENDING")) return;
+    	    if (!intent.getAction().equals("i4nc4mp.myLock.plus.lifecycle.CALL_PENDING")) return;
     	            //incoming call does not steal focus till user grabs a tab
     	            //lifecycle treats this like a home key exit
     	            //forcing dormant state here will allow us to only exit if call is answered

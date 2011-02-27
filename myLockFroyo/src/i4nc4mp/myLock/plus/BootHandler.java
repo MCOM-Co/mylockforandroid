@@ -1,4 +1,4 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -57,8 +57,8 @@ public class BootHandler extends Service {
 
 		
 		Intent i = new Intent();
-		i.setClassName("i4nc4mp.myLock.froyo", "i4nc4mp.myLock.froyo.Toggler");
-		i.putExtra("i4nc4mp.myLock.froyo.TargetState", true);
+		i.setClassName("i4nc4mp.myLock.plus", "i4nc4mp.myLock.plus.Toggler");
+		i.putExtra("i4nc4mp.myLock.plus.TargetState", true);
 
 
 		//restart if last known state was user-initiated active

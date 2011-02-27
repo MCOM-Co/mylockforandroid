@@ -1,4 +1,4 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 
 //how this works - the widget starts toggler service when clicked
 //we manually update the widget via manager interface when toggler executes a change
@@ -37,7 +37,7 @@ public class ToggleWidget extends AppWidgetProvider {
 		//Bundle e = intent.getExtras();
 		//if (e!=null) ex = e.toString();
 		//Log.v("toggle widget","Intent is " + intent.toString() + " extras - " + ex);
-		if(!intent.getBooleanExtra("i4nc4mp.myLock.froyo.toggle", false)) {
+		if(!intent.getBooleanExtra("i4nc4mp.myLock.plus.toggle", false)) {
 			AppWidgetManager mgr = AppWidgetManager.getInstance(context);
 			
 			RemoteViews v = makeView(context);
@@ -73,7 +73,7 @@ public class ToggleWidget extends AppWidgetProvider {
 		
 		
 		Intent i = new Intent();
-		i.setClassName("i4nc4mp.myLock.froyo", "i4nc4mp.myLock.froyo.Toggler");
+		i.setClassName("i4nc4mp.myLock.plus", "i4nc4mp.myLock.plus.Toggler");
 		PendingIntent myPI = PendingIntent.getService(context, 0, i, 0);
 		//tells the widget button to do start command on toggler service when clicked.
 		
