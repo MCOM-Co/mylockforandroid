@@ -1,0 +1,12 @@
+#summary Summary of changes forced by android API progression.
+
+= Introduction =
+
+When myLock began with android 2.0 we set out with certain goals. The realization of the goals has been partial only, and functionality has been lost as v2.x of android has evolved.
+
+
+= Details =
+
+* Up to 2.1 eclair -- able to toggle security modes, enabling idle lock plug-in and useful one click switch between secure lockscreen on and myLock quick unlock.
+* Up to 2.2 froyo -- able to accept or reject incoming calls via customized window on screen or through button commands
+* Never yet possible -- replace lockscreen with full access to button customization, allowing user to choose how the device should wake up or unlock. We would need a way to return control to the lockscreen from a lock superseding window and a way to cleanly unlock the keyguard from user request in the lock superseding window. Google has not provided any tools to fill these gaps when using the technique of show when locked or dismiss keyguard flags in the lock replacement window. 
