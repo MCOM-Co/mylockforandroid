@@ -1,6 +1,6 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 
-import i4nc4mp.myLock.froyo.ManageKeyguard.LaunchOnKeyguardExit;
+import i4nc4mp.myLock.plus.ManageKeyguard.LaunchOnKeyguardExit;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -78,7 +78,7 @@ public class BasicGuardService extends MediatorService {
             	if (!shouldLock) {
                     //if our lock activity is alive, send broadcast to close it
                     
-                    Intent intent = new Intent("i4nc4mp.myLock.froyo.lifecycle.CALL_START");
+                    Intent intent = new Intent("i4nc4mp.myLock.plus.lifecycle.CALL_START");
                     getApplicationContext().sendBroadcast(intent);
                     }
 }
@@ -103,10 +103,10 @@ public class BasicGuardService extends MediatorService {
             //we found we always need it to ensure key events will not occasionally drop on the floor from idle state wakeup
             
             
-            IntentFilter lockStart = new IntentFilter ("i4nc4mp.myLock.froyo.lifecycle.LOCKSCREEN_PRIMED");
+            IntentFilter lockStart = new IntentFilter ("i4nc4mp.myLock.plus.lifecycle.LOCKSCREEN_PRIMED");
             registerReceiver(lockStarted, lockStart);
             
-            IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLock.froyo.lifecycle.LOCKSCREEN_EXITED");
+            IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLock.plus.lifecycle.LOCKSCREEN_EXITED");
             registerReceiver(lockStopped, lockStop);            
     }
     
@@ -130,7 +130,7 @@ public class BasicGuardService extends MediatorService {
             @Override
         public void onReceive(Context context, Intent intent) {
                     
-            if (!intent.getAction().equals("i4nc4mp.myLock.froyo.lifecycle.LOCKSCREEN_PRIMED")) return;
+            if (!intent.getAction().equals("i4nc4mp.myLock.plus.lifecycle.LOCKSCREEN_PRIMED")) return;
 
             if (!PendingLock) Log.v("lock start callback","did not expect this call");
             else PendingLock = false;
@@ -141,7 +141,7 @@ public class BasicGuardService extends MediatorService {
     BroadcastReceiver lockStopped = new BroadcastReceiver() {
             @Override
         public void onReceive(Context context, Intent intent) {
-            if (!intent.getAction().equals("i4nc4mp.myLock.froyo.lifecycle.LOCKSCREEN_EXITED")) return;
+            if (!intent.getAction().equals("i4nc4mp.myLock.plus.lifecycle.LOCKSCREEN_EXITED")) return;
 
             if (shouldLock) Log.v("lock exit callback","did not expect this call"); 
             else shouldLock = true;
@@ -300,7 +300,7 @@ public class BasicGuardService extends MediatorService {
             //this case we will also flag to restart lock at call end
             //callWake = true;
             
-            Intent intent = new Intent("i4nc4mp.myLock.froyo.lifecycle.CALL_START");
+            Intent intent = new Intent("i4nc4mp.myLock.plus.lifecycle.CALL_START");
             getApplicationContext().sendBroadcast(intent);
             }
             else shouldLock = false;
@@ -342,7 +342,7 @@ public class BasicGuardService extends MediatorService {
     
     @Override
     public void onCallRing() {  	
-    	Intent intent = new Intent("i4nc4mp.myLock.froyo.lifecycle.CALL_PENDING");
+    	Intent intent = new Intent("i4nc4mp.myLock.plus.lifecycle.CALL_PENDING");
         getApplicationContext().sendBroadcast(intent);
         //lets the activity know it should not treat focus loss as a navigation exit
         //this will keep activity alive, only stopping it at call start

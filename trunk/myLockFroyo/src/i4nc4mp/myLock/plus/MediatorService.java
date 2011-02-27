@@ -1,4 +1,4 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 
 import i4nc4mp.myLock.IsActive;
 import android.app.Service;

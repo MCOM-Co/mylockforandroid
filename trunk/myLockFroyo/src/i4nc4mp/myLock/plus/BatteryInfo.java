@@ -1,4 +1,4 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 //thanks geekyouup battery widget. I want our lockscreen to display the battery % also.
 //this receiver gets registered by the mediator which as a remote service will always get these updates
 //then place the level into shared prefs for any lock activity to read from

@@ -1,6 +1,8 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,6 +14,9 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.widget.Toast;
 
 //what we need is when this is launched, a short handler is spawned, and the checkbox for service status
@@ -129,7 +134,7 @@ public class MainPreferenceActivity extends PreferenceActivity {
         	//Security and Service statuses need extra handling
         	enabled = myprefs.getBoolean("enabled", false);
         	
-        	
+        	 
         	if (enabled) {
         		//verify that the service is active, we will get true if we held the bind as expected
         		active = ManageMediator.bind(getApplicationContext());

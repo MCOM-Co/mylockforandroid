@@ -1,4 +1,4 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 
 
 
@@ -30,9 +30,9 @@ public class ManageMediator {
 	public static final int MODE_ADVANCED = 2;
 	
 	
-	//public static final String BASIC = "i4nc4mp.myLock.froyo.AutoDismiss";
-	//public static final String HIDDEN = "i4nc4mp.myLock.froyo.BasicGuardService";
-	//public static final String ADVANCED = "i4nc4mp.myLock.froyo.UnGuardService";
+	//public static final String BASIC = "i4nc4mp.myLock.plus.AutoDismiss";
+	//public static final String HIDDEN = "i4nc4mp.myLock.plus.BasicGuardService";
+	//public static final String ADVANCED = "i4nc4mp.myLock.plus.UnGuardService";
 	
 	static class RemoteServiceConnection implements ServiceConnection {
         public void onServiceConnected(ComponentName className, 
@@ -82,7 +82,7 @@ public class ManageMediator {
  	    //new Intent().setComponent(comp));
     	    	    	
     	//Intent i = new Intent();
-		//i.setClassName("i4nc4mp.myLock.froyo", name);
+		//i.setClassName("i4nc4mp.myLock.plus", name);
 		
     	Intent result = new Intent(mCon, c);
 		return result;
@@ -170,8 +170,8 @@ public class ManageMediator {
 	public static synchronized void invokeToggler(Context mCon, boolean on) {
 		Intent i = new Intent();
 		
-		i.setClassName("i4nc4mp.myLock.froyo", "i4nc4mp.myLock.froyo.Toggler");
-		i.putExtra("i4nc4mp.myLock.froyo.TargetState", on);
+		i.setClassName("i4nc4mp.myLock.plus", "i4nc4mp.myLock.plus.Toggler");
+		i.putExtra("i4nc4mp.myLock.plus.TargetState", on);
 		mCon.startService(i);
 	}
 	

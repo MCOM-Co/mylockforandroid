@@ -1,4 +1,4 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 
 
 import android.app.Activity;
@@ -114,7 +114,7 @@ public class SettingsActivity extends Activity {
         switch (item.getItemId()) {
         case R.id.idlesetup:
         	Intent setup = new Intent();
-        	setup.setClassName("i4nc4mp.myLock.froyo.idleLock", "i4nc4mp.myLock.froyo.idleLock.IdleSetup");
+        	setup.setClassName("i4nc4mp.myLock.plus.idleLock", "i4nc4mp.myLock.plus.idleLock.IdleSetup");
         	try {
         		startActivity(setup);
         	}

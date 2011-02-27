@@ -1,4 +1,4 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;

@@ -1,4 +1,4 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -122,7 +122,7 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
             	
             serviceHandler = new Handler();
             
-            IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLock.froyo.lifecycle.LOCKSCREEN_EXITED");
+            IntentFilter lockStop = new IntentFilter ("i4nc4mp.myLock.plus.lifecycle.LOCKSCREEN_EXITED");
             registerReceiver(lockStopped, lockStop);
     }
     
@@ -148,7 +148,7 @@ public class AutoDismiss extends MediatorService implements SensorEventListener 
     BroadcastReceiver lockStopped = new BroadcastReceiver() {
         @Override
     public void onReceive(Context context, Intent intent) {
-        if (!intent.getAction().equals("i4nc4mp.myLock.froyo.lifecycle.LOCKSCREEN_EXITED")) return;
+        if (!intent.getAction().equals("i4nc4mp.myLock.plus.lifecycle.LOCKSCREEN_EXITED")) return;
         
         //couldn't get any other method to avoid the KG from shutting screen back off
         //when dismiss activity sent itself to back

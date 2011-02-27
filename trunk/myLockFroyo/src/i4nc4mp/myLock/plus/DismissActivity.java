@@ -1,6 +1,6 @@
-package i4nc4mp.myLock.froyo;
+package i4nc4mp.myLock.plus;
 
-import i4nc4mp.myLock.froyo.ManageKeyguard.LaunchOnKeyguardExit;
+import i4nc4mp.myLock.plus.ManageKeyguard.LaunchOnKeyguardExit;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
